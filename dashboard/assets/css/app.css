@@ -1,0 +1,140 @@
+/* =========================================================================
+   Estilos do Dashboard Protagonismo
+   Complementa o Tailwind (CDN) com os componentes reutilizados nas vistas.
+   ========================================================================= */
+
+:root {
+    --slate-850: #172033;
+}
+
+body {
+    background-color: #0f172a;
+}
+
+/* Tom intermedio entre slate-800 e slate-900, usado nos cartoes ---------- */
+.bg-slate-850 { background-color: var(--slate-850); }
+.ring-slate-850 { --tw-ring-color: var(--slate-850); }
+.from-slate-850 { --tw-gradient-from: var(--slate-850); }
+
+/* Campos de formulario --------------------------------------------------- */
+.campo {
+    width: 100%;
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.875rem;
+    color: #e2e8f0;
+    transition: border-color .2s, box-shadow .2s;
+}
+.campo::placeholder { color: #64748b; }
+.campo:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .18);
+}
+select.campo { cursor: pointer; }
+textarea.campo { resize: vertical; line-height: 1.6; }
+
+.rotulo {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #94a3b8;
+    margin-bottom: 0.4rem;
+}
+
+/* Botoes ----------------------------------------------------------------- */
+.btn-primario, .btn-secundario, .btn-perigo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.55rem 0.95rem;
+    border-radius: 0.75rem;
+    transition: all .2s;
+    cursor: pointer;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+.btn-primario { background-color: #4f46e5; color: #fff; }
+.btn-primario:hover { background-color: #4338ca; transform: translateY(-1px); }
+.btn-secundario { background-color: #1e293b; color: #cbd5e1; border-color: #334155; }
+.btn-secundario:hover { background-color: #334155; color: #fff; }
+.btn-perigo { background-color: #e11d48; color: #fff; }
+.btn-perigo:hover { background-color: #be123c; }
+
+.btn-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.6rem;
+    color: #94a3b8;
+    background-color: transparent;
+    border: 1px solid #334155;
+    transition: all .2s;
+    cursor: pointer;
+}
+.btn-icone:hover { background-color: #334155; color: #fff; }
+
+.btn-mini, .btn-mini-claro {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.35rem 0.7rem;
+    border-radius: 0.5rem;
+    transition: all .2s;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-mini { background-color: #4f46e5; color: #fff; border: 1px solid #4f46e5; }
+.btn-mini:hover { background-color: #4338ca; }
+.btn-mini-claro { background-color: transparent; color: #cbd5e1; border: 1px solid #334155; }
+.btn-mini-claro:hover { background-color: #334155; color: #fff; }
+
+.btn-filtro, .btn-filtro-ativo {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    transition: all .2s;
+    cursor: pointer;
+    border: 1px solid #334155;
+}
+.btn-filtro { background-color: transparent; color: #94a3b8; }
+.btn-filtro:hover { color: #fff; border-color: #475569; }
+.btn-filtro-ativo { background-color: #4f46e5; color: #fff; border-color: #4f46e5; }
+
+/* Utilitarios ------------------------------------------------------------ */
+.line-clamp-2, .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.line-clamp-2 { -webkit-line-clamp: 2; }
+.line-clamp-3 { -webkit-line-clamp: 3; }
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+/* Animacoes -------------------------------------------------------------- */
+@keyframes slide-in {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in { animation: slide-in .25s ease-out; transition: opacity .3s, transform .3s; }
+
+@keyframes pop {
+    from { opacity: 0; transform: scale(.97) translateY(6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-pop { animation: pop .18s ease-out; }
+
+@media print {
+    #lateral, #topo, #toast-root { display: none !important; }
+}
