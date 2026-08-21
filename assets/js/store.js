@@ -245,22 +245,22 @@
             },
             {
                 id: 'usu_helena', nome: 'Helena Rocha', email: 'helena@escola.pt', senha: 'siv123',
-                perfil: 'admin', funcaoId: 'fun_coord', frenteIds: [siv], comissaoIds: ['com_secretariado'],
+                perfil: 'admin', funcaoId: 'fun_coord', frenteIds: [], comissaoIds: ['com_secretariado'],
                 cargo: 'Secretaria-Geral do SIV', ativo: true, criadoEm: agora(), ultimoAcesso: null
             },
             {
                 id: 'usu_bruno', nome: 'Bruno Alves', email: 'bruno@escola.pt', senha: 'siv123',
-                perfil: 'admin', funcaoId: 'fun_imprensa', frenteIds: [siv], comissaoIds: ['com_imprensa'],
+                perfil: 'admin', funcaoId: 'fun_imprensa', frenteIds: [], comissaoIds: ['com_imprensa'],
                 cargo: 'Coordenador de Imprensa', ativo: true, criadoEm: agora(), ultimoAcesso: null
             },
             {
                 id: 'usu_marta', nome: 'Marta Nogueira', email: 'marta@escola.pt', senha: 'siv123',
-                perfil: 'admin', funcaoId: 'fun_coord', frenteIds: [siv], comissaoIds: ['com_logistica'],
+                perfil: 'admin', funcaoId: 'fun_coord', frenteIds: [], comissaoIds: ['com_logistica'],
                 cargo: 'Coordenadora de Logistica', ativo: true, criadoEm: agora(), ultimoAcesso: null
             },
             {
                 id: 'usu_rafa', nome: 'Rafael Pinto', email: 'rafael@escola.pt', senha: 'cine123',
-                perfil: 'admin', funcaoId: 'fun_coord', frenteIds: [cine], comissaoIds: ['com_curadoria'],
+                perfil: 'admin', funcaoId: 'fun_coord', frenteIds: [], comissaoIds: ['com_curadoria'],
                 cargo: 'Coordenador de Curadoria', ativo: true, criadoEm: agora(), ultimoAcesso: null
             }
         ];

@@ -17,7 +17,7 @@
                 { nome: 'descricao', rotulo: 'Descricao', tipo: 'textarea', valor: edicao ? frente.descricao : '', linhas: 3, obrigatorio: true },
                 {
                     nome: 'cor', rotulo: 'Cor de identificacao', tipo: 'select', largura: 'metade', valor: edicao ? frente.cor : 'indigo',
-                    opcoes: Object.keys(UI.CORES).map(function (c) { return { valor: c, rotulo: c }; })
+                    opcoes: UI.TONS.map(function (c) { return { valor: c, rotulo: c }; })
                 },
                 {
                     nome: 'icone', rotulo: 'Icone', tipo: 'select', largura: 'metade', valor: edicao ? frente.icone : 'layers',
@@ -66,52 +66,54 @@
             var pode = Auth.pode('frentes.gerir');
             var frentes = Auth.frentesVisiveis();
 
-            var html = UI.cabecalho('Frentes do Protagonismo',
+            var html = UI.cabecalho('Protagonismo', 'Frentes',
                 pode ? 'Cadastra e administra todas as frentes: SIV, Cine Club e outras que venham a existir.'
                      : 'Frentes a que o teu perfil tem acesso.',
-                pode ? '<button class="btn-primario" data-acao="nova"><i data-lucide="plus" class="w-4 h-4"></i> Nova frente</button>' : '');
+                pode ? '<button class="btn btn--principal" data-acao="nova">' + UI.icone('plus', 15) + ' Nova frente</button>' : '');
 
             if (!frentes.length) {
-                return html + UI.cartao(UI.vazio('Ainda nao existem frentes cadastradas.', 'layers'));
+                return html + UI.painel('', UI.vazio('Ainda nao existem frentes cadastradas.', 'layers'));
             }
 
-            html += '<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">' + frentes.map(function (f) {
+            html += '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + frentes.map(function (f) {
                 var comissoes = Auth.comissoesVisiveis().filter(function (c) { return c.frenteId === f.id; });
                 var membros = Dados.membrosVisiveis().filter(function (m) {
                     return comissoes.some(function (c) { return c.id === m.comissaoId; });
                 });
-                var c = UI.cor(f.cor);
-                return '<div class="bg-slate-850 border border-slate-700 rounded-2xl overflow-hidden">' +
-                    '<div class="px-5 py-4 flex items-start gap-4 border-b border-slate-700">' +
-                        '<div class="w-12 h-12 rounded-xl ' + c.solido + ' flex items-center justify-center shrink-0">' +
-                            '<i data-lucide="' + UI.esc(f.icone || 'layers') + '" class="w-6 h-6 text-white"></i></div>' +
-                        '<div class="min-w-0 flex-1">' +
-                            '<div class="flex items-center gap-2 flex-wrap">' +
-                                '<h3 class="font-bold text-white">' + UI.esc(f.nome) + '</h3>' +
-                                UI.chip(f.sigla, f.cor) +
-                                (f.ativo ? '' : UI.chip('Inativa', 'slate')) +
+                var posts = Dados.postagensVisiveis().filter(function (p) { return p.frenteId === f.id; });
+
+                return '<section class="painel ' + UI.tom(f.cor) + '">' +
+                    '<div class="painel__cabeca" style="align-items:flex-start">' +
+                        '<div class="flex items-start gap-3 min-w-0">' +
+                            '<span class="selo-frente">' + UI.icone(f.icone || 'layers', 18) + '</span>' +
+                            '<div class="min-w-0">' +
+                                '<div class="flex items-center gap-2 flex-wrap">' +
+                                    '<h3 class="titulo-painel">' + UI.esc(f.nome) + '</h3>' +
+                                    UI.pastilha(f.sigla, f.cor) +
+                                    (f.ativo ? '' : UI.etiqueta('inativa', 'slate')) +
+                                '</div>' +
+                                '<p class="nota" style="margin-top:.2rem">' + UI.esc(f.descricao) + '</p>' +
                             '</div>' +
-                            '<p class="text-xs text-slate-400 mt-1">' + UI.esc(f.descricao) + '</p>' +
-                            (f.responsavel ? '<p class="text-[11px] text-slate-500 mt-1.5"><i data-lucide="user" class="w-3 h-3 inline"></i> ' + UI.esc(f.responsavel) + '</p>' : '') +
                         '</div>' +
                         (pode ? '<div class="flex gap-1 shrink-0">' +
-                            '<button class="btn-icone" data-acao="editar" data-id="' + f.id + '" title="Editar"><i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i></button>' +
-                            '<button class="btn-icone hover:text-rose-400" data-acao="eliminar" data-id="' + f.id + '" title="Eliminar"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>' +
+                            '<button class="btn btn--icone" data-acao="editar" data-id="' + f.id + '" title="Editar">' + UI.icone('pencil', 14) + '</button>' +
+                            '<button class="btn btn--icone perigo" data-acao="eliminar" data-id="' + f.id + '" title="Eliminar">' + UI.icone('trash-2', 14) + '</button>' +
                         '</div>' : '') +
                     '</div>' +
-                    '<div class="px-5 py-4">' +
-                        '<div class="flex gap-4 mb-4">' +
-                            '<div><p class="text-2xl font-bold text-white leading-none">' + comissoes.length + '</p><p class="text-[11px] text-slate-400 mt-1">Comissoes</p></div>' +
-                            '<div><p class="text-2xl font-bold text-white leading-none">' + membros.length + '</p><p class="text-[11px] text-slate-400 mt-1">Membros</p></div>' +
-                            '<div><p class="text-2xl font-bold text-white leading-none">' + Dados.postagensVisiveis().filter(function (p) { return p.frenteId === f.id; }).length + '</p><p class="text-[11px] text-slate-400 mt-1">Postagens</p></div>' +
+                    '<div class="painel__corpo">' +
+                        '<div class="flex gap-8">' +
+                            '<div><p class="numero" style="font-size:1.4rem">' + comissoes.length + '</p><p class="sobrancelha">Comissoes</p></div>' +
+                            '<div><p class="numero" style="font-size:1.4rem">' + membros.length + '</p><p class="sobrancelha">Membros</p></div>' +
+                            '<div><p class="numero" style="font-size:1.4rem">' + posts.length + '</p><p class="sobrancelha">Postagens</p></div>' +
                         '</div>' +
+                        (f.responsavel ? '<p class="nota" style="margin-top:.9rem">Responsavel: ' + UI.esc(f.responsavel) + '</p>' : '') +
                         (comissoes.length
-                            ? '<div class="flex flex-wrap gap-1.5">' + comissoes.map(function (co) {
-                                  return '<a href="#/comissoes" class="text-[11px] bg-slate-800 border border-slate-700 hover:border-indigo-500/50 text-slate-300 px-2.5 py-1 rounded-lg transition-all">' + UI.esc(co.nome) + '</a>';
+                            ? '<div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t" style="border-color:var(--linha)">' + comissoes.map(function (co) {
+                                  return '<a href="#/comissoes" class="etiqueta etiqueta--contorno ' + UI.tom(f.cor) + '">' + UI.esc(co.nome) + '</a>';
                               }).join('') + '</div>'
-                            : '<p class="text-xs text-slate-500">Sem comissoes cadastradas nesta frente.</p>') +
+                            : '<p class="nota" style="margin-top:.9rem">Sem comissoes cadastradas nesta frente.</p>') +
                     '</div>' +
-                '</div>';
+                '</section>';
             }).join('') + '</div>';
 
             return html;

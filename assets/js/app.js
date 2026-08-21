@@ -36,6 +36,11 @@
 
     var rotaAtual = 'visao';
 
+    /* Ajuda de demonstracao: o seletor "Modo de teste" no topo permite saltar
+       entre os tres perfis sem sair da sessao. Poe a false quando o painel
+       passar a ser usado a serio (ver README). */
+    var MODO_TESTE = true;
+
     function temAcesso(item) {
         if (!item.permissao) { return true; }
         return item.permissao.some(function (p) { return Auth.pode(p); });
@@ -55,24 +60,20 @@
     function desenharMenu() {
         var alvo = document.getElementById('menu');
         if (!alvo) { return; }
-        var html = '';
-        NAVEGACAO.forEach(function (grupo) {
+        alvo.innerHTML = NAVEGACAO.map(function (grupo) {
             var itens = grupo.itens.filter(temAcesso);
-            if (!itens.length) { return; }
-            html += '<div class="mb-6">' +
-                '<p class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">' + UI.esc(grupo.grupo) + '</p>' +
+            if (!itens.length) { return ''; }
+            return '<div class="grupo-nav">' +
+                '<p class="grupo-nav__titulo sobrancelha">' + UI.esc(grupo.grupo) + '</p>' +
                 itens.map(function (i) {
-                    var ativo = i.rota === rotaAtual;
-                    return '<a href="#/' + i.rota + '" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm mb-0.5 transition-all ' +
-                        (ativo ? 'bg-indigo-600 text-white font-semibold shadow-lg shadow-indigo-900/30' : 'text-slate-400 hover:text-white hover:bg-slate-800') + '">' +
-                        '<i data-lucide="' + i.icone + '" class="w-4 h-4 shrink-0"></i>' +
-                        '<span class="flex-1">' + UI.esc(i.rotulo) + '</span>' +
-                        (i.contador === 'mensagens' ? '<span id="badge-mensagens" class="hidden text-[10px] font-bold bg-rose-500 text-white px-1.5 py-0.5 rounded-full"></span>' : '') +
+                    return '<a href="#/' + i.rota + '" class="nav-item' + (i.rota === rotaAtual ? ' nav-item--ativo' : '') + '">' +
+                        UI.icone(i.icone, 15) +
+                        '<span>' + UI.esc(i.rotulo) + '</span>' +
+                        (i.contador === 'mensagens' ? '<span id="badge-mensagens" class="nav-item__conta hidden"></span>' : '') +
                     '</a>';
                 }).join('') +
             '</div>';
-        });
-        alvo.innerHTML = html;
+        }).join('');
         UI.icones();
         atualizarContadores();
     }
@@ -92,39 +93,65 @@
     /* --------------------------------------------------------------------- */
     /* Cabecalho                                                              */
     /* --------------------------------------------------------------------- */
+    function desenharUtilizador() {
+        var alvo = document.getElementById('cartao-utilizador');
+        if (!alvo) { return; }
+        var eu = Auth.usuarioAtual();
+        var funcao = Auth.funcaoAtual();
+        alvo.innerHTML =
+            UI.avatar(eu ? eu.nome : 'Visitante', Auth.ehSupra() ? 'violet' : 'indigo', 'grande') +
+            '<div class="min-w-0">' +
+                '<p class="cartao-utilizador__nome truncate">' + UI.esc(eu ? eu.nome : 'Visitante') + '</p>' +
+                '<p class="cartao-utilizador__papel truncate">' + UI.esc(funcao ? funcao.nome : 'Sem funcao') + '</p>' +
+            '</div>';
+    }
+
+    function trocadorHTML() {
+        if (!MODO_TESTE) { return ''; }
+        var perfil = Auth.perfilAtual();
+        var opcoes = [
+            { chave: 'supra', rotulo: 'Supra Admin' },
+            { chave: 'admin', rotulo: 'Admin (comissao)' },
+            { chave: 'publico', rotulo: 'Publico' }
+        ];
+        return '<div class="trocador">' +
+                    '<span class="trocador__rotulo hidden sm:inline">Modo de teste</span>' +
+                    opcoes.map(function (o) {
+                        return '<button type="button" class="trocador__opcao' + (perfil === o.chave ? ' trocador__opcao--ativa' : '') +
+                               '" data-perfil="' + o.chave + '">' + o.rotulo + '</button>';
+                    }).join('') +
+                '</div>';
+    }
+
     function desenharTopo() {
         var alvo = document.getElementById('topo');
         if (!alvo) { return; }
         var eu = Auth.usuarioAtual();
-        var supra = Auth.ehSupra();
-        var funcao = Auth.funcaoAtual();
+        var porLer = Dados.naoLidas();
 
         alvo.innerHTML =
-            '<div class="flex items-center gap-3">' +
-                '<button id="abrir-menu" class="lg:hidden btn-icone"><i data-lucide="menu" class="w-5 h-5 pointer-events-none"></i></button>' +
-                '<div>' +
-                    '<p class="text-[11px] text-slate-400 leading-none">Protagonismo Estudantil</p>' +
-                    '<h1 class="text-base font-bold text-white leading-tight">' + UI.esc((Views[rotaAtual] && Views[rotaAtual].titulo) || 'Painel') + '</h1>' +
-                '</div>' +
+            '<div class="flex items-center gap-2 min-w-0">' +
+                '<button id="abrir-menu" class="btn btn--nu lg:hidden" aria-label="Abrir menu">' + UI.icone('menu', 18) + '</button>' +
+                trocadorHTML() +
             '</div>' +
-            '<div class="flex items-center gap-2">' +
-                '<span class="hidden sm:block">' +
-                    (supra ? UI.chip('Supra Admin', 'rose', 'shield') : UI.chip(funcao ? funcao.nome : 'Coordenador', 'indigo', 'id-card')) +
-                '</span>' +
+            '<div class="flex items-center gap-1.5">' +
+                '<a href="#/mensagens" class="btn btn--nu sino" aria-label="Comunicados">' +
+                    UI.icone('bell', 17) +
+                    (porLer > 0 ? '<span class="sino__ponto"></span>' : '') +
+                '</a>' +
                 '<div class="relative">' +
-                    '<button id="btn-conta" class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-slate-800 transition-all">' +
-                        UI.avatar(eu ? eu.nome : 'Visitante', supra ? 'rose' : 'indigo', 'w-8 h-8 text-[11px]') +
-                        '<span class="hidden sm:block text-left"><span class="block text-xs font-semibold text-white leading-tight">' + UI.esc(eu ? eu.nome : 'Visitante') + '</span>' +
-                        '<span class="block text-[10px] text-slate-400 leading-tight">' + UI.esc(eu && eu.cargo ? eu.cargo : '') + '</span></span>' +
-                        '<i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 pointer-events-none"></i>' +
+                    '<button id="btn-conta" class="btn btn--nu flex items-center gap-2" style="padding:.25rem .35rem">' +
+                        UI.avatar(eu ? eu.nome : 'Visitante', Auth.ehSupra() ? 'violet' : 'indigo', 'pequeno') +
+                        '<span class="hidden sm:block" style="font-size:.75rem;font-weight:500">' + UI.esc(eu ? eu.nome.split(' ')[0] : 'Visitante') + '</span>' +
+                        UI.icone('chevron-down', 14) +
                     '</button>' +
-                    '<div id="menu-conta" class="hidden absolute right-0 mt-2 w-56 bg-slate-850 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-40">' +
-                        '<div class="px-3 py-2 border-b border-slate-700 mb-1">' +
-                            '<p class="text-xs font-semibold text-white truncate">' + UI.esc(eu ? eu.email : '') + '</p>' +
-                            '<p class="text-[11px] text-slate-400">' + UI.esc(funcao ? funcao.nome : '') + '</p>' +
+                    '<div id="menu-conta" class="menu-conta hidden absolute right-0 mt-2 w-56 z-40">' +
+                        '<div class="px-3 py-2.5 border-b" style="border-color:var(--linha)">' +
+                            '<p class="truncate" style="font-size:.75rem;font-weight:500">' + UI.esc(eu ? eu.email : '') + '</p>' +
+                            '<p class="nota" style="font-size:.6875rem">' + UI.esc(eu && eu.cargo ? eu.cargo : '') + '</p>' +
                         '</div>' +
-                        '<a href="#/portal" class="flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-all"><i data-lucide="globe" class="w-4 h-4"></i> Ver portal publico</a>' +
-                        '<button id="btn-sair" class="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-slate-800 transition-all"><i data-lucide="log-out" class="w-4 h-4"></i> Terminar sessao</button>' +
+                        '<a href="#/portal">' + UI.icone('globe', 14) + ' Portal publico</a>' +
+                        '<button id="btn-sair" style="color:var(--sinal)">' + UI.icone('log-out', 14) + ' Terminar sessao</button>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -141,6 +168,23 @@
         if (sair) { sair.addEventListener('click', terminarSessao); }
         var abrir = document.getElementById('abrir-menu');
         if (abrir) { abrir.addEventListener('click', alternarLateral); }
+
+        ligarTrocador(alvo);
+    }
+
+    function ligarTrocador(raiz) {
+        raiz.querySelectorAll('[data-perfil]').forEach(function (el) {
+            el.addEventListener('click', function () {
+                var perfil = el.getAttribute('data-perfil');
+                var r = Auth.assumirPerfil(perfil);
+                if (!r.ok) { UI.toast(r.erro, 'erro'); return; }
+                rotaAtual = 'visao';
+                render();
+                UI.toast(perfil === 'publico'
+                    ? 'A ver a plataforma como visitante.'
+                    : 'A ver o painel de ' + r.usuario.nome + '.', 'info');
+            });
+        });
     }
 
     function fecharLateral() {
@@ -168,26 +212,30 @@
         var alvo = document.getElementById('publico');
         alvo.classList.remove('hidden');
         alvo.innerHTML =
-            '<header class="bg-slate-850/90 backdrop-blur border-b border-slate-700 sticky top-0 z-30">' +
-                '<div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">' +
-                    '<div class="flex items-center gap-3">' +
-                        '<div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center"><i data-lucide="sparkles" class="w-5 h-5 text-white"></i></div>' +
-                        '<div><p class="text-sm font-bold text-white leading-tight">Protagonismo Estudantil</p>' +
-                        '<p class="text-[11px] text-slate-400 leading-tight">Portal publico da escola</p></div>' +
+            '<header class="portal-topo sticky top-0 z-30">' +
+                '<div class="max-w-4xl mx-auto px-5 sm:px-8 py-4 flex items-baseline justify-between gap-4">' +
+                    '<div class="flex items-baseline gap-3">' +
+                        '<span class="serifa" style="font-size:1.1rem">Protagonismo</span>' +
+                        '<span class="sobrancelha hidden sm:inline">Portal da escola</span>' +
                     '</div>' +
-                    '<button id="btn-entrar-painel" class="btn-secundario"><i data-lucide="log-in" class="w-4 h-4"></i> Area de coordenacao</button>' +
+                    '<div class="flex items-center gap-3">' +
+                        trocadorHTML() +
+                        '<button id="btn-entrar-painel" class="ligacao hidden sm:block">Area de coordenacao</button>' +
+                    '</div>' +
                 '</div>' +
             '</header>' +
-            '<main class="max-w-6xl mx-auto px-4 sm:px-6 py-8" id="conteudo-publico"></main>' +
-            '<footer class="max-w-6xl mx-auto px-4 sm:px-6 py-8 text-center text-[11px] text-slate-500 border-t border-slate-800 mt-8">' +
-                'Protagonismo Estudantil · SIV — Simulado da ONU · Cine Club' +
+            '<main class="palco max-w-4xl mx-auto px-5 sm:px-8 py-10" id="conteudo-publico"></main>' +
+            '<footer class="max-w-4xl mx-auto px-5 sm:px-8 py-8 mt-6 border-t" style="border-color:var(--linha)">' +
+                '<p class="nota">Protagonismo Estudantil · SIV — Simulado da ONU · Cine Club</p>' +
             '</footer>';
 
         var conteudo = document.getElementById('conteudo-publico');
         conteudo.innerHTML = Views.portal.render();
         Views.portal.ligar(conteudo);
         UI.icones();
+        UI.animarNumeros(conteudo);
 
+        ligarTrocador(alvo);
         document.getElementById('btn-entrar-painel').addEventListener('click', function () {
             Auth.sair();
             mostrarLogin();
@@ -212,6 +260,7 @@
         if (!vista) { rotaAtual = 'visao'; vista = Views.visao; }
 
         desenharMenu();
+        desenharUtilizador();
         desenharTopo();
         // Em ecras pequenos, navegar fecha o menu lateral.
         if (global.innerWidth < 1024) { fecharLateral(); }
@@ -220,6 +269,7 @@
         conteudo.innerHTML = vista.render();
         if (typeof vista.ligar === 'function') { vista.ligar(conteudo); }
         UI.icones();
+        UI.animarNumeros(conteudo);
         atualizarContadores();
         global.scrollTo(0, 0);
         if (typeof depois === 'function') { depois(); }
@@ -307,6 +357,17 @@
 
         var fundo = document.getElementById('fundo-lateral');
         if (fundo) { fundo.addEventListener('click', alternarLateral); }
+
+        var fechar = document.getElementById('fechar-menu');
+        if (fechar) { fechar.addEventListener('click', alternarLateral); }
+
+        var verPublico = document.getElementById('btn-ver-publico');
+        if (verPublico) {
+            verPublico.addEventListener('click', function () {
+                Auth.assumirPerfil('publico');
+                render();
+            });
+        }
 
         if (Auth.autenticado()) {
             tratarHash();

@@ -98,35 +98,35 @@
             subtitulo: 'Isto e exatamente o que este coordenador ve ao entrar.',
             largura: 'max-w-xl',
             corpo:
-                '<div class="space-y-4">' +
-                    '<div class="bg-slate-800/60 border border-slate-700 rounded-xl p-4">' +
-                        '<p class="text-[11px] uppercase font-bold text-slate-400 mb-2">Funcao atribuida</p>' +
-                        '<p class="text-sm text-white font-semibold">' + UI.esc(funcao ? funcao.nome : '—') + '</p>' +
-                        '<p class="text-xs text-slate-400 mt-1">' + UI.esc(funcao ? funcao.descricao : '') + '</p>' +
+                '<div class="space-y-5">' +
+                    '<div>' +
+                        '<p class="sobrancelha">Funcao atribuida</p>' +
+                        '<p style="font-weight:600;margin-top:.3rem">' + UI.esc(funcao ? funcao.nome : '—') + '</p>' +
+                        '<p class="nota">' + UI.esc(funcao ? funcao.descricao : '') + '</p>' +
                     '</div>' +
                     '<div>' +
-                        '<p class="text-[11px] uppercase font-bold text-slate-400 mb-2">Paineis visiveis</p>' +
-                        '<div class="flex flex-wrap gap-1.5">' + (funcao ? funcao.permissoes.map(function (chave) {
-                            var p = Store.PERMISSOES.filter(function (x) { return x.chave === chave; })[0];
-                            return UI.chip(p ? p.rotulo : chave, 'indigo', 'check');
+                        '<p class="sobrancelha">Paineis visiveis</p>' +
+                        '<div class="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">' + (funcao ? funcao.permissoes.map(function (chave) {
+                            var pm = Store.PERMISSOES.filter(function (x) { return x.chave === chave; })[0];
+                            return UI.etiqueta(pm ? pm.rotulo : chave, 'indigo');
                         }).join('') : '') + '</div>' +
                     '</div>' +
                     '<div>' +
-                        '<p class="text-[11px] uppercase font-bold text-slate-400 mb-2">Comissoes que consegue ver (' + comissoes.length + ')</p>' +
+                        '<p class="sobrancelha">Comissoes que consegue ver (' + comissoes.length + ')</p>' +
                         (comissoes.length
-                            ? '<ul class="space-y-1.5">' + comissoes.map(function (c) {
-                                  return '<li class="text-xs text-slate-300 bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2">' +
-                                         UI.esc(Dados.nomeFrente(c.frenteId)) + ' · <span class="text-white font-medium">' + UI.esc(c.nome) + '</span></li>';
+                            ? '<ul class="lista mt-2">' + comissoes.map(function (c) {
+                                  return '<li style="font-size:.8125rem">' + UI.esc(Dados.nomeFrente(c.frenteId)) +
+                                         ' · <b>' + UI.esc(c.nome) + '</b></li>';
                               }).join('') + '</ul>'
-                            : '<p class="text-xs text-amber-400">Nenhuma comissao libertada.</p>') +
+                            : '<p class="etiqueta tom-amber" style="margin-top:.4rem">Nenhuma comissao libertada.</p>') +
                     '</div>' +
-                    '<div class="bg-slate-800/60 border border-slate-700 rounded-xl p-4">' +
-                        '<p class="text-[11px] uppercase font-bold text-slate-400 mb-1">Credenciais</p>' +
-                        '<p class="text-xs text-slate-300">E-mail: <span class="text-white font-mono">' + UI.esc(usuario.email) + '</span></p>' +
-                        '<p class="text-xs text-slate-300 mt-1">Ultimo acesso: ' + UI.esc(usuario.ultimoAcesso ? UI.dataHora(usuario.ultimoAcesso) : 'ainda nao entrou') + '</p>' +
+                    '<div class="corpo-texto--destacado">' +
+                        '<p class="sobrancelha">Credenciais</p>' +
+                        '<p class="texto-medio" style="margin-top:.3rem">' + UI.esc(usuario.email) + '</p>' +
+                        '<p class="nota">Ultimo acesso: ' + UI.esc(usuario.ultimoAcesso ? UI.dataHora(usuario.ultimoAcesso) : 'ainda nao entrou') + '</p>' +
                     '</div>' +
                 '</div>',
-            rodape: '<button type="button" data-fechar="1" class="btn-secundario">Fechar</button>'
+            rodape: '<button type="button" data-fechar="1" class="btn">Fechar</button>'
         });
     }
 
@@ -136,59 +136,51 @@
         formulario: formulario,
         render: function () {
             var usuarios = Store.listar('usuarios');
-            var html = UI.cabecalho('Coordenadores e acessos',
+            var html = UI.cabecalho('Acessos', 'Coordenadores',
                 'Adiciona os coordenadores de cada comissao e atribui a funcao e o painel a que terao acesso.',
-                '<button class="btn-primario" data-acao="novo"><i data-lucide="user-plus" class="w-4 h-4"></i> Adicionar coordenador</button>');
+                '<button class="btn btn--principal" data-acao="novo">' + UI.icone('user-plus', 15) + ' Adicionar coordenador</button>');
 
-            html += '<div class="bg-slate-850 border border-slate-700 rounded-2xl overflow-hidden">' +
-                '<div class="overflow-x-auto"><table class="w-full text-sm">' +
-                '<thead><tr class="text-left text-[11px] uppercase tracking-wider text-slate-400 bg-slate-800/60">' +
-                    '<th class="px-5 py-3 font-semibold">Coordenador</th>' +
-                    '<th class="px-5 py-3 font-semibold">Funcao do painel</th>' +
-                    '<th class="px-5 py-3 font-semibold">Acesso libertado</th>' +
-                    '<th class="px-5 py-3 font-semibold">Estado</th>' +
-                    '<th class="px-5 py-3 font-semibold text-right">Acoes</th>' +
-                '</tr></thead><tbody class="divide-y divide-slate-700/60">' +
+            html += UI.painel('', '<div class="overflow-x-auto"><table class="tabela">' +
+                '<thead><tr>' +
+                    '<th>Coordenador</th><th>Funcao do painel</th><th>Acesso libertado</th><th>Estado</th><th class="text-right">Acoes</th>' +
+                '</tr></thead><tbody>' +
                 usuarios.map(function (u) {
                     var frentes = (u.frenteIds || []).map(Dados.nomeFrente);
                     var comissoes = (u.comissaoIds || []).map(Dados.nomeComissao);
                     var supra = u.perfil === 'supra';
-                    return '<tr class="hover:bg-slate-800/40 transition-all">' +
-                        '<td class="px-5 py-3">' +
-                            '<div class="flex items-center gap-3">' + UI.avatar(u.nome, supra ? 'rose' : 'indigo') +
-                            '<div class="min-w-0"><p class="text-white font-semibold truncate">' + UI.esc(u.nome) + '</p>' +
-                            '<p class="text-[11px] text-slate-400 truncate">' + UI.esc(u.email) + '</p></div></div>' +
+                    return '<tr>' +
+                        '<td>' +
+                            '<div class="flex items-center gap-3">' + UI.avatar(u.nome, supra ? 'violet' : 'indigo') +
+                            '<div class="min-w-0"><p class="truncate" style="font-weight:500">' + UI.esc(u.nome) + '</p>' +
+                            '<p class="nota truncate">' + UI.esc(u.email) + '</p></div></div>' +
                         '</td>' +
-                        '<td class="px-5 py-3">' +
-                            UI.chip(Dados.nomeFuncao(u.funcaoId), supra ? 'rose' : 'sky', supra ? 'shield' : 'id-card') +
-                            (u.cargo ? '<p class="text-[11px] text-slate-400 mt-1">' + UI.esc(u.cargo) + '</p>' : '') +
-                        '</td>' +
-                        '<td class="px-5 py-3 text-xs text-slate-300 max-w-xs">' +
-                            (supra ? '<span class="text-rose-300">Toda a plataforma</span>'
+                        '<td>' + UI.etiqueta(Dados.nomeFuncao(u.funcaoId), supra ? 'violet' : 'indigo') +
+                            (u.cargo ? '<p class="nota" style="margin-top:.2rem">' + UI.esc(u.cargo) + '</p>' : '') + '</td>' +
+                        '<td class="texto-medio" style="max-width:20rem">' +
+                            (supra ? 'Toda a plataforma'
                                    : (frentes.concat(comissoes).length
                                         ? UI.esc(frentes.concat(comissoes).join(' · '))
-                                        : '<span class="text-amber-400">Sem acesso atribuido</span>')) +
+                                        : '<span class="etiqueta tom-amber">Sem acesso atribuido</span>')) +
                         '</td>' +
-                        '<td class="px-5 py-3">' + (u.ativo ? UI.chip('Ativo', 'emerald', 'circle-check') : UI.chip('Desativado', 'slate', 'circle-slash')) + '</td>' +
-                        '<td class="px-5 py-3">' +
-                            '<div class="flex gap-1 justify-end">' +
-                                '<button class="btn-icone" data-acao="ver" data-id="' + u.id + '" title="Ver painel"><i data-lucide="eye" class="w-4 h-4 pointer-events-none"></i></button>' +
+                        '<td>' + (u.ativo ? UI.etiqueta('Ativo', 'emerald') : UI.etiqueta('Desativado', 'slate')) + '</td>' +
+                        '<td>' +
+                            '<div class="registo__acoes">' +
+                                '<button class="btn btn--icone" data-acao="ver" data-id="' + u.id + '" title="Ver painel">' + UI.icone('eye', 14) + '</button>' +
                                 (supra ? '' :
-                                    '<button class="btn-icone" data-acao="editar" data-id="' + u.id + '" title="Editar"><i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i></button>' +
-                                    '<button class="btn-icone" data-acao="alternar" data-id="' + u.id + '" title="Ativar/desativar"><i data-lucide="power" class="w-4 h-4 pointer-events-none"></i></button>' +
-                                    '<button class="btn-icone hover:text-rose-400" data-acao="eliminar" data-id="' + u.id + '" title="Remover"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>') +
+                                    '<button class="btn btn--icone" data-acao="editar" data-id="' + u.id + '" title="Editar">' + UI.icone('pencil', 14) + '</button>' +
+                                    '<button class="btn btn--icone" data-acao="alternar" data-id="' + u.id + '" title="Ativar/desativar">' + UI.icone('power', 14) + '</button>' +
+                                    '<button class="btn btn--icone perigo" data-acao="eliminar" data-id="' + u.id + '" title="Remover">' + UI.icone('trash-2', 14) + '</button>') +
                             '</div>' +
                         '</td>' +
                     '</tr>';
                 }).join('') +
-                '</tbody></table></div></div>';
+                '</tbody></table></div>', { semPadding: true });
 
             var semCoord = Store.listar('comissoes').filter(function (c) { return !c.coordenadorId; });
             if (semCoord.length) {
-                html += '<div class="mt-5 bg-amber-500/5 border border-amber-500/25 rounded-2xl p-4 flex gap-3">' +
-                    '<i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400 shrink-0"></i>' +
-                    '<div><p class="text-sm text-amber-200 font-semibold">' + semCoord.length + ' comissao(oes) sem coordenador</p>' +
-                    '<p class="text-xs text-amber-200/70 mt-0.5">' + UI.esc(semCoord.map(function (c) { return c.nome; }).join(', ')) + '</p></div></div>';
+                html += '<div class="mt-4">' + UI.aviso(
+                    '<p style="font-weight:500">' + semCoord.length + ' comissao(oes) ainda sem coordenador</p>' +
+                    '<p class="nota">' + UI.esc(semCoord.map(function (c) { return c.nome; }).join(', ')) + '</p>', 'amber') + '</div>';
             }
             return html;
         },

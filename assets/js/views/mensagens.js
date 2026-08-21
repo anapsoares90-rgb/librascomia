@@ -73,13 +73,13 @@
             subtitulo: Dados.nomeUsuario(mensagem.autorId) + ' · ' + Dados.destinatarios(mensagem) + ' · ' + UI.dataHora(mensagem.criadoEm),
             largura: 'max-w-xl',
             corpo:
-                (mensagem.prioridade === 'alta' ? '<div class="mb-3">' + UI.chip('Urgente', 'rose', 'alert-triangle') + '</div>' : '') +
-                '<div class="text-sm text-slate-300 leading-relaxed whitespace-pre-line bg-slate-800/50 border border-slate-700 rounded-xl p-4">' + UI.nl2br(mensagem.corpo) + '</div>' +
+                (mensagem.prioridade === 'alta' ? '<div class="mb-3">' + UI.etiqueta('Urgente', 'rose', { forte: true }) + '</div>' : '') +
+                '<div class="corpo-texto corpo-texto--destacado">' + UI.nl2br(mensagem.corpo) + '</div>' +
                 (Auth.ehSupra()
-                    ? '<div class="mt-4"><p class="text-[11px] uppercase font-bold text-slate-400 mb-1.5">Lido por (' + leitores.length + ')</p>' +
-                      '<p class="text-xs text-slate-300">' + (leitores.length ? UI.esc(leitores.join(', ')) : 'Ainda ninguem abriu este comunicado.') + '</p></div>'
+                    ? '<div class="mt-4"><p class="sobrancelha">Lido por (' + leitores.length + ')</p>' +
+                      '<p class="texto-medio" style="margin-top:.3rem">' + (leitores.length ? UI.esc(leitores.join(', ')) : 'Ainda ninguem abriu este comunicado.') + '</p></div>'
                     : ''),
-            rodape: '<button type="button" data-fechar="1" class="btn-secundario">Fechar</button>',
+            rodape: '<button type="button" data-fechar="1" class="btn">Fechar</button>',
             aoAbrir: function () { App.atualizarContadores(); }
         });
     }
@@ -107,61 +107,57 @@
             var lista = todas.filter(function (m) { return !filtro.alcance || m.alcance === filtro.alcance; });
 
             var acoes = '';
-            if (Auth.pode('mensagens.enviar')) {
-                acoes += '<button class="btn-primario" data-acao="nova"><i data-lucide="send" class="w-4 h-4"></i> Nova comunicacao</button>';
-            }
             if (Auth.pode('mensagens.geral')) {
-                acoes = '<button class="btn-secundario" data-acao="geral"><i data-lucide="radio" class="w-4 h-4"></i> Comunicado geral</button>' + acoes;
+                acoes += '<button class="btn" data-acao="geral">' + UI.icone('radio', 15) + ' Comunicado geral</button>';
+            }
+            if (Auth.pode('mensagens.enviar')) {
+                acoes += '<button class="btn btn--principal" data-acao="nova">' + UI.icone('send', 15) + ' Nova comunicacao</button>';
             }
 
-            var html = UI.cabecalho('Central de comunicacao',
+            var html = UI.cabecalho('Comunicacao', 'Central de comunicacao',
                 Auth.ehSupra() ? 'Envia mensagens para uma comissao, para uma frente inteira ou para toda a plataforma.'
                                : 'Comunicados recebidos da coordenacao e mensagens da tua comissao.',
                 acoes);
 
-            html += '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">' +
-                UI.estatistica('Comunicados', todas.length, 'messages-square', 'violet') +
-                UI.estatistica('Por ler', Dados.naoLidas(), 'mail-open', 'amber') +
-                UI.estatistica('Urgentes', todas.filter(function (m) { return m.prioridade === 'alta'; }).length, 'alert-triangle', 'rose') +
-                UI.estatistica('Enviados por mim', todas.filter(function (m) { return eu && m.autorId === eu.id; }).length, 'send', 'emerald') +
-            '</div>';
+            html += UI.metricas([
+                { rotulo: 'Comunicados', valor: todas.length, tom: 'violet' },
+                { rotulo: 'Por ler', valor: Dados.naoLidas(), tom: 'amber' },
+                { rotulo: 'Urgentes', valor: todas.filter(function (m) { return m.prioridade === 'alta'; }).length, tom: 'rose' },
+                { rotulo: 'Enviados por mim', valor: todas.filter(function (m) { return eu && m.autorId === eu.id; }).length, tom: 'emerald' }
+            ]);
 
-            html += '<div class="flex flex-wrap gap-2 mb-5">' +
+            html += '<div class="flex flex-wrap gap-1.5 mb-4">' +
                 [['', 'Todos'], ['geral', 'Gerais'], ['frente', 'Por frente'], ['comissao', 'Por comissao']].map(function (par) {
-                    var ativo = filtro.alcance === par[0];
-                    return '<button class="' + (ativo ? 'btn-filtro-ativo' : 'btn-filtro') + '" data-filtro="' + par[0] + '">' + par[1] + '</button>';
+                    return '<button class="filtro' + (filtro.alcance === par[0] ? ' filtro--ativo' : '') + '" data-filtro="' + par[0] + '">' + par[1] + '</button>';
                 }).join('') +
             '</div>';
 
             if (!lista.length) {
-                return html + UI.cartao(UI.vazio('Ainda nao ha comunicados nesta categoria.', 'message-square-off'));
+                return html + UI.painel('', UI.vazio('Ainda nao ha comunicados nesta categoria.', 'message-square-off'));
             }
 
-            html += '<div class="space-y-3">' + lista.map(function (m) {
+            html += UI.painel('', lista.map(function (m) {
                 var lida = !eu || m.autorId === eu.id || (m.lidasPor || []).indexOf(eu.id) !== -1;
-                var iconeAlcance = m.alcance === 'geral' ? 'radio' : m.alcance === 'frente' ? 'layers' : 'users-round';
-                return '<div class="bg-slate-850 border ' + (lida ? 'border-slate-700' : 'border-indigo-500/40') + ' rounded-2xl p-4 hover:border-slate-600 transition-all">' +
-                    '<div class="flex gap-4">' +
-                        UI.avatar(Dados.nomeUsuario(m.autorId), m.prioridade === 'alta' ? 'rose' : 'indigo', 'w-10 h-10 text-xs') +
+                return '<article class="registo">' +
+                        UI.avatar(Dados.nomeUsuario(m.autorId), m.prioridade === 'alta' ? 'rose' : 'indigo') +
                         '<div class="min-w-0 flex-1">' +
-                            '<div class="flex flex-wrap items-center gap-2">' +
-                                (lida ? '' : '<span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span>') +
-                                '<h3 class="font-bold text-white">' + UI.esc(m.assunto) + '</h3>' +
-                                (m.prioridade === 'alta' ? UI.chip('Urgente', 'rose', 'alert-triangle') : '') +
-                                UI.chip(Dados.destinatarios(m), 'slate', iconeAlcance) +
+                            '<div class="flex flex-wrap items-center gap-x-3 gap-y-1">' +
+                                (lida ? '' : '<span class="pastilha tom-indigo">novo</span>') +
+                                '<h3 style="font-weight:600;font-size:.875rem">' + UI.esc(m.assunto) + '</h3>' +
+                                (m.prioridade === 'alta' ? UI.etiqueta('Urgente', 'rose', { forte: true }) : '') +
+                                UI.etiqueta(Dados.destinatarios(m), 'slate') +
                             '</div>' +
-                            '<p class="text-sm text-slate-400 mt-1.5 line-clamp-2">' + UI.esc(m.corpo) + '</p>' +
-                            '<p class="text-[11px] text-slate-500 mt-2">' + UI.esc(Dados.nomeUsuario(m.autorId)) + ' · ' + UI.haQuanto(m.criadoEm) +
+                            '<p class="texto-medio line-clamp-2" style="margin-top:.25rem">' + UI.esc(m.corpo) + '</p>' +
+                            '<p class="nota" style="margin-top:.35rem">' + UI.esc(Dados.nomeUsuario(m.autorId)) + ' · ' + UI.haQuanto(m.criadoEm) +
                                 (Auth.ehSupra() ? ' · ' + (m.lidasPor || []).length + ' leitura(s)' : '') + '</p>' +
                         '</div>' +
-                        '<div class="flex flex-col sm:flex-row items-start gap-1.5 shrink-0">' +
-                            '<button class="btn-mini-claro" data-acao="ver" data-id="' + m.id + '">Ler</button>' +
+                        '<div class="flex items-center gap-1.5 shrink-0">' +
+                            '<button class="btn btn--pequeno" data-acao="ver" data-id="' + m.id + '">Ler</button>' +
                             ((Auth.ehSupra() || (eu && m.autorId === eu.id))
-                                ? '<button class="btn-icone hover:text-rose-400" data-acao="eliminar" data-id="' + m.id + '"><i data-lucide="trash-2" class="w-3.5 h-3.5 pointer-events-none"></i></button>' : '') +
+                                ? '<button class="btn btn--icone perigo" data-acao="eliminar" data-id="' + m.id + '">' + UI.icone('trash-2', 13) + '</button>' : '') +
                         '</div>' +
-                    '</div>' +
-                '</div>';
-            }).join('') + '</div>';
+                    '</article>';
+            }).join(''), { semPadding: true });
 
             return html;
         },

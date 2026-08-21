@@ -85,50 +85,54 @@
             var comissoes = Auth.comissoesVisiveis();
             var frentes = Auth.frentesVisiveis();
 
-            var html = UI.cabecalho('Comissoes',
+            var html = UI.cabecalho('Protagonismo', 'Comissoes',
                 pode ? 'Cria comissoes, define objetivos e nomeia o coordenador de cada painel.'
                      : 'Comissoes a que tens acesso.',
-                pode ? '<button class="btn-primario" data-acao="nova"><i data-lucide="plus" class="w-4 h-4"></i> Nova comissao</button>' : '');
+                pode ? '<button class="btn btn--principal" data-acao="nova">' + UI.icone('plus', 15) + ' Nova comissao</button>' : '');
 
             if (!comissoes.length) {
-                return html + UI.cartao(UI.vazio('Ainda nao ha comissoes disponiveis para o teu acesso.', 'users-round'));
+                return html + UI.painel('', UI.vazio('Ainda nao ha comissoes disponiveis para o teu acesso.', 'users-round'));
             }
 
             frentes.forEach(function (f) {
                 var doGrupo = comissoes.filter(function (c) { return c.frenteId === f.id; });
                 if (!doGrupo.length) { return; }
-                html += '<div class="mb-6">' +
-                    '<div class="flex items-center gap-2 mb-3">' +
-                        '<span class="w-2.5 h-2.5 rounded-full ' + UI.cor(f.cor).ponto + '"></span>' +
-                        '<h3 class="text-sm font-bold text-white">' + UI.esc(f.nome) + '</h3>' +
-                        '<span class="text-xs text-slate-500">' + doGrupo.length + ' comissao(oes)</span>' +
+                html += '<div class="mb-6 ' + UI.tom(f.cor) + '">' +
+                    '<div class="flex items-baseline gap-3 mb-3">' +
+                        '<h3 class="titulo-painel">' + UI.esc(f.nome) + '</h3>' +
+                        '<span class="nota">' + doGrupo.length + ' comissao(oes)</span>' +
                     '</div>' +
                     '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">' +
                     doGrupo.map(function (c) {
                         var coord = c.coordenadorId ? Store.encontrar('usuarios', c.coordenadorId) : null;
                         var membros = Store.listar('membros').filter(function (m) { return m.comissaoId === c.id; }).length;
                         var posts = Store.listar('postagens').filter(function (p) { return p.comissaoId === c.id; }).length;
-                        return '<div class="bg-slate-850 border border-slate-700 rounded-2xl p-4 flex flex-col hover:border-slate-600 transition-all">' +
-                            '<div class="flex items-start justify-between gap-2 mb-2">' +
-                                '<div class="min-w-0">' +
-                                    '<h4 class="font-bold text-white text-sm truncate">' + UI.esc(c.nome) + '</h4>' +
-                                    '<p class="text-[11px] text-slate-500">' + UI.esc(c.sigla || '') + (c.ativo ? '' : ' · inativa') + '</p>' +
+                        return '<section class="painel h-full flex flex-col">' +
+                            '<div class="painel__corpo flex-1">' +
+                                '<div class="flex items-start justify-between gap-2">' +
+                                    '<div class="min-w-0">' +
+                                        '<h4 class="titulo-painel truncate">' + UI.esc(c.nome) + '</h4>' +
+                                        '<p class="nota">' + UI.esc(c.sigla || '') + (c.ativo ? '' : ' · inativa') + '</p>' +
+                                    '</div>' +
+                                    (pode ? '<div class="flex gap-1 shrink-0">' +
+                                        '<button class="btn btn--icone" data-acao="editar" data-id="' + c.id + '">' + UI.icone('pencil', 13) + '</button>' +
+                                        '<button class="btn btn--icone perigo" data-acao="eliminar" data-id="' + c.id + '">' + UI.icone('trash-2', 13) + '</button>' +
+                                    '</div>' : '') +
                                 '</div>' +
-                                (pode ? '<div class="flex gap-1 shrink-0">' +
-                                    '<button class="btn-icone" data-acao="editar" data-id="' + c.id + '"><i data-lucide="pencil" class="w-3.5 h-3.5 pointer-events-none"></i></button>' +
-                                    '<button class="btn-icone hover:text-rose-400" data-acao="eliminar" data-id="' + c.id + '"><i data-lucide="trash-2" class="w-3.5 h-3.5 pointer-events-none"></i></button>' +
-                                '</div>' : '') +
+                                '<p class="texto-medio line-clamp-3" style="margin-top:.6rem">' + UI.esc(c.descricao || 'Sem descricao.') + '</p>' +
                             '</div>' +
-                            '<p class="text-xs text-slate-400 flex-1 line-clamp-3">' + UI.esc(c.descricao || 'Sem descricao.') + '</p>' +
-                            '<div class="mt-3 pt-3 border-t border-slate-700/60">' +
+                            '<div class="painel__corpo" style="border-top:1px solid var(--linha)">' +
                                 (coord
-                                    ? '<div class="flex items-center gap-2">' + UI.avatar(coord.nome, f.cor, 'w-8 h-8 text-[11px]') +
-                                      '<div class="min-w-0"><p class="text-xs text-white font-medium truncate">' + UI.esc(coord.nome) + '</p>' +
-                                      '<p class="text-[10px] text-slate-400 truncate">' + UI.esc(Dados.nomeFuncao(coord.funcaoId)) + '</p></div></div>'
-                                    : '<p class="text-xs text-amber-400 flex items-center gap-1.5"><i data-lucide="user-x" class="w-3.5 h-3.5"></i> Sem coordenador atribuido</p>') +
-                                '<div class="flex gap-1.5 mt-3">' + UI.chip(membros + ' membros', 'slate', 'users') + UI.chip(posts + ' postagens', 'slate', 'megaphone') + '</div>' +
+                                    ? '<div class="flex items-center gap-2.5">' + UI.avatar(coord.nome, f.cor, 'pequeno') +
+                                      '<div class="min-w-0"><p class="truncate" style="font-size:.75rem;font-weight:500">' + UI.esc(coord.nome) + '</p>' +
+                                      '<p class="nota truncate">' + UI.esc(Dados.nomeFuncao(coord.funcaoId)) + '</p></div></div>'
+                                    : '<p class="etiqueta tom-amber">Sem coordenador atribuido</p>') +
+                                '<div class="flex gap-x-4 mt-3">' +
+                                    UI.etiqueta(membros + ' membros', 'slate') +
+                                    UI.etiqueta(posts + ' postagens', 'slate') +
+                                '</div>' +
                             '</div>' +
-                        '</div>';
+                        '</section>';
                     }).join('') +
                     '</div></div>';
             });

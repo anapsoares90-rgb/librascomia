@@ -82,53 +82,54 @@
         formulario: formulario,
         render: function () {
             var funcoes = Store.listar('funcoes');
-            var html = UI.cabecalho('Funcoes do painel',
-                'Cadastro dos perfis de acesso. Cada coordenador recebe uma funcao e so ve os paineis aqui libertados.',
-                '<button class="btn-primario" data-acao="nova"><i data-lucide="plus" class="w-4 h-4"></i> Cadastrar funcao</button>');
+            var html = UI.cabecalho('Acessos', 'Funcoes do painel',
+                'Cada coordenador recebe uma funcao. E a funcao que decide os paineis e as acoes que ele encontra ao entrar.',
+                '<button class="btn btn--principal" data-acao="nova">' + UI.icone('plus', 15) + ' Cadastrar funcao</button>');
 
-            html += '<div class="grid grid-cols-1 xl:grid-cols-2 gap-5">' + funcoes.map(function (f) {
+            html += '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' + funcoes.map(function (f) {
                 var utilizadores = Store.listar('usuarios').filter(function (u) { return u.funcaoId === f.id; });
                 var total = f.permissoes.indexOf('plataforma.total') !== -1;
-                return '<div class="bg-slate-850 border border-slate-700 rounded-2xl p-5">' +
-                    '<div class="flex items-start justify-between gap-3 mb-3">' +
+                return '<section class="painel ' + UI.tom(total ? 'rose' : 'indigo') + '">' +
+                    '<div class="painel__cabeca" style="align-items:flex-start">' +
                         '<div class="min-w-0">' +
                             '<div class="flex items-center gap-2 flex-wrap">' +
-                                '<h3 class="font-bold text-white">' + UI.esc(f.nome) + '</h3>' +
-                                (f.sistema ? UI.chip('Sistema', 'slate', 'lock') : '') +
-                                UI.chip('Ambito: ' + UI.esc(f.escopo), total ? 'rose' : 'sky') +
+                                '<h3 class="titulo-painel">' + UI.esc(f.nome) + '</h3>' +
+                                (f.sistema ? UI.pastilha('sistema', 'slate') : '') +
+                                UI.pastilha(f.escopo, total ? 'rose' : 'indigo') +
                             '</div>' +
-                            '<p class="text-xs text-slate-400 mt-1">' + UI.esc(f.descricao || '') + '</p>' +
+                            '<p class="nota" style="margin-top:.2rem">' + UI.esc(f.descricao || '') + '</p>' +
                         '</div>' +
                         '<div class="flex gap-1 shrink-0">' +
-                            '<button class="btn-icone" data-acao="editar" data-id="' + f.id + '"><i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i></button>' +
-                            (f.sistema ? '' : '<button class="btn-icone hover:text-rose-400" data-acao="eliminar" data-id="' + f.id + '"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>') +
+                            '<button class="btn btn--icone" data-acao="editar" data-id="' + f.id + '">' + UI.icone('pencil', 14) + '</button>' +
+                            (f.sistema ? '' : '<button class="btn btn--icone perigo" data-acao="eliminar" data-id="' + f.id + '">' + UI.icone('trash-2', 14) + '</button>') +
                         '</div>' +
                     '</div>' +
-                    '<div class="flex flex-wrap gap-1.5 mb-4">' +
-                        (total
-                            ? UI.chip('Acesso total a plataforma', 'rose', 'shield')
-                            : f.permissoes.map(function (chave) {
-                                  var p = Store.PERMISSOES.filter(function (x) { return x.chave === chave; })[0];
-                                  return UI.chip(p ? p.rotulo : chave, 'indigo', 'check');
-                              }).join('')) +
+                    '<div class="painel__corpo">' +
+                        '<div class="flex flex-wrap gap-x-4 gap-y-1.5">' +
+                            (total
+                                ? UI.etiqueta('Acesso total a plataforma', 'rose')
+                                : f.permissoes.map(function (chave) {
+                                      var pm = Store.PERMISSOES.filter(function (x) { return x.chave === chave; })[0];
+                                      return UI.etiqueta(pm ? pm.rotulo : chave, 'indigo');
+                                  }).join('')) +
+                        '</div>' +
+                        '<div class="flex items-center justify-between gap-3 mt-4 pt-3 border-t" style="border-color:var(--linha)">' +
+                            '<span class="nota">' + utilizadores.length + ' coordenador(es) com esta funcao</span>' +
+                            '<div class="flex -space-x-1.5">' + utilizadores.slice(0, 5).map(function (u) {
+                                return UI.avatar(u.nome, 'slate', 'pequeno');
+                            }).join('') + '</div>' +
+                        '</div>' +
                     '</div>' +
-                    '<div class="pt-3 border-t border-slate-700/60 flex items-center justify-between">' +
-                        '<span class="text-[11px] text-slate-400">' + utilizadores.length + ' coordenador(es) com esta funcao</span>' +
-                        '<div class="flex -space-x-2">' + utilizadores.slice(0, 5).map(function (u) {
-                            return UI.avatar(u.nome, 'indigo', 'w-7 h-7 text-[10px] ring-2 ring-slate-850');
-                        }).join('') + '</div>' +
-                    '</div>' +
-                '</div>';
+                '</section>';
             }).join('') + '</div>';
 
-            html += '<div class="mt-6 bg-slate-850 border border-slate-700 rounded-2xl p-5">' +
-                '<h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><i data-lucide="key-round" class="w-4 h-4 text-indigo-400"></i> Permissoes disponiveis</h3>' +
-                '<div class="grid grid-cols-1 md:grid-cols-2 gap-2">' + Store.PERMISSOES.map(function (p) {
-                    return '<div class="flex gap-3 bg-slate-800/60 border border-slate-700 rounded-lg px-3 py-2">' +
-                        '<span class="text-[10px] font-bold uppercase text-slate-500 w-20 shrink-0 pt-0.5">' + UI.esc(p.grupo) + '</span>' +
-                        '<div><p class="text-xs text-slate-200 font-medium">' + UI.esc(p.rotulo) + '</p>' +
-                        '<p class="text-[11px] text-slate-400">' + UI.esc(p.descricao) + '</p></div></div>';
-                }).join('') + '</div></div>';
+            html += '<div class="mt-4">' + UI.painel('Permissoes disponiveis',
+                '<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">' + Store.PERMISSOES.map(function (pm) {
+                    return '<div class="flex gap-3">' +
+                        '<span class="sobrancelha shrink-0" style="width:5.5rem;padding-top:.15rem">' + UI.esc(pm.grupo) + '</span>' +
+                        '<div><p style="font-size:.8125rem;font-weight:500">' + UI.esc(pm.rotulo) + '</p>' +
+                        '<p class="nota">' + UI.esc(pm.descricao) + '</p></div></div>';
+                }).join('') + '</div>') + '</div>';
 
             return html;
         },

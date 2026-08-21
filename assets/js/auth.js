@@ -57,6 +57,24 @@
         return { ok: true };
     }
 
+    /* Modo de teste: salta entre perfis sem voltar ao ecra de entrada.
+       E uma ajuda de demonstracao — ver App.MODO_TESTE em app.js. */
+    function assumirPerfil(perfil) {
+        if (perfil === 'publico') {
+            entrarComoPublico();
+            return { ok: true };
+        }
+        var candidatos = Store.listar('usuarios').filter(function (u) { return u.perfil === perfil && u.ativo; });
+        var alvo = candidatos[0];
+        if (perfil === 'admin') {
+            var atual = usuarioAtual();
+            if (atual && atual.perfil === 'admin') { alvo = atual; }
+        }
+        if (!alvo) { return { ok: false, erro: 'Nao ha nenhuma conta ativa com esse perfil.' }; }
+        guardarSessao({ usuarioId: alvo.id, perfil: alvo.perfil, iniciadaEm: Store.agora(), teste: true });
+        return { ok: true, usuario: alvo };
+    }
+
     function sair() {
         var u = usuarioAtual();
         if (u) { Store.registar('Fim de sessao', u.nome + ' saiu do painel.', u.id); }
@@ -152,6 +170,7 @@
     global.Auth = {
         entrar: entrar,
         entrarComoPublico: entrarComoPublico,
+        assumirPerfil: assumirPerfil,
         sair: sair,
         autenticado: autenticado,
         usuarioAtual: usuarioAtual,

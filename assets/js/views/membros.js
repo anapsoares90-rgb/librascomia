@@ -84,18 +84,18 @@
                 return true;
             });
 
-            var html = UI.cabecalho('Membros das comissoes',
+            var html = UI.cabecalho('Comissoes', 'Membros',
                 'Alunos inscritos nas comissoes a que tens acesso.',
-                (pode ? '<button class="btn-primario" data-acao="novo"><i data-lucide="user-plus" class="w-4 h-4"></i> Cadastrar membro</button>' : ''));
+                (pode ? '<button class="btn btn--principal" data-acao="novo">' + UI.icone('user-plus', 15) + ' Cadastrar membro</button>' : ''));
 
-            html += '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">' +
-                UI.estatistica('Total de membros', todos.length, 'users', 'indigo') +
-                UI.estatistica('Ativos', todos.filter(function (m) { return m.status === 'ativo'; }).length, 'user-check', 'emerald') +
-                UI.estatistica('Pendentes', todos.filter(function (m) { return m.status === 'pendente'; }).length, 'user-plus', 'amber') +
-                UI.estatistica('Comissoes', Auth.comissoesVisiveis().length, 'users-round', 'sky') +
-            '</div>';
+            html += UI.metricas([
+                { rotulo: 'Total de membros', valor: todos.length, tom: 'indigo' },
+                { rotulo: 'Ativos', valor: todos.filter(function (m) { return m.status === 'ativo'; }).length, tom: 'emerald' },
+                { rotulo: 'Inscricoes pendentes', valor: todos.filter(function (m) { return m.status === 'pendente'; }).length, tom: 'amber' },
+                { rotulo: 'Comissoes', valor: Auth.comissoesVisiveis().length, tom: 'sky' }
+            ]);
 
-            html += '<div class="bg-slate-850 border border-slate-700 rounded-2xl p-4 mb-5 grid grid-cols-1 sm:grid-cols-2 gap-3">' +
+            html += '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" style="max-width:44rem">' +
                 '<input id="m-busca" type="search" value="' + UI.esc(filtro.busca) + '" placeholder="Procurar por nome, turma ou funcao..." class="campo">' +
                 '<select id="m-comissao" class="campo">' +
                     '<option value="">Todas as comissoes</option>' +
@@ -106,34 +106,28 @@
             '</div>';
 
             if (!lista.length) {
-                return html + UI.cartao(UI.vazio('Nenhum membro encontrado.', 'users'));
+                return html + UI.painel('', UI.vazio('Nenhum membro encontrado.', 'users'));
             }
 
-            html += '<div class="bg-slate-850 border border-slate-700 rounded-2xl overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm">' +
-                '<thead><tr class="text-left text-[11px] uppercase tracking-wider text-slate-400 bg-slate-800/60">' +
-                    '<th class="px-5 py-3 font-semibold">Aluno</th>' +
-                    '<th class="px-5 py-3 font-semibold">Comissao</th>' +
-                    '<th class="px-5 py-3 font-semibold">Funcao</th>' +
-                    '<th class="px-5 py-3 font-semibold">Situacao</th>' +
-                    (pode ? '<th class="px-5 py-3 font-semibold text-right">Acoes</th>' : '') +
-                '</tr></thead><tbody class="divide-y divide-slate-700/60">' +
+            html += UI.painel('', '<div class="overflow-x-auto"><table class="tabela">' +
+                '<thead><tr><th>Aluno</th><th>Comissao</th><th>Funcao</th><th>Situacao</th>' +
+                (pode ? '<th class="text-right">Acoes</th>' : '') + '</tr></thead><tbody>' +
                 lista.map(function (m) {
                     var comissao = Store.encontrar('comissoes', m.comissaoId);
-                    return '<tr class="hover:bg-slate-800/40 transition-all">' +
-                        '<td class="px-5 py-3"><div class="flex items-center gap-3">' + UI.avatar(m.nome, 'sky') +
-                            '<div class="min-w-0"><p class="text-white font-semibold truncate">' + UI.esc(m.nome) + '</p>' +
-                            '<p class="text-[11px] text-slate-400 truncate">' + UI.esc(m.turma || '') + (m.email ? ' · ' + UI.esc(m.email) : '') + '</p></div></div></td>' +
-                        '<td class="px-5 py-3 text-slate-300 text-xs">' + UI.esc(comissao ? comissao.nome : '—') +
-                            '<p class="text-[11px] text-slate-500">' + UI.esc(comissao ? Dados.nomeFrente(comissao.frenteId) : '') + '</p></td>' +
-                        '<td class="px-5 py-3 text-slate-300 text-xs">' + UI.esc(m.papel || '—') + '</td>' +
-                        '<td class="px-5 py-3">' + UI.chip(m.status, CORES_ESTADO[m.status] || 'slate') + '</td>' +
-                        (pode ? '<td class="px-5 py-3"><div class="flex gap-1 justify-end">' +
-                            '<button class="btn-icone" data-acao="editar" data-id="' + m.id + '"><i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i></button>' +
-                            '<button class="btn-icone hover:text-rose-400" data-acao="eliminar" data-id="' + m.id + '"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>' +
+                    return '<tr>' +
+                        '<td><div class="flex items-center gap-3">' + UI.avatar(m.nome, 'sky') +
+                            '<div class="min-w-0"><p class="truncate" style="font-weight:500">' + UI.esc(m.nome) + '</p>' +
+                            '<p class="nota truncate">' + UI.esc(m.turma || '') + (m.email ? ' · ' + UI.esc(m.email) : '') + '</p></div></div></td>' +
+                        '<td class="texto-medio">' + UI.esc(comissao ? comissao.nome : '—') +
+                            '<p class="nota">' + UI.esc(comissao ? Dados.nomeFrente(comissao.frenteId) : '') + '</p></td>' +
+                        '<td class="texto-medio">' + UI.esc(m.papel || '—') + '</td>' +
+                        '<td>' + UI.etiqueta(m.status, CORES_ESTADO[m.status] || 'slate') + '</td>' +
+                        (pode ? '<td><div class="registo__acoes">' +
+                            '<button class="btn btn--icone" data-acao="editar" data-id="' + m.id + '">' + UI.icone('pencil', 14) + '</button>' +
+                            '<button class="btn btn--icone perigo" data-acao="eliminar" data-id="' + m.id + '">' + UI.icone('trash-2', 14) + '</button>' +
                         '</div></td>' : '') +
                     '</tr>';
-                }).join('') +
-                '</tbody></table></div></div>';
+                }).join('') + '</tbody></table></div>', { semPadding: true });
 
             return html;
         },

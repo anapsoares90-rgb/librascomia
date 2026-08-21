@@ -123,45 +123,41 @@
             subtitulo: Dados.nomeFrente(post.frenteId) + ' · ' + Dados.nomeComissao(post.comissaoId),
             largura: 'max-w-2xl',
             corpo:
-                '<div class="flex flex-wrap gap-1.5 mb-4">' +
-                    UI.chip(e.rotulo, e.cor, e.icone) +
-                    UI.chip(post.visibilidade === 'publico' ? 'Portal publico' : 'Interno', post.visibilidade === 'publico' ? 'sky' : 'slate', post.visibilidade === 'publico' ? 'globe' : 'lock') +
-                    (post.destaque ? UI.chip('Destaque', 'amber', 'star') : '') +
+                '<div class="flex flex-wrap gap-x-4 gap-y-2 mb-4">' +
+                    UI.etiqueta(e.rotulo, e.cor, { forte: true }) +
+                    UI.etiqueta(post.visibilidade === 'publico' ? 'Portal publico' : 'Interno', post.visibilidade === 'publico' ? 'sky' : 'slate') +
+                    (post.destaque ? UI.etiqueta('Destaque', 'amber') : '') +
                 '</div>' +
-                '<p class="text-sm text-slate-300 font-medium mb-3">' + UI.esc(post.resumo) + '</p>' +
-                '<div class="text-sm text-slate-300 leading-relaxed whitespace-pre-line bg-slate-800/50 border border-slate-700 rounded-xl p-4">' + UI.nl2br(post.conteudo) + '</div>' +
-                '<p class="text-[11px] text-slate-500 mt-4">Por ' + UI.esc(Dados.nomeUsuario(post.autorId)) + ' · criada ' + UI.haQuanto(post.criadoEm) +
+                '<p style="font-weight:500;margin-bottom:.9rem">' + UI.esc(post.resumo) + '</p>' +
+                '<div class="corpo-texto corpo-texto--destacado">' + UI.nl2br(post.conteudo) + '</div>' +
+                '<p class="nota" style="margin-top:1rem">Por ' + UI.esc(Dados.nomeUsuario(post.autorId)) + ' · criada ' + UI.haQuanto(post.criadoEm) +
                 (post.publicadoEm ? ' · liberada em ' + UI.dataHora(post.publicadoEm) : '') + '</p>',
-            rodape: '<button type="button" data-fechar="1" class="btn-secundario">Fechar</button>'
+            rodape: '<button type="button" data-fechar="1" class="btn">Fechar</button>'
         });
     }
 
     /* --------------------------------------------------------------------- */
     function acoesDe(post) {
-        var html = '';
-        var editavel = podeEditar(post);
-        html += '<button class="btn-mini-claro" data-acao="ver" data-id="' + post.id + '">Abrir</button>';
-        if (!editavel) { return html; }
+        var html = '<button class="btn btn--pequeno" data-acao="ver" data-id="' + post.id + '">Abrir</button>';
+        if (!podeEditar(post)) { return html; }
 
         if (post.status === 'rascunho') {
-            if (post.visibilidade === 'publico' && !Auth.pode('postagens.publicar')) {
-                html += '<button class="btn-mini" data-acao="estado" data-estado="pendente" data-id="' + post.id + '">Pedir liberacao</button>';
-            } else {
-                html += '<button class="btn-mini" data-acao="estado" data-estado="aprovado" data-id="' + post.id + '">Publicar</button>';
-            }
+            html += post.visibilidade === 'publico' && !Auth.pode('postagens.publicar')
+                ? '<button class="btn btn--principal btn--pequeno" data-acao="estado" data-estado="pendente" data-id="' + post.id + '">Pedir liberacao</button>'
+                : '<button class="btn btn--principal btn--pequeno" data-acao="estado" data-estado="aprovado" data-id="' + post.id + '">Publicar</button>';
         }
         if (post.status === 'pendente' && Auth.pode('postagens.publicar')) {
-            html += '<button class="btn-mini" data-acao="estado" data-estado="aprovado" data-id="' + post.id + '">Liberar</button>';
-            html += '<button class="btn-mini-claro" data-acao="estado" data-estado="rejeitado" data-id="' + post.id + '">Devolver</button>';
+            html += '<button class="btn btn--principal btn--pequeno" data-acao="estado" data-estado="aprovado" data-id="' + post.id + '">Liberar</button>' +
+                    '<button class="btn btn--pequeno" data-acao="estado" data-estado="rejeitado" data-id="' + post.id + '">Devolver</button>';
         }
         if (post.status === 'aprovado' && Auth.pode('postagens.publicar')) {
-            html += '<button class="btn-mini-claro" data-acao="estado" data-estado="rascunho" data-id="' + post.id + '">Retirar</button>';
+            html += '<button class="btn btn--pequeno" data-acao="estado" data-estado="rascunho" data-id="' + post.id + '">Retirar</button>';
         }
         if (post.status === 'rejeitado') {
-            html += '<button class="btn-mini" data-acao="estado" data-estado="pendente" data-id="' + post.id + '">Reenviar</button>';
+            html += '<button class="btn btn--principal btn--pequeno" data-acao="estado" data-estado="pendente" data-id="' + post.id + '">Reenviar</button>';
         }
-        html += '<button class="btn-icone" data-acao="editar" data-id="' + post.id + '"><i data-lucide="pencil" class="w-3.5 h-3.5 pointer-events-none"></i></button>';
-        html += '<button class="btn-icone hover:text-rose-400" data-acao="eliminar" data-id="' + post.id + '"><i data-lucide="trash-2" class="w-3.5 h-3.5 pointer-events-none"></i></button>';
+        html += '<button class="btn btn--icone" data-acao="editar" data-id="' + post.id + '">' + UI.icone('pencil', 13) + '</button>' +
+                '<button class="btn btn--icone perigo" data-acao="eliminar" data-id="' + post.id + '">' + UI.icone('trash-2', 13) + '</button>';
         return html;
     }
 
@@ -171,7 +167,8 @@
         formulario: formulario,
         mudarEstado: mudarEstado,
         render: function () {
-            var lista = Dados.postagensVisiveis().filter(function (p) {
+            var todas = Dados.postagensVisiveis();
+            var lista = todas.filter(function (p) {
                 if (filtro.estado && p.status !== filtro.estado) { return false; }
                 if (filtro.comissaoId && p.comissaoId !== filtro.comissaoId) { return false; }
                 if (filtro.visibilidade && p.visibilidade !== filtro.visibilidade) { return false; }
@@ -182,33 +179,28 @@
                 return true;
             });
 
-            var todas = Dados.postagensVisiveis();
-            var html = UI.cabecalho('Postagens',
+            var html = UI.cabecalho('Comunicacao', 'Postagens',
                 Auth.ehSupra() ? 'Todas as postagens das comissoes, em qualquer estado.'
                                : 'As postagens da tua comissao e as ja liberadas no portal.',
-                (Auth.pode('postagens.criar') ? '<button class="btn-primario" data-acao="nova"><i data-lucide="plus" class="w-4 h-4"></i> Nova postagem</button>' : ''));
+                (Auth.pode('postagens.criar') ? '<button class="btn btn--principal" data-acao="nova">' + UI.icone('plus', 15) + ' Nova postagem</button>' : ''));
 
-            html += '<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">' +
-                UI.estatistica('Total', todas.length, 'megaphone', 'indigo') +
-                UI.estatistica('Em analise', todas.filter(function (p) { return p.status === 'pendente'; }).length, 'clock', 'amber') +
-                UI.estatistica('Liberadas', todas.filter(function (p) { return p.status === 'aprovado'; }).length, 'check-circle-2', 'emerald') +
-                UI.estatistica('No portal publico', todas.filter(function (p) { return p.status === 'aprovado' && p.visibilidade === 'publico'; }).length, 'globe', 'sky') +
-            '</div>';
+            html += UI.metricas([
+                { rotulo: 'Total', valor: todas.length, tom: 'indigo' },
+                { rotulo: 'Em analise', valor: todas.filter(function (p) { return p.status === 'pendente'; }).length, tom: 'amber' },
+                { rotulo: 'Liberadas', valor: todas.filter(function (p) { return p.status === 'aprovado'; }).length, tom: 'emerald' },
+                { rotulo: 'No portal publico', valor: todas.filter(function (p) { return p.status === 'aprovado' && p.visibilidade === 'publico'; }).length, tom: 'sky' }
+            ]);
 
-            html += '<div class="bg-slate-850 border border-slate-700 rounded-2xl p-4 mb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">' +
+            html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">' +
                 '<input id="f-busca" type="search" value="' + UI.esc(filtro.busca) + '" placeholder="Procurar por titulo ou etiqueta..." class="campo">' +
-                '<select id="f-estado" class="campo">' +
-                    '<option value="">Todos os estados</option>' +
+                '<select id="f-estado" class="campo"><option value="">Todos os estados</option>' +
                     Object.keys(Dados.ESTADOS).map(function (k) {
                         return '<option value="' + k + '"' + (filtro.estado === k ? ' selected' : '') + '>' + Dados.ESTADOS[k].rotulo + '</option>';
-                    }).join('') +
-                '</select>' +
-                '<select id="f-comissao" class="campo">' +
-                    '<option value="">Todas as comissoes</option>' +
+                    }).join('') + '</select>' +
+                '<select id="f-comissao" class="campo"><option value="">Todas as comissoes</option>' +
                     Dados.opcoesComissoes().map(function (o) {
                         return '<option value="' + o.valor + '"' + (filtro.comissaoId === o.valor ? ' selected' : '') + '>' + UI.esc(o.rotulo) + '</option>';
-                    }).join('') +
-                '</select>' +
+                    }).join('') + '</select>' +
                 '<select id="f-visibilidade" class="campo">' +
                     '<option value="">Interno e publico</option>' +
                     '<option value="interno"' + (filtro.visibilidade === 'interno' ? ' selected' : '') + '>So internas</option>' +
@@ -217,31 +209,28 @@
             '</div>';
 
             if (!lista.length) {
-                html += UI.cartao(UI.vazio('Nenhuma postagem corresponde a esta pesquisa.', 'megaphone-off'));
-                return html;
+                return html + UI.painel('', UI.vazio('Nenhuma postagem corresponde a esta pesquisa.', 'file-search'));
             }
 
-            html += '<div class="space-y-3">' + lista.map(function (p) {
+            html += UI.painel('', lista.map(function (p) {
                 var e = Dados.estado(p.status);
-                return '<div class="bg-slate-850 border border-slate-700 rounded-2xl p-4 hover:border-slate-600 transition-all">' +
-                    '<div class="flex flex-col lg:flex-row lg:items-start gap-4">' +
-                        '<div class="min-w-0 flex-1">' +
-                            '<div class="flex flex-wrap items-center gap-1.5 mb-1.5">' +
-                                UI.chip(e.rotulo, e.cor, e.icone) +
-                                UI.chip(p.visibilidade === 'publico' ? 'Publico' : 'Interno', p.visibilidade === 'publico' ? 'sky' : 'slate', p.visibilidade === 'publico' ? 'globe' : 'lock') +
-                                (p.destaque ? UI.chip('Destaque', 'amber', 'star') : '') +
-                            '</div>' +
-                            '<h3 class="font-bold text-white">' + UI.esc(p.titulo) + '</h3>' +
-                            '<p class="text-sm text-slate-400 mt-1 line-clamp-2">' + UI.esc(p.resumo) + '</p>' +
-                            '<p class="text-[11px] text-slate-500 mt-2">' +
-                                UI.esc(Dados.nomeFrente(p.frenteId)) + ' · ' + UI.esc(Dados.nomeComissao(p.comissaoId)) +
-                                ' · ' + UI.esc(Dados.nomeUsuario(p.autorId)) + ' · ' + UI.haQuanto(p.criadoEm) +
-                            '</p>' +
+                return '<article class="registo">' +
+                    '<div class="min-w-0 flex-1">' +
+                        '<div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">' +
+                            UI.etiqueta(e.rotulo, e.cor, { forte: true }) +
+                            UI.etiqueta(p.visibilidade === 'publico' ? 'Publico' : 'Interno', p.visibilidade === 'publico' ? 'sky' : 'slate') +
+                            (p.destaque ? UI.etiqueta('Destaque', 'amber') : '') +
                         '</div>' +
-                        '<div class="flex flex-wrap items-center gap-1.5 lg:justify-end shrink-0">' + acoesDe(p) + '</div>' +
+                        '<h3 style="font-weight:600;margin-top:.4rem">' + UI.esc(p.titulo) + '</h3>' +
+                        '<p class="texto-medio line-clamp-2" style="margin-top:.15rem">' + UI.esc(p.resumo) + '</p>' +
+                        '<p class="nota" style="margin-top:.4rem">' +
+                            UI.esc(Dados.nomeFrente(p.frenteId)) + ' · ' + UI.esc(Dados.nomeComissao(p.comissaoId)) +
+                            ' · ' + UI.esc(Dados.nomeUsuario(p.autorId)) + ' · ' + UI.haQuanto(p.criadoEm) +
+                        '</p>' +
                     '</div>' +
-                '</div>';
-            }).join('') + '</div>';
+                    '<div class="flex flex-wrap items-center gap-1.5 shrink-0">' + acoesDe(p) + '</div>' +
+                '</article>';
+            }).join(''), { semPadding: true });
 
             return html;
         },

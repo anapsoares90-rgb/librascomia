@@ -74,18 +74,18 @@
             subtitulo: UI.dataLonga(evento.data) + (evento.hora ? ' · ' + evento.hora : ''),
             largura: 'max-w-lg',
             corpo:
-                '<div class="flex flex-wrap gap-1.5 mb-4">' +
-                    UI.chip(t.rotulo, t.cor, 'tag') +
-                    UI.chip(Dados.nomeFrente(evento.frenteId), Dados.corFrente(evento.frenteId), 'layers') +
-                    UI.chip(Dados.nomeComissao(evento.comissaoId), 'slate', 'users-round') +
-                    (evento.publico ? UI.chip('Publico', 'emerald', 'globe') : UI.chip('Interno', 'slate', 'lock')) +
+                '<div class="flex flex-wrap gap-x-4 gap-y-2 mb-4">' +
+                    UI.etiqueta(t.rotulo, t.cor, { forte: true }) +
+                    UI.etiqueta(Dados.nomeFrente(evento.frenteId), Dados.corFrente(evento.frenteId)) +
+                    UI.etiqueta(Dados.nomeComissao(evento.comissaoId), 'slate') +
+                    UI.etiqueta(evento.publico ? 'Publico' : 'Interno', evento.publico ? 'emerald' : 'slate') +
                 '</div>' +
-                (evento.local ? '<p class="text-sm text-slate-300 mb-2 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-slate-500"></i>' + UI.esc(evento.local) + '</p>' : '') +
-                '<p class="text-sm text-slate-300 leading-relaxed">' + UI.nl2br(evento.descricao || 'Sem descricao.') + '</p>',
+                (evento.local ? '<p class="texto-medio" style="margin-bottom:.6rem">' + UI.icone('map-pin', 14) + ' ' + UI.esc(evento.local) + '</p>' : '') +
+                '<p class="corpo-texto">' + UI.nl2br(evento.descricao || 'Sem descricao.') + '</p>',
             rodape:
-                (pode ? '<button type="button" class="btn-perigo" id="ev-eliminar">Eliminar</button>' +
-                        '<button type="button" class="btn-secundario" id="ev-editar">Editar</button>' : '') +
-                '<button type="button" data-fechar="1" class="btn-primario">Fechar</button>',
+                (pode ? '<button type="button" class="btn btn--perigo" id="ev-eliminar">Eliminar</button>' +
+                        '<button type="button" class="btn" id="ev-editar">Editar</button>' : '') +
+                '<button type="button" data-fechar="1" class="btn btn--principal">Fechar</button>',
             aoAbrir: function (raiz) {
                 var e1 = raiz.querySelector('#ev-editar');
                 if (e1) { e1.addEventListener('click', function () { UI.fecharModal(); formulario(evento); }); }
@@ -117,56 +117,44 @@
         var hojeIso = UI.dataHoje();
         var pode = Auth.pode('calendario.gerir');
 
-        var html = '<div class="grid grid-cols-7 gap-px bg-slate-700 border border-slate-700 rounded-2xl overflow-hidden">';
-        UI.DIAS.forEach(function (d) {
-            html += '<div class="bg-slate-800 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400">' + d + '</div>';
-        });
+        var html = '<div class="calendario">' +
+            '<div class="calendario__cabeca">' + UI.DIAS.map(function (d) { return '<span>' + d + '</span>'; }).join('') + '</div>' +
+            '<div class="calendario__grelha">';
 
-        for (var i = 0; i < comecaEm; i++) {
-            html += '<div class="bg-slate-900/60 min-h-[92px]"></div>';
-        }
+        for (var i = 0; i < comecaEm; i++) { html += '<div class="dia dia--fora"></div>'; }
 
         for (var dia = 1; dia <= diasNoMes; dia++) {
             var data = iso(estado.ano, estado.mes, dia);
             var doDia = eventos.filter(function (e) { return e.data === data; });
-            var ehHoje = data === hojeIso;
-            html += '<div class="bg-slate-850 min-h-[92px] p-1.5 group relative ' + (pode ? 'cursor-pointer hover:bg-slate-800' : '') + '" ' +
-                    (pode ? 'data-dia="' + data + '"' : '') + '>' +
-                '<div class="flex items-center justify-between mb-1">' +
-                    '<span class="text-xs font-bold ' + (ehHoje ? 'bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center' : 'text-slate-400') + '">' + dia + '</span>' +
-                    (pode ? '<i data-lucide="plus" class="w-3 h-3 text-slate-600 opacity-0 group-hover:opacity-100 transition-all pointer-events-none"></i>' : '') +
-                '</div>' +
-                '<div class="space-y-1">' +
+            html += '<div class="dia' + (data === hojeIso ? ' dia--hoje' : '') + (pode ? ' dia--clicavel' : '') + '"' +
+                    (pode ? ' data-dia="' + data + '"' : '') + '>' +
+                '<span class="dia__numero">' + dia + '</span>' +
                 doDia.slice(0, 3).map(function (e) {
-                    var c = UI.cor(Dados.tipoEvento(e.tipo).cor);
-                    return '<button class="w-full text-left ' + c.solido + '/80 hover:' + c.solido + ' text-white text-[10px] leading-tight px-1.5 py-1 rounded truncate transition-all" ' +
-                           'data-evento="' + e.id + '" title="' + UI.esc(e.titulo) + '">' +
+                    return '<button class="evento-chip ' + UI.tom(Dados.tipoEvento(e.tipo).cor) + '" data-evento="' + e.id + '" title="' + UI.esc(e.titulo) + '">' +
                            (e.hora ? UI.esc(e.hora) + ' ' : '') + UI.esc(e.titulo) + '</button>';
                 }).join('') +
-                (doDia.length > 3 ? '<p class="text-[10px] text-slate-500 pl-1">+' + (doDia.length - 3) + ' mais</p>' : '') +
-                '</div></div>';
+                (doDia.length > 3 ? '<p class="dia__mais">+' + (doDia.length - 3) + ' mais</p>' : '') +
+            '</div>';
         }
 
         var resto = (comecaEm + diasNoMes) % 7;
-        if (resto) {
-            for (var j = resto; j < 7; j++) { html += '<div class="bg-slate-900/60 min-h-[92px]"></div>'; }
-        }
-        html += '</div>';
-        return html;
+        if (resto) { for (var j = resto; j < 7; j++) { html += '<div class="dia dia--fora"></div>'; } }
+
+        return html + '</div></div>';
     }
 
     function listaLateral() {
         var eventos = eventosDoMes();
         if (!eventos.length) { return UI.vazio('Sem eventos neste mes.', 'calendar-off'); }
-        return '<ul class="space-y-2">' + eventos.map(function (e) {
+        return '<ul class="lista">' + eventos.map(function (e) {
             var t = Dados.tipoEvento(e.tipo);
-            return '<li><button class="w-full text-left bg-slate-800/60 border border-slate-700 hover:border-indigo-500/50 rounded-xl px-3 py-2.5 transition-all" data-evento="' + e.id + '">' +
-                '<div class="flex items-center gap-2 mb-1">' +
-                    '<span class="w-2 h-2 rounded-full ' + UI.cor(t.cor).ponto + '"></span>' +
-                    '<span class="text-xs font-bold text-white">' + UI.dataCurta(e.data) + (e.hora ? ' · ' + UI.esc(e.hora) : '') + '</span>' +
+            return '<li><button class="w-full text-left flex gap-3" data-evento="' + e.id + '">' +
+                UI.dataBloco(e.data) +
+                '<div class="min-w-0">' +
+                    '<p class="truncate" style="font-size:.8125rem;font-weight:500">' + UI.esc(e.titulo) + '</p>' +
+                    '<p class="nota truncate">' + UI.esc(e.hora || '') + (e.local ? ' · ' + UI.esc(e.local) : '') + '</p>' +
+                    '<div style="margin-top:.25rem">' + UI.etiqueta(t.rotulo, t.cor) + '</div>' +
                 '</div>' +
-                '<p class="text-sm text-slate-200 truncate">' + UI.esc(e.titulo) + '</p>' +
-                '<p class="text-[11px] text-slate-500 truncate">' + UI.esc(Dados.nomeComissao(e.comissaoId)) + (e.local ? ' · ' + UI.esc(e.local) : '') + '</p>' +
             '</button></li>';
         }).join('') + '</ul>';
     }
@@ -177,18 +165,18 @@
         formulario: formulario,
         render: function () {
             var pode = Auth.pode('calendario.gerir');
-            var html = UI.cabecalho('Calendario do Protagonismo',
-                'Agenda integrada de todas as frentes: reunioes, formacoes, prazos e sessoes.',
-                (pode ? '<button class="btn-primario" data-acao="novo"><i data-lucide="calendar-plus" class="w-4 h-4"></i> Novo evento</button>' : ''));
+            var html = UI.cabecalho('Agenda', 'Calendario do Protagonismo',
+                'Reunioes, formacoes, prazos e sessoes de todas as frentes, num so calendario.',
+                (pode ? '<button class="btn btn--principal" data-acao="novo">' + UI.icone('calendar-plus', 15) + ' Novo evento</button>' : ''));
 
             html += '<div class="flex flex-wrap items-center justify-between gap-3 mb-4">' +
-                '<div class="flex items-center gap-2">' +
-                    '<button class="btn-icone" data-nav="-1"><i data-lucide="chevron-left" class="w-4 h-4 pointer-events-none"></i></button>' +
-                    '<h3 class="text-lg font-bold text-white min-w-[190px] text-center">' + UI.MESES[estado.mes] + ' ' + estado.ano + '</h3>' +
-                    '<button class="btn-icone" data-nav="1"><i data-lucide="chevron-right" class="w-4 h-4 pointer-events-none"></i></button>' +
-                    '<button class="btn-filtro ml-1" data-nav="0">Hoje</button>' +
+                '<div class="flex items-center gap-1.5">' +
+                    '<button class="btn btn--icone" data-nav="-1">' + UI.icone('chevron-left', 15) + '</button>' +
+                    '<h3 class="serifa" style="font-size:1.05rem;min-width:11rem;text-align:center">' + UI.MESES[estado.mes] + ' ' + estado.ano + '</h3>' +
+                    '<button class="btn btn--icone" data-nav="1">' + UI.icone('chevron-right', 15) + '</button>' +
+                    '<button class="filtro" data-nav="0" style="margin-left:.35rem">Hoje</button>' +
                 '</div>' +
-                '<select id="f-frente" class="campo max-w-xs">' +
+                '<select id="f-frente" class="campo" style="max-width:16rem">' +
                     '<option value="">Todas as frentes</option>' +
                     Dados.opcoesFrentes().map(function (o) {
                         return '<option value="' + o.valor + '"' + (estado.frenteId === o.valor ? ' selected' : '') + '>' + UI.esc(o.rotulo) + '</option>';
@@ -196,18 +184,14 @@
                 '</select>' +
             '</div>';
 
-            html += '<div class="grid grid-cols-1 xl:grid-cols-4 gap-5">' +
+            html += '<div class="grid grid-cols-1 xl:grid-cols-4 gap-4">' +
                 '<div class="xl:col-span-3">' + grelha() +
-                    '<div class="flex flex-wrap gap-3 mt-4">' + Object.keys(Dados.TIPOS_EVENTO).map(function (k) {
-                        return '<span class="flex items-center gap-1.5 text-[11px] text-slate-400">' +
-                               '<span class="w-2.5 h-2.5 rounded-full ' + UI.cor(Dados.TIPOS_EVENTO[k].cor).ponto + '"></span>' +
-                               Dados.TIPOS_EVENTO[k].rotulo + '</span>';
+                    '<div class="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">' + Object.keys(Dados.TIPOS_EVENTO).map(function (k) {
+                        return UI.etiqueta(Dados.TIPOS_EVENTO[k].rotulo, Dados.TIPOS_EVENTO[k].cor);
                     }).join('') + '</div>' +
                 '</div>' +
-                '<div>' + UI.cartao(
-                    '<div class="px-4 py-3 border-b border-slate-700"><h3 class="font-bold text-sm text-white">Eventos de ' + UI.MESES[estado.mes] + '</h3></div>' +
-                    '<div class="p-4 max-h-[560px] overflow-y-auto custom-scrollbar">' + listaLateral() + '</div>') +
-                '</div>' +
+                '<div>' + UI.painel('Eventos de ' + UI.MESES[estado.mes],
+                    '<div class="max-h-[34rem] overflow-y-auto custom-scrollbar custom-scrollbar--claro">' + listaLateral() + '</div>') + '</div>' +
             '</div>';
 
             return html;
