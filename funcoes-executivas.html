@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitor de Funções Executivas | Acompanhamento por Faixa Etária</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root { color-scheme: light; }
+  /* Base mínima para a aplicação continuar utilizável se o CDN de estilos não carregar */
+  .hidden { display: none !important; }
+  * { box-sizing: border-box; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:#f1f5f9; color:#0f172a; }
+  .tab-ativo { background:#4f46e5; color:#fff; }
+  .nivel-btn { transition: all .15s ease; }
+  .fade-in { animation: fade .25s ease; }
+  @keyframes fade { from { opacity:0; transform: translateY(4px);} to {opacity:1; transform:none;} }
+  .custom-scroll::-webkit-scrollbar { width:8px; height:8px; }
+  .custom-scroll::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
+  /* Estilos alternativos, aplicados apenas se o CDN de estilos não estiver disponível
+     (escola sem internet). Garantem legibilidade, ainda que sem o desenho completo. */
+  html.sem-cdn body { max-width: 1100px; margin: 0 auto; padding: 0 16px 40px; line-height: 1.5; }
+  html.sem-cdn header, html.sem-cdn footer { background:#fff; padding:12px 0; margin-bottom:12px; }
+  html.sem-cdn header { border-bottom:2px solid #cbd5e1; }
+  html.sem-cdn footer { border-top:1px solid #cbd5e1; text-align:center; font-size:12px; color:#64748b; }
+  html.sem-cdn h1 { font-size:20px; margin:0; } html.sem-cdn h2 { font-size:18px; margin:16px 0 8px; }
+  html.sem-cdn h3 { font-size:15px; margin:12px 0 6px; }
+  html.sem-cdn #nav-tabs { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  html.sem-cdn button, html.sem-cdn select, html.sem-cdn input, html.sem-cdn textarea {
+    font:inherit; padding:6px 10px; border:1px solid #94a3b8; border-radius:6px; background:#fff; cursor:pointer; }
+  html.sem-cdn textarea, html.sem-cdn input { width:100%; cursor:text; }
+  html.sem-cdn .tab-ativo { background:#4f46e5; color:#fff; border-color:#4f46e5; }
+  html.sem-cdn section, html.sem-cdn table { border:1px solid #cbd5e1; border-radius:8px; background:#fff;
+    margin-bottom:12px; padding:10px; width:100%; }
+  html.sem-cdn table { border-collapse:collapse; padding:0; }
+  html.sem-cdn th, html.sem-cdn td { border-bottom:1px solid #e2e8f0; padding:8px; text-align:left; font-size:14px; }
+  html.sem-cdn svg { max-width:420px; }
+  html.sem-cdn #modal-aluno { position:fixed; inset:0; background:rgba(15,23,42,.5); display:flex;
+    align-items:center; justify-content:center; padding:16px; }
+  html.sem-cdn #modal-aluno > div { background:#fff; padding:16px; border-radius:10px; max-width:520px; width:100%; }
+  html.sem-cdn #toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+    background:#0f172a; color:#fff; padding:10px 16px; border-radius:8px; }
+  @media print {
+    .no-print { display:none !important; }
+    body { background:#fff; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- ============ CABEÇALHO ============ -->
+<header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30 no-print">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="bg-indigo-600 text-white p-2 rounded-xl"><i data-lucide="brain-circuit" class="w-6 h-6"></i></div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight">Monitor de Funções Executivas</h1>
+        <p class="text-xs text-slate-500">Acompanhamento dos requisitos de aprendizagem por faixa etária</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <span id="chip-armazenamento" class="hidden sm:flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1.5 rounded-full">
+        <i data-lucide="database" class="w-3.5 h-3.5"></i><span>Dados guardados neste dispositivo</span>
+      </span>
+      <button onclick="irPara('dados')" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-3 py-1.5 rounded-lg font-medium">
+        <i data-lucide="settings" class="w-4 h-4"></i> Dados
+      </button>
+    </div>
+  </div>
+  <nav class="max-w-7xl mx-auto px-2 pb-2 flex gap-1 overflow-x-auto custom-scroll" id="nav-tabs"></nav>
+</header>
+
+<main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6">
+  <div id="view-painel" class="view"></div>
+  <div id="view-alunos" class="view hidden"></div>
+  <div id="view-avaliacao" class="view hidden"></div>
+  <div id="view-progresso" class="view hidden"></div>
+  <div id="view-referencial" class="view hidden"></div>
+  <div id="view-dados" class="view hidden"></div>
+</main>
+
+<footer class="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500 no-print">
+  Instrumento de observação pedagógica — apoia, mas não substitui, avaliação especializada.
+</footer>
+
+<!-- ============ MODAL ALUNO ============ -->
+<div id="modal-aluno" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+      <h3 class="font-bold flex items-center gap-2" id="modal-aluno-titulo"><i data-lucide="user-plus" class="w-5 h-5 text-indigo-600"></i> Novo aluno</h3>
+      <button onclick="fecharModalAluno()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <form id="form-aluno" class="p-5 space-y-4">
+      <input type="hidden" id="aluno-id">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do aluno *</label>
+        <input id="aluno-nome" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex.: Maria Silva">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Turma</label>
+          <input id="aluno-turma" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex.: 3.ºB">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Data de nascimento *</label>
+          <input id="aluno-nascimento" type="date" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+      </div>
+      <p id="aluno-faixa-info" class="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2 hidden"></p>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Notas / apoios (opcional)</label>
+        <textarea id="aluno-notas" rows="3" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Medidas de suporte, contexto relevante..."></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" onclick="fecharModalAluno()" class="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50">Cancelar</button>
+        <button type="submit" class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] bg-slate-900 text-white text-sm px-4 py-2.5 rounded-lg shadow-lg no-print"></div>
+
+<script>
+/* =====================================================================
+   1. REFERENCIAL PEDAGÓGICO
+   ===================================================================== */
+
+const DOMINIOS = [
+  { id:'atencao',      nome:'Atenção sustentada',       curto:'Atenção',     icone:'eye',            cor:'#4f46e5' },
+  { id:'memoria',      nome:'Memória de trabalho',      curto:'Memória',     icone:'brain',          cor:'#0891b2' },
+  { id:'inibicao',     nome:'Controlo inibitório',      curto:'Inibição',    icone:'hand',           cor:'#d97706' },
+  { id:'flexibilidade',nome:'Flexibilidade cognitiva',  curto:'Flexib.',     icone:'shuffle',        cor:'#7c3aed' },
+  { id:'planeamento',  nome:'Planeamento e organização',curto:'Planeam.',    icone:'list-checks',    cor:'#059669' },
+  { id:'iniciativa',   nome:'Iniciativa e persistência',curto:'Iniciativa',  icone:'rocket',         cor:'#db2777' },
+  { id:'emocional',    nome:'Regulação emocional',      curto:'Emoção',      icone:'heart-handshake',cor:'#e11d48' },
+  { id:'metacognicao', nome:'Metacognição',             curto:'Metacog.',    icone:'search-check',   cor:'#475569' }
+];
+
+const NIVEIS = [
+  { v:0, curto:'NO', nome:'Não observado',      desc:'Ainda não se observa em contexto de sala.',        cor:'#e2e8f0', texto:'#475569' },
+  { v:1, curto:'EM', nome:'Emergente',          desc:'Surge com apoio constante do adulto.',             cor:'#fecaca', texto:'#991b1b' },
+  { v:2, curto:'ED', nome:'Em desenvolvimento', desc:'Já ocorre com apoio pontual ou lembrete.',         cor:'#fde68a', texto:'#92400e' },
+  { v:3, curto:'CO', nome:'Consolidado',        desc:'Ocorre de forma autónoma e consistente.',          cor:'#a7f3d0', texto:'#065f46' }
+];
+
+/* Indicadores = requisitos de aprendizagem esperados em cada faixa etária */
+const FAIXAS = [
+  {
+    id:'b1', nome:'3 a 4 anos', ciclo:'Pré-escolar (inicial)', min:3, max:4,
+    foco:'Autorregulação inicial apoiada pelo adulto e pela rotina.',
+    indicadores:{
+      atencao:['Mantém-se envolvido numa atividade escolhida durante 5 a 10 minutos',
+               'Orienta o olhar para o adulto quando é chamado pelo nome',
+               'Termina uma tarefa curta sem mudar de espaço'],
+      memoria:['Cumpre instruções simples de um passo',
+               'Recorda qual é o momento seguinte da rotina quando questionado',
+               'Repete sequências de 2 elementos (palavras, gestos ou objetos)'],
+      inibicao:['Espera pela sua vez em jogos curtos com apoio do adulto',
+                'Para a ação quando é dado o sinal combinado',
+                'Evita mexer em materiais quando é lembrado da regra'],
+      flexibilidade:['Aceita mudar de atividade quando é avisado com antecedência',
+                     'Experimenta uma forma diferente de brincar sugerida por outra criança',
+                     'Adapta-se a alterações simples da rotina com apoio'],
+      planeamento:['Escolhe o material antes de iniciar a brincadeira',
+                   'Arruma os materiais no local certo com orientação',
+                   'Segue uma sequência de 2 passos apoiada em imagens'],
+      iniciativa:['Inicia uma brincadeira por iniciativa própria',
+                  'Pede ajuda quando não consegue continuar',
+                  'Tenta novamente após a primeira dificuldade'],
+      emocional:['Aceita o conforto do adulto quando fica frustrado',
+                 'Nomeia emoções básicas (alegre, triste, zangado)',
+                 'Recupera a calma em poucos minutos após um conflito'],
+      metacognicao:['Reconhece quando terminou a tarefa',
+                    'Mostra o seu trabalho e diz o que fez',
+                    'Percebe quando precisa de ajuda']
+    }
+  },
+  {
+    id:'b2', nome:'5 a 6 anos', ciclo:'Pré-escolar / 1.º ano', min:5, max:6,
+    foco:'Transição para tarefas dirigidas e cumprimento de regras de grupo.',
+    indicadores:{
+      atencao:['Mantém atenção numa tarefa dirigida durante 10 a 15 minutos',
+               'Ignora pequenos ruídos ou movimentos à sua volta durante a tarefa',
+               'Retoma a tarefa após uma interrupção breve'],
+      memoria:['Cumpre instruções de dois passos sem que sejam repetidas',
+               'Mantém as regras de um jogo presentes ao longo da atividade',
+               'Reconta a sequência de uma história curta'],
+      inibicao:['Espera pela sua vez sem lembrete constante',
+                'Coloca o dedo no ar antes de falar no grupo',
+                'Resiste a mexer em materiais que não são para usar'],
+      flexibilidade:['Muda de estratégia quando a primeira não resulta, com pista do adulto',
+                     'Aceita jogar com regras diferentes das habituais',
+                     'Lida com mudanças de rotina sem se desorganizar'],
+      planeamento:['Prepara o material necessário antes de começar',
+                   'Organiza a tarefa em 2 ou 3 passos com apoio visual',
+                   'Arruma o espaço de trabalho no fim da atividade'],
+      iniciativa:['Começa a tarefa sem esperar por instrução individual',
+                  'Persiste numa tarefa difícil durante alguns minutos',
+                  'Pede ajuda de forma clara e específica'],
+      emocional:['Usa uma estratégia combinada para se acalmar (respirar, cantinho da calma)',
+                 'Expressa desagrado por palavras em vez de gestos bruscos',
+                 'Tolera perder num jogo sem abandonar a atividade'],
+      metacognicao:['Verifica se cumpriu o pedido antes de entregar',
+                    'Identifica a parte da tarefa que foi mais difícil',
+                    'Explica o que conseguiu fazer e porquê']
+    }
+  },
+  {
+    id:'b3', nome:'7 a 8 anos', ciclo:'1.º ciclo (2.º/3.º ano)', min:7, max:8,
+    foco:'Autonomia no trabalho escrito e organização do material.',
+    indicadores:{
+      atencao:['Mantém o foco numa tarefa escrita durante cerca de 20 minutos',
+               'Conclui a ficha sem se distrair com o que os colegas fazem',
+               'Retoma o trabalho autonomamente após uma pausa'],
+      memoria:['Segue instruções de três passos',
+               'Copia do quadro mantendo o sentido do texto',
+               'Faz cálculo mental simples guardando resultados intermédios'],
+      inibicao:['Pensa antes de responder, evitando respostas impulsivas',
+                'Cumpre as regras da sala sem lembretes frequentes',
+                'Adia uma vontade (falar, mexer no material) até ao momento adequado'],
+      flexibilidade:['Corrige o método quando percebe que o resultado está errado',
+                     'Aceita sugestões dos colegas no trabalho de grupo',
+                     'Passa de uma tarefa para outra sem resistência'],
+      planeamento:['Regista os trabalhos de casa na caderneta',
+                   'Mantém o caderno e o material organizados por disciplina',
+                   'Divide a tarefa em passos antes de começar'],
+      iniciativa:['Inicia o trabalho autonomamente após a instrução coletiva',
+                  'Termina o que começou dentro do tempo dado',
+                  'Tenta pelo menos duas estratégias antes de desistir'],
+      emocional:['Gere a frustração perante o erro sem interromper o trabalho',
+                 'Pede uma pausa em vez de reagir com agressividade',
+                 'Aceita a correção do professor sem se desmotivar'],
+      metacognicao:['Revê o trabalho antes de entregar',
+                    'Identifica os erros que comete com mais frequência',
+                    'Explica o raciocínio que usou para chegar à resposta']
+    }
+  },
+  {
+    id:'b4', nome:'9 a 11 anos', ciclo:'4.º a 6.º ano', min:9, max:11,
+    foco:'Gestão de tarefas com vários passos e início do estudo autónomo.',
+    indicadores:{
+      atencao:['Mantém-se concentrado cerca de 30 minutos numa tarefa exigente',
+               'Filtra distrações do ambiente durante o estudo',
+               'Mantém o ritmo de trabalho até ao fim da aula'],
+      memoria:['Segue instruções múltiplas dadas oralmente uma só vez',
+               'Toma notas enquanto ouve a explicação',
+               'Resolve problemas de vários passos sem perder os dados'],
+      inibicao:['Evita comentários fora de tempo durante a aula',
+                'Adia atividades de lazer até concluir a tarefa',
+                'Controla a impulsividade em situações de conflito'],
+      flexibilidade:['Usa uma estratégia alternativa quando a primeira falha',
+                     'Aceita mudanças de plano ou de grupo sem desmotivar',
+                     'Considera outros pontos de vista numa discussão'],
+      planeamento:['Planeia as etapas de um trabalho com prazo de vários dias',
+                   'Estima o tempo necessário para cada tarefa',
+                   'Traz o material certo para cada aula'],
+      iniciativa:['Inicia o estudo em casa sem ser lembrado',
+                  'Persiste em tarefas longas ou pouco motivadoras',
+                  'Procura recursos (manual, colega, professor) para avançar'],
+      emocional:['Mantém o desempenho em situações de avaliação',
+                 'Recupera o foco após um contratempo',
+                 'Expressa desacordo de forma assertiva'],
+      metacognicao:['Avalia a qualidade do próprio trabalho com critérios dados',
+                    'Reconhece que estratégia de estudo lhe resulta melhor',
+                    'Define uma meta de melhoria concreta']
+    }
+  },
+  {
+    id:'b5', nome:'12 a 14 anos', ciclo:'3.º ciclo', min:12, max:14,
+    foco:'Gestão de prazos, método de estudo e regulação em avaliação.',
+    indicadores:{
+      atencao:['Mantém atenção em aulas de 45 a 50 minutos com registo de notas',
+               'Estuda 30 a 40 minutos com o telemóvel afastado',
+               'Retoma rapidamente o foco após interrupções'],
+      memoria:['Relaciona conteúdos de aulas anteriores com a matéria nova',
+               'Segue enunciados complexos sem precisar de reler várias vezes',
+               'Organiza informação de várias fontes num só resumo'],
+      inibicao:['Resiste a distrações digitais durante o trabalho',
+                'Pensa nas consequências antes de agir em situações de conflito',
+                'Cumpre prazos mesmo perante atividades mais apelativas'],
+      flexibilidade:['Reformula o trabalho após o feedback do professor',
+                     'Alterna entre métodos de resolução conforme o problema',
+                     'Adapta-se a professores e metodologias diferentes'],
+      planeamento:['Usa agenda ou calendário para gerir testes e entregas',
+                   'Distribui o estudo ao longo dos dias em vez da véspera',
+                   'Prepara materiais e etapas de um trabalho de grupo'],
+      iniciativa:['Assume tarefas no grupo sem lhe serem atribuídas',
+                  'Retoma trabalhos em atraso por iniciativa própria',
+                  'Procura esclarecer dúvidas junto do professor'],
+      emocional:['Gere a ansiedade antes e durante os testes',
+                 'Lida com o insucesso sem generalizar ("não sou capaz")',
+                 'Resolve conflitos com os pares através do diálogo'],
+      metacognicao:['Analisa os erros do teste e regista o que deve melhorar',
+                    'Ajusta o método de estudo aos resultados obtidos',
+                    'Monitoriza o tempo que dedica realmente a cada tarefa']
+    }
+  },
+  {
+    id:'b6', nome:'15 a 18 anos', ciclo:'Ensino secundário', min:15, max:18,
+    foco:'Autonomia plena: projetos longos, metas pessoais e gestão do stress.',
+    indicadores:{
+      atencao:['Sustenta blocos de estudo de 45 a 60 minutos com pausas planeadas',
+               'Organiza o ambiente de trabalho para reduzir distrações',
+               'Mantém a qualidade do trabalho em tarefas prolongadas'],
+      memoria:['Integra informação de várias disciplinas numa mesma resposta',
+               'Trabalha com enunciados extensos mantendo todos os critérios',
+               'Sintetiza textos longos sem apoio permanente'],
+      inibicao:['Adia gratificações imediatas a favor de objetivos de médio prazo',
+                'Mantém uma postura adequada em situações de tensão',
+                'Gere o uso de redes sociais durante os períodos de trabalho'],
+      flexibilidade:['Reformula objetivos quando as condições mudam',
+                     'Integra críticas de pares e professores no seu trabalho',
+                     'Aborda o mesmo problema por vias diferentes'],
+      planeamento:['Planeia um projeto de longa duração com metas intermédias',
+                   'Antecipa obstáculos e prevê alternativas',
+                   'Concilia estudo, atividades e vida pessoal'],
+      iniciativa:['Define objetivos pessoais de aprendizagem e trabalha para eles',
+                  'Mantém o esforço em tarefas sem recompensa imediata',
+                  'Procura autonomamente recursos e apoios adequados'],
+      emocional:['Regula o stress em períodos de avaliação intensa',
+                 'Mantém a motivação após resultados abaixo do esperado',
+                 'Pede apoio quando reconhece sobrecarga'],
+      metacognicao:['Autoavalia o desempenho usando os critérios de avaliação',
+                    'Justifica as escolhas de estratégia que faz',
+                    'Ajusta o plano de trabalho com base na autoavaliação']
+    }
+  }
+];
+
+const FAIXA_POR_ID = Object.fromEntries(FAIXAS.map(f => [f.id, f]));
+const DOM_POR_ID   = Object.fromEntries(DOMINIOS.map(d => [d.id, d]));
+
+/* Identificador estável de cada indicador: faixa.dominio.indice */
+function idIndicador(faixaId, domId, i){ return faixaId + '.' + domId + '.' + i; }
+function indicadoresDaFaixa(faixaId){
+  const f = FAIXA_POR_ID[faixaId]; if(!f) return [];
+  const lista = [];
+  DOMINIOS.forEach(d => (f.indicadores[d.id]||[]).forEach((texto,i) =>
+    lista.push({ id: idIndicador(faixaId, d.id, i), dominio: d.id, texto })));
+  return lista;
+}
+function faixaPorIdade(idade){
+  if(idade == null || isNaN(idade)) return null;
+  if(idade < FAIXAS[0].min) return FAIXAS[0];
+  const f = FAIXAS.find(f => idade >= f.min && idade <= f.max);
+  return f || FAIXAS[FAIXAS.length-1];
+}
+
+/* =====================================================================
+   2. ESTADO E PERSISTÊNCIA
+   ===================================================================== */
+
+const CHAVE = 'monitor-fe-v1';
+let dados = { alunos: [], avaliacoes: [] };
+let ui = { tab:'painel', alunoSel:null, filtroTurma:'', filtroFaixa:'', busca:'', rascunho:null };
+
+function carregar(){
+  try {
+    const bruto = localStorage.getItem(CHAVE);
+    if(bruto){
+      const obj = JSON.parse(bruto);
+      dados.alunos = Array.isArray(obj.alunos) ? obj.alunos : [];
+      dados.avaliacoes = Array.isArray(obj.avaliacoes) ? obj.avaliacoes : [];
+    }
+  } catch(e){ console.warn('Não foi possível ler os dados guardados', e); }
+}
+function guardar(){
+  try { localStorage.setItem(CHAVE, JSON.stringify(dados)); }
+  catch(e){ toast('Não foi possível guardar (armazenamento indisponível).', true); }
+}
+
+/* ---------- utilitários ---------- */
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const hoje = () => new Date().toISOString().slice(0,10);
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function dataPT(iso){
+  if(!iso) return '—';
+  const [a,m,d] = iso.split('-'); return d && m && a ? `${d}/${m}/${a}` : iso;
+}
+function idadeDe(nascimento, refIso){
+  if(!nascimento) return null;
+  const ref = refIso ? new Date(refIso) : new Date();
+  const n = new Date(nascimento);
+  if(isNaN(n) || isNaN(ref)) return null;
+  let i = ref.getFullYear() - n.getFullYear();
+  const m = ref.getMonth() - n.getMonth();
+  if(m < 0 || (m === 0 && ref.getDate() < n.getDate())) i--;
+  return i;
+}
+function toast(msg, erro){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] text-sm px-4 py-2.5 rounded-lg shadow-lg no-print fade-in ' +
+                (erro ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.add('hidden'), 3200);
+}
+function icones(){ if(window.lucide && lucide.createIcons) lucide.createIcons(); }
+
+/* ---------- consultas ---------- */
+const alunoPorId = id => dados.alunos.find(a => a.id === id) || null;
+function avaliacoesDe(alunoId){
+  return dados.avaliacoes.filter(a => a.alunoId === alunoId)
+    .sort((x,y) => x.data === y.data ? x.criadoEm - y.criadoEm : (x.data < y.data ? -1 : 1));
+}
+const ultimaAvaliacao = alunoId => { const l = avaliacoesDe(alunoId); return l.length ? l[l.length-1] : null; };
+
+/* Pontuação de um domínio numa avaliação: 0–100 (%) da consolidação esperada */
+function pontuacaoDominio(av, domId){
+  if(!av) return null;
+  const idxs = (FAIXA_POR_ID[av.faixaId]?.indicadores[domId] || []);
+  let soma = 0, n = 0;
+  idxs.forEach((_, i) => {
+    const v = av.respostas[idIndicador(av.faixaId, domId, i)];
+    if(v !== undefined && v !== null){ soma += v; n++; }
+  });
+  return n ? Math.round((soma / (n*3)) * 100) : null;
+}
+function pontuacaoGeral(av){
+  if(!av) return null;
+  const vals = DOMINIOS.map(d => pontuacaoDominio(av, d.id)).filter(v => v !== null);
+  return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0) / vals.length) : null;
+}
+function preenchimento(av){
+  if(!av) return 0;
+  const total = indicadoresDaFaixa(av.faixaId).length;
+  const resp = Object.values(av.respostas || {}).filter(v => v !== undefined && v !== null).length;
+  return total ? Math.round(resp/total*100) : 0;
+}
+function corPontuacao(p){
+  if(p === null) return '#cbd5e1';
+  if(p >= 75) return '#059669';
+  if(p >= 50) return '#d97706';
+  if(p >= 25) return '#f97316';
+  return '#e11d48';
+}
+function rotuloPontuacao(p){
+  if(p === null) return 'Sem dados';
+  if(p >= 75) return 'Consolidado';
+  if(p >= 50) return 'Em desenvolvimento';
+  if(p >= 25) return 'Emergente';
+  return 'Requer apoio';
+}
+/* Alunos filtrados pelos filtros ativos do painel/lista */
+function alunosFiltrados(){
+  const b = ui.busca.trim().toLowerCase();
+  return dados.alunos.filter(a => {
+    if(ui.filtroTurma && (a.turma||'') !== ui.filtroTurma) return false;
+    if(ui.filtroFaixa && faixaDoAluno(a).id !== ui.filtroFaixa) return false;
+    if(b && !(a.nome.toLowerCase().includes(b) || (a.turma||'').toLowerCase().includes(b))) return false;
+    return true;
+  }).sort((x,y) => x.nome.localeCompare(y.nome, 'pt'));
+}
+function faixaDoAluno(a){ return faixaPorIdade(idadeDe(a.nascimento)) || FAIXAS[0]; }
+const turmas = () => [...new Set(dados.alunos.map(a => a.turma).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
+
+/* =====================================================================
+   3. NAVEGAÇÃO
+   ===================================================================== */
+
+const TABS = [
+  { id:'painel',      nome:'Painel',      icone:'layout-dashboard' },
+  { id:'alunos',      nome:'Alunos',      icone:'users' },
+  { id:'avaliacao',   nome:'Registar observação', icone:'clipboard-pen' },
+  { id:'progresso',   nome:'Progresso',   icone:'trending-up' },
+  { id:'referencial', nome:'Referencial', icone:'book-open' },
+  { id:'dados',       nome:'Dados',       icone:'database' }
+];
+
+function renderTabs(){
+  document.getElementById('nav-tabs').innerHTML = TABS.map(t => `
+    <button onclick="irPara('${t.id}')"
+      class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all
+             ${ui.tab===t.id ? 'tab-ativo shadow-sm' : 'text-slate-600 hover:bg-slate-100'}">
+      <i data-lucide="${t.icone}" class="w-4 h-4"></i> ${t.nome}
+    </button>`).join('');
+  icones();
+}
+
+function irPara(tab, alunoId){
+  ui.tab = tab;
+  if(alunoId) ui.alunoSel = alunoId;
+  renderTabs();
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  document.getElementById('view-' + tab).classList.remove('hidden');
+  render();
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function render(){
+  ({ painel:renderPainel, alunos:renderAlunos, avaliacao:renderAvaliacao,
+     progresso:renderProgresso, referencial:renderReferencial, dados:renderDados })[ui.tab]();
+  icones();
+}
+
+/* =====================================================================
+   4. GRÁFICOS (SVG, sem dependências externas)
+   ===================================================================== */
+
+/* Radar dos 8 domínios */
+function svgRadar(valores){
+  const W = 340, H = 268, CX = W/2, CY = H/2, R = 84, n = valores.length;
+  const ponto = (i, r) => {
+    const ang = (Math.PI*2*i/n) - Math.PI/2;
+    return [CX + Math.cos(ang)*r, CY + Math.sin(ang)*r];
+  };
+  let teias = '';
+  [0.25,0.5,0.75,1].forEach(f => {
+    const pts = valores.map((_,i) => ponto(i, R*f).map(v=>v.toFixed(1)).join(',')).join(' ');
+    teias += `<polygon points="${pts}" fill="none" stroke="#e2e8f0" stroke-width="1"/>`;
+  });
+  let eixos = '', rotulos = '';
+  valores.forEach((v,i) => {
+    const [x,y] = ponto(i, R);
+    eixos += `<line x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`;
+    const [lx,ly] = ponto(i, R+16);
+    const anchor = Math.abs(lx-CX) < 8 ? 'middle' : (lx > CX ? 'start' : 'end');
+    rotulos += `<text x="${lx.toFixed(1)}" y="${(ly+3).toFixed(1)}" text-anchor="${anchor}" font-size="10" fill="#64748b">${esc(v.curto)}</text>`
+              + `<text x="${lx.toFixed(1)}" y="${(ly+14).toFixed(1)}" text-anchor="${anchor}" font-size="9" font-weight="700" fill="${corPontuacao(v.valor)}">${v.valor==null?'—':v.valor+'%'}</text>`;
+  });
+  const pts = valores.map((v,i) => ponto(i, R*((v.valor==null?0:v.valor)/100)).map(p=>p.toFixed(1)).join(',')).join(' ');
+  const bolas = valores.map((v,i) => {
+    const [x,y] = ponto(i, R*((v.valor==null?0:v.valor)/100));
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${corPontuacao(v.valor)}"><title>${esc(v.nome)}: ${v.valor==null?'sem dados':v.valor+'%'}</title></circle>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="w-full max-w-[340px] mx-auto">
+    ${teias}${eixos}
+    <polygon points="${pts}" fill="rgba(79,70,229,.18)" stroke="#4f46e5" stroke-width="2" stroke-linejoin="round"/>
+    ${bolas}${rotulos}
+  </svg>`;
+}
+
+/* Linha de evolução da pontuação geral ao longo das observações */
+function svgLinha(pontos){
+  const W = 620, H = 200, pl = 34, pr = 12, pt = 14, pb = 30;
+  if(pontos.length === 0) return '<p class="text-sm text-slate-500 py-8 text-center">Ainda sem observações registadas.</p>';
+  const gw = W - pl - pr, gh = H - pt - pb;
+  const x = i => pontos.length === 1 ? pl + gw/2 : pl + (gw * i / (pontos.length-1));
+  const y = v => pt + gh - (gh * v/100);
+  let grelha = '';
+  [0,25,50,75,100].forEach(v => {
+    grelha += `<line x1="${pl}" y1="${y(v)}" x2="${W-pr}" y2="${y(v)}" stroke="#e2e8f0" stroke-width="1"/>
+               <text x="${pl-6}" y="${y(v)+3}" text-anchor="end" font-size="9" fill="#94a3b8">${v}</text>`;
+  });
+  const linha = pontos.map((p,i) => `${i?'L':'M'}${x(i).toFixed(1)},${y(p.valor).toFixed(1)}`).join(' ');
+  const area = `M${x(0).toFixed(1)},${y(0)} ` + pontos.map((p,i)=>`L${x(i).toFixed(1)},${y(p.valor).toFixed(1)}`).join(' ') + ` L${x(pontos.length-1).toFixed(1)},${y(0)} Z`;
+  const marcas = pontos.map((p,i) => `
+    <circle cx="${x(i).toFixed(1)}" cy="${y(p.valor).toFixed(1)}" r="4.5" fill="#fff" stroke="${corPontuacao(p.valor)}" stroke-width="2.5">
+      <title>${dataPT(p.data)} — ${p.valor}%</title></circle>
+    <text x="${x(i).toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="9" fill="#64748b">${dataPT(p.data).slice(0,5)}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="w-full">
+    ${grelha}
+    <path d="${area}" fill="rgba(79,70,229,.10)"/>
+    <path d="${linha}" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${marcas}
+  </svg>`;
+}
+
+/* Barra horizontal simples */
+function barra(valor, cor){
+  const v = valor == null ? 0 : valor;
+  return `<div class="h-2 rounded-full bg-slate-200 overflow-hidden">
+            <div class="h-full rounded-full" style="width:${v}%; background:${cor || corPontuacao(valor)}"></div>
+          </div>`;
+}
+
+/* =====================================================================
+   5. VISTA: PAINEL
+   ===================================================================== */
+
+function renderPainel(){
+  const lista = alunosFiltrados();
+  const comAv = lista.filter(a => ultimaAvaliacao(a.id));
+  const semAv = lista.filter(a => !ultimaAvaliacao(a.id));
+  const medias = comAv.map(a => pontuacaoGeral(ultimaAvaliacao(a.id))).filter(v => v !== null);
+  const mediaTurma = medias.length ? Math.round(medias.reduce((x,y)=>x+y,0)/medias.length) : null;
+
+  /* média por domínio, considerando a última observação de cada aluno */
+  const porDominio = DOMINIOS.map(d => {
+    const vs = comAv.map(a => pontuacaoDominio(ultimaAvaliacao(a.id), d.id)).filter(v => v !== null);
+    return { ...d, media: vs.length ? Math.round(vs.reduce((x,y)=>x+y,0)/vs.length) : null, n: vs.length };
+  });
+  const prioritarios = porDominio.filter(d => d.media !== null).sort((a,b) => a.media - b.media).slice(0,3);
+
+  const kpi = (icone, valor, rotulo, cor) => `
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 flex items-center gap-3 shadow-sm print-block">
+      <div class="p-2.5 rounded-xl" style="background:${cor}1a; color:${cor}"><i data-lucide="${icone}" class="w-5 h-5"></i></div>
+      <div><p class="text-2xl font-bold leading-tight">${valor}</p><p class="text-xs text-slate-500">${rotulo}</p></div>
+    </div>`;
+
+  document.getElementById('view-painel').innerHTML = `
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+      <div>
+        <h2 class="text-xl font-bold">Panorama da turma</h2>
+        <p class="text-sm text-slate-500">Baseado na observação mais recente de cada aluno.</p>
+      </div>
+      <div class="flex flex-wrap gap-2 no-print">
+        ${seletorTurma()} ${seletorFaixa()}
+        <button onclick="irPara('avaliacao')" class="flex items-center gap-1.5 bg-indigo-600 text-white text-sm px-3.5 py-2 rounded-lg font-medium hover:bg-indigo-700">
+          <i data-lucide="clipboard-pen" class="w-4 h-4"></i> Registar observação
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      ${kpi('users', lista.length, 'Alunos monitorizados', '#4f46e5')}
+      ${kpi('clipboard-check', dados.avaliacoes.filter(av => lista.some(a=>a.id===av.alunoId)).length, 'Observações registadas', '#0891b2')}
+      ${kpi('gauge', mediaTurma===null?'—':mediaTurma+'%', 'Média de consolidação', '#059669')}
+      ${kpi('alert-circle', semAv.length, 'Sem qualquer observação', '#e11d48')}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm print-block">
+        <h3 class="font-semibold mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i> Consolidação por domínio</h3>
+        ${comAv.length === 0 ? vazio('Sem observações para os filtros escolhidos.') : porDominio.map(d => `
+          <div class="mb-3.5">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-medium text-slate-700 flex items-center gap-1.5"><i data-lucide="${d.icone}" class="w-3.5 h-3.5" style="color:${d.cor}"></i>${d.nome}</span>
+              <span class="text-slate-500">${d.media===null?'—':d.media+'%'} <span class="text-slate-400">(${d.n} aluno${d.n===1?'':'s'})</span></span>
+            </div>
+            ${barra(d.media, d.cor)}
+          </div>`).join('')}
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm print-block">
+        <h3 class="font-semibold mb-3 flex items-center gap-2"><i data-lucide="target" class="w-4 h-4 text-rose-600"></i> Prioridades de intervenção</h3>
+        ${prioritarios.length === 0 ? vazio('Ainda sem dados suficientes.') : `
+          <ol class="space-y-3">${prioritarios.map((d,i) => `
+            <li class="flex gap-3 items-start">
+              <span class="w-6 h-6 rounded-full bg-rose-50 text-rose-700 text-xs font-bold flex items-center justify-center shrink-0">${i+1}</span>
+              <div><p class="text-sm font-medium">${d.nome}</p>
+                   <p class="text-xs text-slate-500">Média da turma: ${d.media}% — ${rotuloPontuacao(d.media)}</p></div>
+            </li>`).join('')}</ol>`}
+        ${semAv.length ? `<div class="mt-5 pt-4 border-t border-slate-100">
+          <p class="text-xs font-semibold text-slate-600 mb-2">Aguardam primeira observação</p>
+          <div class="flex flex-wrap gap-1.5">${semAv.slice(0,12).map(a =>
+            `<button onclick="irPara('avaliacao','${a.id}')" class="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-2 py-1 rounded-md hover:bg-amber-100">${esc(a.nome)}</button>`).join('')}
+            ${semAv.length>12?`<span class="text-xs text-slate-500 self-center">+${semAv.length-12}</span>`:''}</div>
+        </div>` : ''}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 mt-4 shadow-sm overflow-hidden print-block">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-semibold flex items-center gap-2"><i data-lucide="table-2" class="w-4 h-4 text-indigo-600"></i> Alunos e evolução</h3>
+        <button onclick="window.print()" class="no-print text-xs flex items-center gap-1.5 border border-slate-300 px-2.5 py-1.5 rounded-lg hover:bg-slate-50"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir</button>
+      </div>
+      ${lista.length === 0 ? vazio('Ainda não há alunos. Comece por adicionar a sua turma no separador "Alunos".') : `
+      <div class="overflow-x-auto custom-scroll">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
+            <tr><th class="text-left px-5 py-2.5 font-semibold">Aluno</th>
+                <th class="text-left px-3 py-2.5 font-semibold">Faixa etária</th>
+                <th class="text-left px-3 py-2.5 font-semibold">Última observação</th>
+                <th class="text-left px-3 py-2.5 font-semibold w-48">Consolidação</th>
+                <th class="text-left px-3 py-2.5 font-semibold">Evolução</th>
+                <th class="px-3 py-2.5"></th></tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${lista.map(a => linhaAluno(a)).join('')}
+          </tbody>
+        </table>
+      </div>`}
+    </div>`;
+}
+
+function linhaAluno(a){
+  const avs = avaliacoesDe(a.id);
+  const ult = avs.length ? avs[avs.length-1] : null;
+  const pen = avs.length > 1 ? avs[avs.length-2] : null;
+  const p = pontuacaoGeral(ult), pp = pontuacaoGeral(pen);
+  /* só é comparável se as duas observações usaram o mesmo referencial */
+  const delta = (p !== null && pp !== null && pen.faixaId === ult.faixaId) ? p - pp : null;
+  const f = faixaDoAluno(a);
+  const seta = delta === null ? '<span class="text-xs text-slate-400">—</span>'
+    : delta > 0 ? `<span class="text-xs font-semibold text-emerald-600 flex items-center gap-1"><i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>+${delta} pp</span>`
+    : delta < 0 ? `<span class="text-xs font-semibold text-rose-600 flex items-center gap-1"><i data-lucide="arrow-down-right" class="w-3.5 h-3.5"></i>${delta} pp</span>`
+    : '<span class="text-xs font-semibold text-slate-500">estável</span>';
+  return `<tr class="hover:bg-slate-50">
+    <td class="px-5 py-3">
+      <button onclick="irPara('progresso','${a.id}')" class="font-medium text-slate-800 hover:text-indigo-700 text-left">${esc(a.nome)}</button>
+      <p class="text-xs text-slate-500">${a.turma ? esc(a.turma)+' • ' : ''}${idadeDe(a.nascimento)} anos</p>
+    </td>
+    <td class="px-3 py-3 text-xs text-slate-600">${f.nome}<br><span class="text-slate-400">${f.ciclo}</span></td>
+    <td class="px-3 py-3 text-xs text-slate-600">${ult ? dataPT(ult.data) : '<span class="text-amber-600">nenhuma</span>'}</td>
+    <td class="px-3 py-3">
+      ${p===null ? '<span class="text-xs text-slate-400">sem dados</span>' : `
+        <div class="flex items-center gap-2"><span class="text-xs font-bold w-9" style="color:${corPontuacao(p)}">${p}%</span>
+        <div class="flex-1">${barra(p)}</div></div>
+        <p class="text-[11px] text-slate-500 mt-0.5">${rotuloPontuacao(p)}</p>`}
+    </td>
+    <td class="px-3 py-3">${seta}</td>
+    <td class="px-3 py-3 text-right whitespace-nowrap no-print">
+      <button onclick="irPara('avaliacao','${a.id}')" title="Registar observação" class="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-600"><i data-lucide="clipboard-pen" class="w-4 h-4"></i></button>
+      <button onclick="irPara('progresso','${a.id}')" title="Ver progresso" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600"><i data-lucide="trending-up" class="w-4 h-4"></i></button>
+    </td>
+  </tr>`;
+}
+
+function vazio(msg){
+  return `<div class="text-center py-10 px-4">
+    <i data-lucide="inbox" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+    <p class="text-sm text-slate-500">${esc(msg)}</p></div>`;
+}
+function seletorTurma(){
+  const ts = turmas();
+  if(!ts.length) return '';
+  return `<select onchange="ui.filtroTurma=this.value; render()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+    <option value="">Todas as turmas</option>
+    ${ts.map(t => `<option value="${esc(t)}" ${ui.filtroTurma===t?'selected':''}>${esc(t)}</option>`).join('')}</select>`;
+}
+function seletorFaixa(){
+  return `<select onchange="ui.filtroFaixa=this.value; render()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+    <option value="">Todas as faixas etárias</option>
+    ${FAIXAS.map(f => `<option value="${f.id}" ${ui.filtroFaixa===f.id?'selected':''}>${f.nome}</option>`).join('')}</select>`;
+}
+
+/* =====================================================================
+   6. VISTA: ALUNOS
+   ===================================================================== */
+
+function renderAlunos(){
+  const lista = alunosFiltrados();
+  document.getElementById('view-alunos').innerHTML = `
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+      <div><h2 class="text-xl font-bold">Alunos</h2>
+           <p class="text-sm text-slate-500">${dados.alunos.length} aluno(s) registado(s). A faixa etária é atribuída automaticamente pela data de nascimento.</p></div>
+      <div class="flex flex-wrap gap-2">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input value="${esc(ui.busca)}" oninput="ui.busca=this.value; renderAlunos(); icones()" placeholder="Procurar aluno ou turma"
+                 class="pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm w-56 focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        ${seletorTurma()}
+        <button onclick="abrirModalAluno()" class="flex items-center gap-1.5 bg-indigo-600 text-white text-sm px-3.5 py-2 rounded-lg font-medium hover:bg-indigo-700">
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Novo aluno
+        </button>
+      </div>
+    </div>
+    ${lista.length === 0 ? `<div class="bg-white rounded-2xl border border-slate-200 p-8">${vazio('Nenhum aluno encontrado. Adicione o primeiro aluno ou carregue os dados de exemplo no separador "Dados".')}</div>` : `
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      ${lista.map(a => cartaoAluno(a)).join('')}
+    </div>`}`;
+}
+
+function cartaoAluno(a){
+  const f = faixaDoAluno(a), avs = avaliacoesDe(a.id), ult = avs.length ? avs[avs.length-1] : null;
+  const p = pontuacaoGeral(ult);
+  return `<div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col gap-3">
+    <div class="flex items-start justify-between gap-2">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center shrink-0">${esc(iniciais(a.nome))}</div>
+        <div class="min-w-0">
+          <p class="font-semibold truncate">${esc(a.nome)}</p>
+          <p class="text-xs text-slate-500">${a.turma ? esc(a.turma)+' • ' : ''}${idadeDe(a.nascimento)} anos</p>
+        </div>
+      </div>
+      <div class="flex gap-1 shrink-0">
+        <button onclick="abrirModalAluno('${a.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+        <button onclick="apagarAluno('${a.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+      </div>
+    </div>
+    <div class="text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
+      <span class="font-semibold text-slate-700">${f.nome}</span> — ${esc(f.ciclo)}
+      <p class="text-slate-500 mt-0.5">${esc(f.foco)}</p>
+    </div>
+    ${p === null ? `<p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">Sem observações registadas</p>` : `
+    <div>
+      <div class="flex justify-between text-xs mb-1"><span class="text-slate-600">Consolidação global</span>
+        <span class="font-bold" style="color:${corPontuacao(p)}">${p}% · ${rotuloPontuacao(p)}</span></div>
+      ${barra(p)}
+      <p class="text-[11px] text-slate-500 mt-1">${avs.length} observação(ões) • última a ${dataPT(ult.data)}</p>
+    </div>`}
+    ${a.notas ? `<p class="text-xs text-slate-600 border-l-2 border-indigo-200 pl-2 italic">${esc(a.notas)}</p>` : ''}
+    <div class="flex gap-2 pt-1">
+      <button onclick="irPara('avaliacao','${a.id}')" class="flex-1 text-xs font-medium bg-indigo-600 text-white rounded-lg py-2 hover:bg-indigo-700">Observar</button>
+      <button onclick="irPara('progresso','${a.id}')" class="flex-1 text-xs font-medium border border-slate-300 rounded-lg py-2 hover:bg-slate-50">Progresso</button>
+    </div>
+  </div>`;
+}
+function iniciais(nome){
+  const p = nome.trim().split(/\s+/);
+  return ((p[0]||'')[0] || '' ).toUpperCase() + (p.length>1 ? (p[p.length-1][0]||'').toUpperCase() : '');
+}
+
+/* ---------- modal aluno ---------- */
+function abrirModalAluno(id){
+  const a = id ? alunoPorId(id) : null;
+  document.getElementById('aluno-id').value = a ? a.id : '';
+  document.getElementById('aluno-nome').value = a ? a.nome : '';
+  document.getElementById('aluno-turma').value = a ? (a.turma||'') : '';
+  document.getElementById('aluno-nascimento').value = a ? a.nascimento : '';
+  document.getElementById('aluno-notas').value = a ? (a.notas||'') : '';
+  document.getElementById('modal-aluno-titulo').innerHTML =
+    `<i data-lucide="${a?'pencil':'user-plus'}" class="w-5 h-5 text-indigo-600"></i> ${a?'Editar aluno':'Novo aluno'}`;
+  atualizarFaixaInfo();
+  document.getElementById('modal-aluno').classList.remove('hidden');
+  icones();
+  setTimeout(() => document.getElementById('aluno-nome').focus(), 50);
+}
+function fecharModalAluno(){ document.getElementById('modal-aluno').classList.add('hidden'); }
+
+function atualizarFaixaInfo(){
+  const el = document.getElementById('aluno-faixa-info');
+  const nasc = document.getElementById('aluno-nascimento').value;
+  const idade = idadeDe(nasc);
+  if(idade === null || idade < 0){ el.classList.add('hidden'); return; }
+  const f = faixaPorIdade(idade);
+  el.classList.remove('hidden');
+  el.innerHTML = `<strong>${idade} anos</strong> → referencial <strong>${f.nome}</strong> (${esc(f.ciclo)}) · ${indicadoresDaFaixa(f.id).length} indicadores`;
+}
+
+function apagarAluno(id){
+  const a = alunoPorId(id); if(!a) return;
+  const n = avaliacoesDe(id).length;
+  if(!confirm(`Eliminar "${a.nome}"${n?` e as suas ${n} observação(ões)`:''}? Esta ação não pode ser anulada.`)) return;
+  dados.alunos = dados.alunos.filter(x => x.id !== id);
+  dados.avaliacoes = dados.avaliacoes.filter(x => x.alunoId !== id);
+  if(ui.alunoSel === id) ui.alunoSel = null;
+  guardar(); render(); icones(); toast('Aluno eliminado.');
+}
+
+/* =====================================================================
+   7. VISTA: REGISTAR OBSERVAÇÃO
+   ===================================================================== */
+
+function iniciarRascunho(alunoId){
+  const a = alunoPorId(alunoId);
+  if(!a){ ui.rascunho = null; return; }
+  const ult = ultimaAvaliacao(alunoId);
+  ui.rascunho = {
+    alunoId, data: hoje(),
+    faixaId: (ult && ult.faixaId) || faixaDoAluno(a).id,
+    respostas: {}, observacoes: '', editandoId: null
+  };
+}
+
+function renderAvaliacao(){
+  const el = document.getElementById('view-avaliacao');
+  if(dados.alunos.length === 0){
+    el.innerHTML = `<div class="bg-white rounded-2xl border border-slate-200 p-8">${vazio('Adicione primeiro um aluno para poder registar observações.')}</div>`;
+    return;
+  }
+  if(ui.alunoSel && (!ui.rascunho || ui.rascunho.alunoId !== ui.alunoSel)) iniciarRascunho(ui.alunoSel);
+  if(!ui.rascunho){ ui.alunoSel = alunosFiltrados()[0]?.id || dados.alunos[0].id; iniciarRascunho(ui.alunoSel); }
+
+  const r = ui.rascunho, aluno = alunoPorId(r.alunoId), faixa = FAIXA_POR_ID[r.faixaId];
+  const faixaEsperada = faixaDoAluno(aluno);
+  const total = indicadoresDaFaixa(r.faixaId).length;
+  const respondidos = Object.values(r.respostas).filter(v => v !== undefined && v !== null).length;
+  const parcial = pontuacaoGeral({ faixaId:r.faixaId, respostas:r.respostas });
+
+  el.innerHTML = `
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+      <div><h2 class="text-xl font-bold">Registar observação</h2>
+        <p class="text-sm text-slate-500">Classifique cada requisito de aprendizagem esperado para a faixa etária.</p></div>
+      ${r.editandoId ? `<span class="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1.5 rounded-lg">A editar observação de ${dataPT(r.data)}</span>` : ''}
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mb-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Aluno</label>
+          <select onchange="trocarAlunoAvaliacao(this.value)" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+            ${dados.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(a =>
+              `<option value="${a.id}" ${a.id===r.alunoId?'selected':''}>${esc(a.nome)}${a.turma?' — '+esc(a.turma):''}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Data da observação</label>
+          <input type="date" value="${r.data}" max="${hoje()}" onchange="ui.rascunho.data=this.value"
+                 class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Referencial aplicado</label>
+          <select onchange="trocarFaixaAvaliacao(this.value)" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+            ${FAIXAS.map(f => `<option value="${f.id}" ${f.id===r.faixaId?'selected':''}>${f.nome} — ${esc(f.ciclo)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+        <span class="bg-indigo-50 text-indigo-800 border border-indigo-100 px-2.5 py-1 rounded-md">${idadeDe(aluno.nascimento)} anos • faixa sugerida: ${faixaEsperada.nome}</span>
+        ${r.faixaId !== faixaEsperada.id ? `<span class="bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-md flex items-center gap-1">
+          <i data-lucide="info" class="w-3.5 h-3.5"></i> Referencial adaptado (diferente da faixa etária do aluno)</span>` : ''}
+        <button onclick="copiarUltima()" class="ml-auto flex items-center gap-1.5 border border-slate-300 px-2.5 py-1.5 rounded-lg hover:bg-slate-50">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i> Partir da última observação</button>
+        <button onclick="limparRespostas()" class="flex items-center gap-1.5 border border-slate-300 px-2.5 py-1.5 rounded-lg hover:bg-slate-50">
+          <i data-lucide="eraser" class="w-3.5 h-3.5"></i> Limpar</button>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm mb-4 sticky top-[104px] z-20">
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-[180px]">
+          <div class="flex justify-between text-xs mb-1"><span class="font-medium">Preenchido</span><span>${respondidos}/${total}</span></div>
+          ${barra(total ? Math.round(respondidos/total*100) : 0, '#4f46e5')}
+        </div>
+        <div class="text-center px-3">
+          <p class="text-lg font-bold" style="color:${corPontuacao(parcial)}">${parcial===null?'—':parcial+'%'}</p>
+          <p class="text-[11px] text-slate-500">consolidação</p>
+        </div>
+        <button onclick="guardarAvaliacao()" class="flex items-center gap-1.5 bg-emerald-600 text-white text-sm px-4 py-2.5 rounded-lg font-medium hover:bg-emerald-700">
+          <i data-lucide="save" class="w-4 h-4"></i> Guardar observação
+        </button>
+      </div>
+      <div class="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-100">
+        ${NIVEIS.map(n => `<span class="flex items-center gap-1.5 text-[11px] text-slate-600">
+          <span class="w-3.5 h-3.5 rounded" style="background:${n.cor}"></span>${n.curto} — ${n.nome}</span>`).join('')}
+      </div>
+    </div>
+
+    <p class="text-sm text-slate-600 mb-3 flex items-center gap-2">
+      <i data-lucide="book-open" class="w-4 h-4 text-indigo-600"></i>
+      <span><strong>${faixa.nome}</strong> — ${esc(faixa.foco)}</span></p>
+
+    <div class="space-y-4">${DOMINIOS.map(d => blocoDominio(d, faixa, r)).join('')}</div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mt-4">
+      <label class="block text-sm font-semibold mb-2 flex items-center gap-2"><i data-lucide="notebook-pen" class="w-4 h-4 text-indigo-600"></i> Observações qualitativas</label>
+      <textarea rows="4" oninput="ui.rascunho.observacoes=this.value" placeholder="Contexto, estratégias que resultaram, situações relevantes..."
+        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">${esc(r.observacoes)}</textarea>
+      <div class="flex justify-end mt-3">
+        <button onclick="guardarAvaliacao()" class="flex items-center gap-1.5 bg-emerald-600 text-white text-sm px-4 py-2.5 rounded-lg font-medium hover:bg-emerald-700">
+          <i data-lucide="save" class="w-4 h-4"></i> Guardar observação</button>
+      </div>
+    </div>`;
+}
+
+function blocoDominio(d, faixa, r){
+  const itens = faixa.indicadores[d.id] || [];
+  const vals = itens.map((_,i) => r.respostas[idIndicador(faixa.id, d.id, i)]).filter(v => v !== undefined && v !== null);
+  const p = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/(vals.length*3)*100) : null;
+  return `<section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between gap-3" style="background:${d.cor}0d">
+      <h3 class="font-semibold text-sm flex items-center gap-2"><i data-lucide="${d.icone}" class="w-4 h-4" style="color:${d.cor}"></i>${d.nome}</h3>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-500">${vals.length}/${itens.length}</span>
+        <span class="text-xs font-bold" style="color:${corPontuacao(p)}">${p===null?'—':p+'%'}</span>
+      </div>
+    </div>
+    <div class="divide-y divide-slate-100">
+      ${itens.map((texto,i) => {
+        const id = idIndicador(faixa.id, d.id, i);
+        const atual = r.respostas[id];
+        return `<div class="px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+          <p class="text-sm text-slate-700 flex-1">${esc(texto)}</p>
+          <div class="flex gap-1.5 shrink-0">
+            ${NIVEIS.map(n => `<button onclick="responder('${id}',${n.v})" title="${esc(n.nome)}: ${esc(n.desc)}"
+              class="nivel-btn w-11 h-9 rounded-lg text-xs font-bold border"
+              style="${atual===n.v ? `background:${n.cor}; color:${n.texto}; border-color:${n.texto}55; box-shadow:0 0 0 2px ${n.texto}22;`
+                                   : 'background:#fff; color:#94a3b8; border-color:#e2e8f0;'}">${n.curto}</button>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </section>`;
+}
+
+function responder(indicadorId, valor){
+  if(!ui.rascunho) return;
+  if(ui.rascunho.respostas[indicadorId] === valor) delete ui.rascunho.respostas[indicadorId];
+  else ui.rascunho.respostas[indicadorId] = valor;
+  renderAvaliacao(); icones();
+}
+function trocarAlunoAvaliacao(id){ ui.alunoSel = id; iniciarRascunho(id); renderAvaliacao(); icones(); }
+function trocarFaixaAvaliacao(faixaId){
+  const r = ui.rascunho;
+  if(Object.keys(r.respostas).length && !confirm('Mudar de referencial limpa as respostas já dadas. Continuar?')){ renderAvaliacao(); icones(); return; }
+  r.faixaId = faixaId; r.respostas = {};
+  renderAvaliacao(); icones();
+}
+function limparRespostas(){
+  if(!ui.rascunho || !Object.keys(ui.rascunho.respostas).length) return;
+  if(!confirm('Limpar todas as classificações desta observação?')) return;
+  ui.rascunho.respostas = {};
+  renderAvaliacao(); icones();
+}
+function copiarUltima(){
+  const r = ui.rascunho, ult = ultimaAvaliacao(r.alunoId);
+  if(!ult){ toast('Este aluno ainda não tem observações anteriores.', true); return; }
+  r.faixaId = ult.faixaId;
+  r.respostas = { ...ult.respostas };
+  r.observacoes = '';
+  renderAvaliacao(); icones();
+  toast('Respostas da observação de ' + dataPT(ult.data) + ' carregadas. Ajuste o que mudou.');
+}
+function guardarAvaliacao(){
+  const r = ui.rascunho;
+  if(!r) return;
+  const n = Object.values(r.respostas).filter(v => v !== undefined && v !== null).length;
+  if(n === 0){ toast('Classifique pelo menos um indicador antes de guardar.', true); return; }
+  if(r.editandoId){
+    const av = dados.avaliacoes.find(a => a.id === r.editandoId);
+    if(av){ Object.assign(av, { data:r.data, faixaId:r.faixaId, respostas:{...r.respostas}, observacoes:r.observacoes }); }
+  } else {
+    dados.avaliacoes.push({ id: uid(), alunoId:r.alunoId, data:r.data, faixaId:r.faixaId,
+      respostas:{...r.respostas}, observacoes:r.observacoes, criadoEm: Date.now() });
+  }
+  guardar();
+  const alunoId = r.alunoId;
+  ui.rascunho = null;
+  toast('Observação guardada.');
+  irPara('progresso', alunoId);
+}
+function editarAvaliacao(id){
+  const av = dados.avaliacoes.find(a => a.id === id); if(!av) return;
+  ui.alunoSel = av.alunoId;
+  ui.rascunho = { alunoId:av.alunoId, data:av.data, faixaId:av.faixaId,
+                  respostas:{...av.respostas}, observacoes:av.observacoes||'', editandoId:av.id };
+  irPara('avaliacao');
+}
+function apagarAvaliacao(id){
+  const av = dados.avaliacoes.find(a => a.id === id); if(!av) return;
+  if(!confirm('Eliminar a observação de ' + dataPT(av.data) + '?')) return;
+  dados.avaliacoes = dados.avaliacoes.filter(a => a.id !== id);
+  guardar(); render(); icones(); toast('Observação eliminada.');
+}
+
+/* =====================================================================
+   8. VISTA: PROGRESSO DO ALUNO
+   ===================================================================== */
+
+function renderProgresso(){
+  const el = document.getElementById('view-progresso');
+  if(dados.alunos.length === 0){
+    el.innerHTML = `<div class="bg-white rounded-2xl border border-slate-200 p-8">${vazio('Ainda não há alunos registados.')}</div>`;
+    return;
+  }
+  if(!ui.alunoSel || !alunoPorId(ui.alunoSel)) ui.alunoSel = alunosFiltrados()[0]?.id || dados.alunos[0].id;
+  const aluno = alunoPorId(ui.alunoSel);
+  const avs = avaliacoesDe(aluno.id);
+  const ult = avs.length ? avs[avs.length-1] : null;
+  const pen = avs.length > 1 ? avs[avs.length-2] : null;
+  const geral = pontuacaoGeral(ult), geralAnt = pontuacaoGeral(pen);
+  const faixa = ult ? FAIXA_POR_ID[ult.faixaId] : faixaDoAluno(aluno);
+
+  const seletor = `<select onchange="ui.alunoSel=this.value; render(); icones()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+    ${dados.alunos.slice().sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(a =>
+      `<option value="${a.id}" ${a.id===aluno.id?'selected':''}>${esc(a.nome)}${a.turma?' — '+esc(a.turma):''}</option>`).join('')}</select>`;
+
+  if(!ult){
+    el.innerHTML = `<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 class="text-xl font-bold">Progresso de ${esc(aluno.nome)}</h2>
+        <div class="flex gap-2 no-print">${seletor}
+          <button onclick="irPara('avaliacao','${aluno.id}')" class="bg-indigo-600 text-white text-sm px-3.5 py-2 rounded-lg font-medium hover:bg-indigo-700">Registar observação</button></div>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-8">${vazio('Este aluno ainda não tem observações registadas.')}</div>`;
+    return;
+  }
+
+  const dominios = DOMINIOS.map(d => {
+    const atual = pontuacaoDominio(ult, d.id);
+    const anterior = pen && pen.faixaId === ult.faixaId ? pontuacaoDominio(pen, d.id) : null;
+    return { ...d, atual, anterior, delta: (atual!==null && anterior!==null) ? atual-anterior : null };
+  });
+  const radar = dominios.map(d => ({ curto: d.curto, nome:d.nome, valor:d.atual }));
+  const serie = avs.map(a => ({ data:a.data, valor: pontuacaoGeral(a) })).filter(p => p.valor !== null);
+  const deltaGeral = (geral!==null && geralAnt!==null && pen.faixaId===ult.faixaId) ? geral-geralAnt : null;
+
+  el.innerHTML = `
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div>
+        <h2 class="text-xl font-bold">${esc(aluno.nome)}</h2>
+        <p class="text-sm text-slate-500">${aluno.turma ? esc(aluno.turma)+' • ' : ''}${idadeDe(aluno.nascimento)} anos • ${faixa.nome} (${esc(faixa.ciclo)})</p>
+      </div>
+      <div class="flex flex-wrap gap-2 no-print">${seletor}
+        <button onclick="irPara('avaliacao','${aluno.id}')" class="flex items-center gap-1.5 bg-indigo-600 text-white text-sm px-3.5 py-2 rounded-lg font-medium hover:bg-indigo-700">
+          <i data-lucide="clipboard-pen" class="w-4 h-4"></i> Nova observação</button>
+        <button onclick="window.print()" class="flex items-center gap-1.5 border border-slate-300 text-sm px-3 py-2 rounded-lg hover:bg-slate-50">
+          <i data-lucide="printer" class="w-4 h-4"></i> Relatório</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm print-block">
+        <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i data-lucide="gauge" class="w-4 h-4 text-indigo-600"></i> Situação atual</h3>
+        <p class="text-4xl font-bold" style="color:${corPontuacao(geral)}">${geral}%</p>
+        <p class="text-sm text-slate-600 mb-1">${rotuloPontuacao(geral)}</p>
+        <p class="text-xs text-slate-500">Observação de ${dataPT(ult.data)} • ${preenchimento(ult)}% dos indicadores classificados</p>
+        <div class="mt-3">${barra(geral)}</div>
+        ${deltaGeral !== null ? `<p class="mt-3 text-sm font-medium ${deltaGeral>0?'text-emerald-600':deltaGeral<0?'text-rose-600':'text-slate-500'}">
+          ${deltaGeral>0?'▲ +':deltaGeral<0?'▼ ':'■ '}${deltaGeral===0?'sem alteração':Math.abs(deltaGeral)+' pontos percentuais'} face a ${dataPT(pen.data)}</p>` :
+          `<p class="mt-3 text-xs text-slate-500">Sem comparação direta disponível.</p>`}
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm print-block">
+        <h3 class="font-semibold text-sm mb-1 flex items-center gap-2"><i data-lucide="radar" class="w-4 h-4 text-indigo-600"></i> Perfil por domínio</h3>
+        ${svgRadar(radar)}
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm print-block">
+        <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i data-lucide="lightbulb" class="w-4 h-4 text-amber-500"></i> Leitura pedagógica</h3>
+        ${leituraPedagogica(dominios, geral)}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mb-4 print-block">
+      <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i data-lucide="trending-up" class="w-4 h-4 text-indigo-600"></i> Evolução ao longo do tempo</h3>
+      ${svgLinha(serie)}
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm mb-4 overflow-hidden print-block">
+      <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-sm flex items-center gap-2"><i data-lucide="list-checks" class="w-4 h-4 text-indigo-600"></i> Requisitos de aprendizagem — ${faixa.nome}</h3></div>
+      <div class="divide-y divide-slate-100">
+        ${dominios.map(d => `
+          <div class="px-5 py-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <span class="font-medium text-sm flex items-center gap-2"><i data-lucide="${d.icone}" class="w-4 h-4" style="color:${d.cor}"></i>${d.nome}</span>
+              <span class="text-xs flex items-center gap-2">
+                <span class="font-bold" style="color:${corPontuacao(d.atual)}">${d.atual===null?'—':d.atual+'%'}</span>
+                ${d.delta===null?'':`<span class="${d.delta>0?'text-emerald-600':d.delta<0?'text-rose-600':'text-slate-400'}">${d.delta>0?'+':''}${d.delta} pp</span>`}
+              </span>
+            </div>
+            ${barra(d.atual, d.cor)}
+            <ul class="mt-3 space-y-1.5">
+              ${(faixa.indicadores[d.id]||[]).map((texto,i) => {
+                const iid = idIndicador(faixa.id, d.id, i);
+                const v = ult.respostas[iid];
+                const va = pen ? pen.respostas[iid] : undefined;
+                const n = NIVEIS[v===undefined?0:v];
+                const mudou = (v!==undefined && va!==undefined && v!==va) ? (v>va?'subiu':'desceu') : null;
+                return `<li class="flex items-start gap-2 text-xs">
+                  <span class="px-1.5 py-0.5 rounded font-bold shrink-0" style="background:${v===undefined?'#f1f5f9':n.cor}; color:${v===undefined?'#94a3b8':n.texto}">${v===undefined?'—':n.curto}</span>
+                  <span class="text-slate-700 flex-1">${esc(texto)}</span>
+                  ${mudou==='subiu'?'<span class="text-emerald-600 font-semibold shrink-0">▲</span>':mudou==='desceu'?'<span class="text-rose-600 font-semibold shrink-0">▼</span>':''}
+                </li>`;
+              }).join('')}
+            </ul>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print-block">
+      <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-sm flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-indigo-600"></i> Histórico de observações (${avs.length})</h3></div>
+      <div class="divide-y divide-slate-100">
+        ${avs.slice().reverse().map(av => {
+          const p = pontuacaoGeral(av);
+          return `<div class="px-5 py-3 flex flex-wrap items-start gap-3">
+            <div class="w-24 shrink-0">
+              <p class="text-sm font-medium">${dataPT(av.data)}</p>
+              <p class="text-xs" style="color:${corPontuacao(p)}">${p===null?'—':p+'%'}</p>
+            </div>
+            <div class="flex-1 min-w-[200px]">
+              <p class="text-xs text-slate-500">${FAIXA_POR_ID[av.faixaId]?.nome || '—'} • ${preenchimento(av)}% classificado</p>
+              ${av.observacoes ? `<p class="text-sm text-slate-700 mt-1">${esc(av.observacoes)}</p>` : '<p class="text-xs text-slate-400 mt-1 italic">Sem notas qualitativas.</p>'}
+            </div>
+            <div class="flex gap-1 no-print">
+              <button onclick="editarAvaliacao('${av.id}')" title="Editar" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+              <button onclick="apagarAvaliacao('${av.id}')" title="Eliminar" class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+/* Sugestões automáticas a partir dos pontos fortes e frágeis */
+const SUGESTOES = {
+  atencao:'Fracionar a tarefa em blocos curtos com pausa marcada e reduzir estímulos na mesa de trabalho.',
+  memoria:'Usar apoios visuais dos passos da tarefa e pedir que repita a instrução por palavras próprias.',
+  inibicao:'Combinar sinais não verbais de paragem e antecipar as regras antes de cada atividade.',
+  flexibilidade:'Avisar as mudanças com antecedência e treinar "e se resolvermos de outra forma?".',
+  planeamento:'Introduzir checklist visível da tarefa e revisão do material no início e no fim da aula.',
+  iniciativa:'Definir o primeiro passo em conjunto e reforçar o esforço, não apenas o resultado.',
+  emocional:'Combinar uma estratégia de regulação (pausa, respiração) e nomear a emoção antes de agir.',
+  metacognicao:'Terminar a tarefa com duas perguntas: "o que correu bem?" e "o que faço diferente?".'
+};
+function leituraPedagogica(dominios, geral){
+  const comDados = dominios.filter(d => d.atual !== null);
+  if(!comDados.length) return '<p class="text-sm text-slate-500">Sem dados suficientes.</p>';
+  const ord = comDados.slice().sort((a,b) => a.atual - b.atual);
+  const frageis = ord.slice(0,2), fortes = ord.slice(-2).reverse();
+  const progrediu = dominios.filter(d => d.delta !== null && d.delta > 0);
+  return `
+    <p class="text-xs text-slate-600 mb-3">Perfil global <strong>${rotuloPontuacao(geral).toLowerCase()}</strong> (${geral}%).</p>
+    <p class="text-xs font-semibold text-emerald-700 mb-1">Pontos fortes</p>
+    <ul class="text-xs text-slate-700 mb-3 space-y-0.5">${fortes.map(d => `<li>• ${d.nome} (${d.atual}%)</li>`).join('')}</ul>
+    <p class="text-xs font-semibold text-rose-700 mb-1">A trabalhar</p>
+    <ul class="text-xs text-slate-700 space-y-1.5">${frageis.map(d => `<li><span class="font-medium">${d.nome} (${d.atual}%)</span><br><span class="text-slate-500">${SUGESTOES[d.id]}</span></li>`).join('')}</ul>
+    ${progrediu.length ? `<p class="text-xs text-emerald-700 mt-3 pt-3 border-t border-slate-100">Progrediu em: ${progrediu.map(d=>d.nome).join(', ')}.</p>` : ''}`;
+}
+
+/* =====================================================================
+   9. VISTA: REFERENCIAL
+   ===================================================================== */
+
+let faixaAberta = 'b1';
+function renderReferencial(){
+  document.getElementById('view-referencial').innerHTML = `
+    <div class="mb-4">
+      <h2 class="text-xl font-bold">Referencial de requisitos por faixa etária</h2>
+      <p class="text-sm text-slate-500">${FAIXAS.length} faixas × ${DOMINIOS.length} domínios das funções executivas. Serve de guião de observação em sala.</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      ${NIVEIS.map(n => `<div class="bg-white rounded-xl border border-slate-200 p-3">
+        <span class="inline-block px-2 py-0.5 rounded text-xs font-bold mb-1" style="background:${n.cor}; color:${n.texto}">${n.curto}</span>
+        <p class="text-sm font-semibold">${n.nome}</p><p class="text-xs text-slate-500">${n.desc}</p></div>`).join('')}
+    </div>
+    <div class="space-y-3">
+      ${FAIXAS.map(f => `
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print-block">
+        <button onclick="faixaAberta = faixaAberta==='${f.id}' ? '' : '${f.id}'; renderReferencial(); icones()"
+                class="w-full flex items-center justify-between gap-3 px-5 py-4 text-left hover:bg-slate-50">
+          <div>
+            <p class="font-semibold">${f.nome} <span class="text-slate-400 font-normal">· ${esc(f.ciclo)}</span></p>
+            <p class="text-xs text-slate-500">${esc(f.foco)}</p>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded">${indicadoresDaFaixa(f.id).length} indicadores</span>
+            <i data-lucide="${faixaAberta===f.id?'chevron-up':'chevron-down'}" class="w-4 h-4 text-slate-400"></i>
+          </div>
+        </button>
+        ${faixaAberta===f.id ? `<div class="border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100">
+          ${DOMINIOS.map(d => `<div class="bg-white p-4">
+            <p class="text-sm font-semibold flex items-center gap-2 mb-2"><i data-lucide="${d.icone}" class="w-4 h-4" style="color:${d.cor}"></i>${d.nome}</p>
+            <ul class="space-y-1 text-xs text-slate-700">${(f.indicadores[d.id]||[]).map(t => `<li class="flex gap-2"><span style="color:${d.cor}">▸</span><span>${esc(t)}</span></li>`).join('')}</ul>
+          </div>`).join('')}
+        </div>` : ''}
+      </div>`).join('')}
+    </div>`;
+}
+
+/* =====================================================================
+   10. VISTA: DADOS (exportar / importar / exemplo)
+   ===================================================================== */
+
+function renderDados(){
+  const cartao = (icone, cor, titulo, desc, botoes) => `
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-center gap-2 mb-1"><i data-lucide="${icone}" class="w-4 h-4" style="color:${cor}"></i><h3 class="font-semibold text-sm">${titulo}</h3></div>
+      <p class="text-xs text-slate-500 mb-3">${desc}</p>
+      <div class="flex flex-wrap gap-2">${botoes}</div>
+    </div>`;
+  const btn = (onclick, icone, texto, classe) =>
+    `<button onclick="${onclick}" class="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg font-medium ${classe}"><i data-lucide="${icone}" class="w-4 h-4"></i> ${texto}</button>`;
+
+  document.getElementById('view-dados').innerHTML = `
+    <div class="mb-4"><h2 class="text-xl font-bold">Dados e cópias de segurança</h2>
+      <p class="text-sm text-slate-500">Os registos ficam guardados apenas neste navegador. Exporte regularmente para não perder o histórico.</p></div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      ${cartao('hard-drive-download', '#4f46e5', 'Exportar', 'Guarde uma cópia integral (JSON) ou uma folha de cálculo (CSV) com todas as observações.',
+        btn('exportarJSON()','download','Cópia de segurança (JSON)','bg-indigo-600 text-white hover:bg-indigo-700') +
+        btn('exportarCSV()','table','Observações (CSV)','border border-slate-300 hover:bg-slate-50'))}
+      ${cartao('hard-drive-upload', '#059669', 'Importar', 'Reponha uma cópia JSON criada anteriormente. Os registos atuais são substituídos.',
+        `<label class="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg font-medium border border-slate-300 hover:bg-slate-50 cursor-pointer">
+          <i data-lucide="upload" class="w-4 h-4"></i> Escolher ficheiro JSON
+          <input type="file" accept="application/json,.json" class="hidden" onchange="importarJSON(this)"></label>`)}
+      ${cartao('sparkles', '#d97706', 'Dados de exemplo', 'Carrega uma turma fictícia com observações em várias datas, para explorar a aplicação.',
+        btn('carregarExemplo()','wand-2','Carregar exemplo','border border-amber-300 text-amber-800 bg-amber-50 hover:bg-amber-100'))}
+      ${cartao('trash-2', '#e11d48', 'Apagar tudo', 'Elimina definitivamente todos os alunos e observações guardados neste dispositivo.',
+        btn('apagarTudo()','trash-2','Apagar todos os dados','border border-rose-300 text-rose-700 hover:bg-rose-50'))}
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mt-4">
+      <h3 class="font-semibold text-sm mb-2 flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4 text-slate-500"></i> Proteção de dados</h3>
+      <ul class="text-xs text-slate-600 space-y-1 list-disc pl-4">
+        <li>Nenhuma informação é enviada para a internet: tudo permanece no navegador deste dispositivo.</li>
+        <li>Registe apenas os dados necessários; evite informação clínica sensível nas notas.</li>
+        <li>Limpar o histórico do navegador ou usar janela anónima pode eliminar os registos — exporte com regularidade.</li>
+        <li>Este instrumento apoia a observação pedagógica e não constitui diagnóstico.</li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mt-4">
+      <h3 class="font-semibold text-sm mb-2">Resumo do armazenamento</h3>
+      <p class="text-sm text-slate-600">${dados.alunos.length} aluno(s) • ${dados.avaliacoes.length} observação(ões) • ${turmas().length} turma(s)</p>
+    </div>`;
+}
+
+function descarregar(nome, conteudo, tipo){
+  const blob = new Blob([conteudo], { type: tipo });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function exportarJSON(){
+  descarregar(`funcoes-executivas-${hoje()}.json`,
+    JSON.stringify({ versao:1, exportadoEm:new Date().toISOString(), ...dados }, null, 2),
+    'application/json');
+  toast('Cópia de segurança exportada.');
+}
+function exportarCSV(){
+  if(!dados.avaliacoes.length){ toast('Ainda não há observações para exportar.', true); return; }
+  const linhas = [['Aluno','Turma','Idade na observação','Data','Faixa','Dominio','Indicador','Nivel','Descricao nivel','Observacoes']];
+  dados.avaliacoes.slice().sort((a,b) => a.data < b.data ? -1 : 1).forEach(av => {
+    const al = alunoPorId(av.alunoId); if(!al) return;
+    const f = FAIXA_POR_ID[av.faixaId]; if(!f) return;
+    DOMINIOS.forEach(d => (f.indicadores[d.id]||[]).forEach((texto,i) => {
+      const v = av.respostas[idIndicador(f.id, d.id, i)];
+      if(v === undefined || v === null) return;
+      linhas.push([al.nome, al.turma||'', idadeDe(al.nascimento, av.data), av.data, f.nome, d.nome, texto, v, NIVEIS[v].nome, av.observacoes||'']);
+    }));
+  });
+  const csv = '﻿' + linhas.map(l => l.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+  descarregar(`observacoes-${hoje()}.csv`, csv, 'text/csv;charset=utf-8');
+  toast('CSV exportado (' + (linhas.length-1) + ' registos).');
+}
+function importarJSON(input){
+  const ficheiro = input.files && input.files[0];
+  if(!ficheiro) return;
+  const leitor = new FileReader();
+  leitor.onload = e => {
+    try {
+      const obj = JSON.parse(e.target.result);
+      if(!Array.isArray(obj.alunos) || !Array.isArray(obj.avaliacoes)) throw new Error('formato');
+      if(!confirm(`Importar ${obj.alunos.length} aluno(s) e ${obj.avaliacoes.length} observação(ões)? Os dados atuais serão substituídos.`)) return;
+      dados = { alunos: obj.alunos, avaliacoes: obj.avaliacoes };
+      ui.alunoSel = null; ui.rascunho = null;
+      guardar(); render(); icones(); toast('Dados importados com sucesso.');
+    } catch(err){ toast('Ficheiro inválido ou corrompido.', true); }
+    finally { input.value = ''; }
+  };
+  leitor.readAsText(ficheiro);
+}
+function apagarTudo(){
+  if(!confirm('Apagar TODOS os alunos e observações? Esta ação não pode ser anulada.')) return;
+  if(!confirm('Confirma? Recomenda-se exportar uma cópia de segurança antes.')) return;
+  dados = { alunos:[], avaliacoes:[] }; ui.alunoSel = null; ui.rascunho = null;
+  guardar(); render(); icones(); toast('Todos os dados foram apagados.');
+}
+
+/* =====================================================================
+   11. DADOS DE EXEMPLO
+   ===================================================================== */
+
+function carregarExemplo(){
+  if(dados.alunos.length && !confirm('Isto substitui os dados atuais pelos dados de exemplo. Continuar?')) return;
+  const anoAtual = new Date().getFullYear();
+  const modelo = [
+    ['Ana Rita Marques','1.ºA', 6, 0.45, 0.10],
+    ['Bruno Costa','1.ºA', 6, 0.30, 0.16],
+    ['Carolina Nunes','3.ºB', 8, 0.62, 0.08],
+    ['Diogo Ferreira','3.ºB', 8, 0.38, 0.14],
+    ['Eva Sampaio','5.ºC', 10, 0.70, 0.06],
+    ['Francisco Melo','5.ºC', 11, 0.44, 0.12],
+    ['Gabriela Pinto','8.ºA', 13, 0.55, 0.09],
+    ['Henrique Lopes','8.ºA', 13, 0.33, 0.15]
+  ];
+  const pesoDominio = { atencao:-0.10, memoria:0, inibicao:-0.08, flexibilidade:0.04,
+                        planeamento:-0.06, iniciativa:0.02, emocional:0.06, metacognicao:-0.04 };
+  const notas = ['Responde bem a apoios visuais.','Beneficia de pausas curtas entre tarefas.',
+                 'Melhor desempenho em trabalho a pares.','Necessita de lembrete para iniciar a tarefa.',
+                 'Mostra maior autonomia nas rotinas da manhã.',''];
+  let semente = 7;
+  const rnd = () => (semente = (semente*1103515245 + 12345) % 2147483648) / 2147483648;
+
+  const alunos = [], avaliacoes = [];
+  modelo.forEach(([nome, turma, idade, base, ganho], k) => {
+    const alunoId = uid() + k;
+    const mes = 1 + Math.floor(rnd()*12), dia = 1 + Math.floor(rnd()*27);
+    alunos.push({ id:alunoId, nome, turma,
+      nascimento: `${anoAtual-idade}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`,
+      notas: notas[Math.floor(rnd()*notas.length)], criadoEm: Date.now() });
+    const faixa = faixaPorIdade(idade);
+    [0,1,2].forEach(t => {
+      const d = new Date(); d.setMonth(d.getMonth() - (2-t)*3);
+      const respostas = {};
+      DOMINIOS.forEach(dom => (faixa.indicadores[dom.id]||[]).forEach((_,i) => {
+        const alvo = (base + ganho*t + (pesoDominio[dom.id]||0) + (rnd()-0.5)*0.28) * 3;
+        respostas[idIndicador(faixa.id, dom.id, i)] = Math.max(0, Math.min(3, Math.round(alvo)));
+      }));
+      avaliacoes.push({ id: uid()+k+t, alunoId, data: d.toISOString().slice(0,10), faixaId: faixa.id,
+        respostas, observacoes: t===2 ? notas[Math.floor(rnd()*notas.length)] : '', criadoEm: Date.now()+t });
+    });
+  });
+  dados = { alunos, avaliacoes };
+  ui.alunoSel = null; ui.rascunho = null;
+  guardar(); irPara('painel');
+  toast('Dados de exemplo carregados: 8 alunos e 24 observações.');
+}
+
+/* =====================================================================
+   12. ARRANQUE
+   ===================================================================== */
+
+document.getElementById('form-aluno').addEventListener('submit', e => {
+  e.preventDefault();
+  const id = document.getElementById('aluno-id').value;
+  const nome = document.getElementById('aluno-nome').value.trim();
+  const nascimento = document.getElementById('aluno-nascimento').value;
+  const idade = idadeDe(nascimento);
+  if(!nome){ toast('Indique o nome do aluno.', true); return; }
+  if(idade === null || idade < 0 || idade > 25){ toast('Data de nascimento inválida.', true); return; }
+  const campos = { nome, turma: document.getElementById('aluno-turma').value.trim(),
+                   nascimento, notas: document.getElementById('aluno-notas').value.trim() };
+  if(id){
+    const a = alunoPorId(id); if(a) Object.assign(a, campos);
+    toast('Aluno atualizado.');
+  } else {
+    dados.alunos.push({ id: uid(), ...campos, criadoEm: Date.now() });
+    toast('Aluno adicionado.');
+  }
+  guardar(); fecharModalAluno(); render(); icones();
+});
+document.getElementById('aluno-nascimento').addEventListener('change', atualizarFaixaInfo);
+document.getElementById('modal-aluno').addEventListener('click', e => {
+  if(e.target.id === 'modal-aluno') fecharModalAluno();
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape') fecharModalAluno(); });
+
+/* Se o CDN de estilos não carregar, ativa os estilos alternativos definidos no <head>. */
+(function detetarCDN(){
+  const probe = document.createElement('div');
+  probe.className = 'flex'; probe.style.position = 'absolute'; probe.style.visibility = 'hidden';
+  document.body.appendChild(probe);
+  const temTailwind = getComputedStyle(probe).display === 'flex';
+  probe.remove();
+  if(!temTailwind){
+    document.documentElement.classList.add('sem-cdn');
+    const c = document.getElementById('chip-armazenamento');
+    if(c) c.textContent = 'Modo simplificado (sem ligação aos estilos online)';
+  }
+})();
+
+carregar();
+renderTabs();
+irPara('painel');
+</script>
+</body>
+</html>
