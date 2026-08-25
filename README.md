@@ -5,9 +5,12 @@ Protótipos web de apoio à sala de aula. Cada aplicação é um único ficheiro
 | Aplicação | Ficheiro | Descrição |
 |---|---|---|
 | Libras Gestos & Voz | [`index.html`](index.html) | Protótipo de tradutor de gestos com deteção de mãos pela webcam. |
-| Monitor de Funções Executivas | [`funcoes-executivas.html`](funcoes-executivas.html) | Acompanhamento, pelo professor, dos requisitos de aprendizagem das funções executivas por faixa etária. |
+| Monitor de Funções Executivas | [`funcoes-executivas.html`](funcoes-executivas.html) | Acompanhamento, pelo professor, dos requisitos de aprendizagem das funções executivas por faixa etária. Publicado em [funcoes-executivas.netlify.app](https://funcoes-executivas.netlify.app/). |
 
 ## Monitor de Funções Executivas
+
+Disponível em **https://funcoes-executivas.netlify.app/**
+
 
 Permite ao professor observar e acompanhar a evolução de cada aluno nos requisitos
 de aprendizagem esperados para a sua idade.
@@ -36,3 +39,10 @@ emocional e metacognição — num total de 144 indicadores observáveis.
 uma vez que limpar os dados do navegador elimina os registos.
 
 O instrumento apoia a observação pedagógica e não constitui diagnóstico.
+
+### Publicar uma nova versão
+
+O site da Netlify é servido a partir de um envio manual da pasta de publicação
+(`index.html` = conteúdo de `funcoes-executivas.html`). Para atualizar depois de
+alterar a app, basta voltar a largar o ficheiro em
+`app.netlify.com/projects/funcoes-executivas/deploys`, com o nome `index.html`.
