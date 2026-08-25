@@ -121,6 +121,41 @@
   </div>
 </div>
 
+<!-- ============ MODAL META ============ -->
+<div id="modal-meta" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in max-h-[92vh] overflow-y-auto custom-scroll">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+      <h3 class="font-bold flex items-center gap-2 text-sm" id="modal-meta-titulo"></h3>
+      <button onclick="fecharModalMeta()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <form id="form-meta" class="p-5 space-y-4">
+      <input type="hidden" id="meta-id"><input type="hidden" id="meta-aluno">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Domínio a trabalhar</label>
+        <select id="meta-dominio" onchange="sugerirEstrategia()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"></select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">O que se pretende alcançar *</label>
+        <input id="meta-descricao" required placeholder="Ex.: Registar os trabalhos de casa na caderneta todos os dias"
+               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Estratégia a aplicar</label>
+        <textarea id="meta-estrategia" rows="3" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+        <p class="text-[11px] text-slate-500 mt-1">Preenchida com a estratégia sugerida para esta faixa etária. Pode ajustá-la.</p>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Data de revisão *</label>
+        <input id="meta-prazo" type="date" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+      </div>
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" onclick="fecharModalMeta()" class="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50">Cancelar</button>
+        <button type="submit" class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">Guardar meta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] bg-slate-900 text-white text-sm px-4 py-2.5 rounded-lg shadow-lg no-print"></div>
 
 <script>
@@ -147,188 +182,643 @@ const NIVEIS = [
 ];
 
 /* Indicadores = requisitos de aprendizagem esperados em cada faixa etária */
+/* Cada indicador é um par [requisito observável, exemplo concreto de evidência].
+   A ordem nunca deve mudar: o identificador de cada indicador é o seu índice,
+   e alterá-la faria as observações já guardadas apontar para outro requisito. */
 const FAIXAS = [
   {
-    id:'b1', nome:'3 a 4 anos', ciclo:'Pré-escolar (inicial)', min:3, max:4,
-    foco:'Autorregulação inicial apoiada pelo adulto e pela rotina.',
+    id:"b1", nome:"3 a 4 anos", ciclo:"Pré-escolar (inicial)", min:3, max:4,
+    foco:"Autorregulação inicial apoiada pelo adulto e pela rotina.",
     indicadores:{
-      atencao:['Mantém-se envolvido numa atividade escolhida durante 5 a 10 minutos',
-               'Orienta o olhar para o adulto quando é chamado pelo nome',
-               'Termina uma tarefa curta sem mudar de espaço'],
-      memoria:['Cumpre instruções simples de um passo',
-               'Recorda qual é o momento seguinte da rotina quando questionado',
-               'Repete sequências de 2 elementos (palavras, gestos ou objetos)'],
-      inibicao:['Espera pela sua vez em jogos curtos com apoio do adulto',
-                'Para a ação quando é dado o sinal combinado',
-                'Evita mexer em materiais quando é lembrado da regra'],
-      flexibilidade:['Aceita mudar de atividade quando é avisado com antecedência',
-                     'Experimenta uma forma diferente de brincar sugerida por outra criança',
-                     'Adapta-se a alterações simples da rotina com apoio'],
-      planeamento:['Escolhe o material antes de iniciar a brincadeira',
-                   'Arruma os materiais no local certo com orientação',
-                   'Segue uma sequência de 2 passos apoiada em imagens'],
-      iniciativa:['Inicia uma brincadeira por iniciativa própria',
-                  'Pede ajuda quando não consegue continuar',
-                  'Tenta novamente após a primeira dificuldade'],
-      emocional:['Aceita o conforto do adulto quando fica frustrado',
-                 'Nomeia emoções básicas (alegre, triste, zangado)',
-                 'Recupera a calma em poucos minutos após um conflito'],
-      metacognicao:['Reconhece quando terminou a tarefa',
-                    'Mostra o seu trabalho e diz o que fez',
-                    'Percebe quando precisa de ajuda']
+      atencao:[
+        ["Mantém-se envolvido numa atividade escolhida durante 5 a 10 minutos",
+         "No canto de jogo, permanece na mesma atividade cerca de 5 minutos sem vaguear pela sala."],
+        ["Orienta o olhar para o adulto quando é chamado pelo nome",
+         "Ao ouvir o seu nome, procura o adulto com o olhar em poucos segundos, mesmo com ruído à volta."],
+        ["Termina uma tarefa curta sem mudar de espaço",
+         "Completa um puzzle de 4 peças sentado no mesmo lugar."],
+        ["Participa numa história ou canção em grupo do princípio ao fim",
+         "Mantém-se na manta durante uma história de 5 minutos, acompanhando gestos ou refrões."],
+        ["Volta à atividade depois de olhar para o que se passa à volta",
+         "Se um colega passa a correr, olha e retoma o que estava a fazer sem apoio do adulto."]],
+      memoria:[
+        ["Cumpre instruções simples de um passo",
+         "Perante \"vai buscar o teu babete\", executa sem precisar de repetição."],
+        ["Recorda qual é o momento seguinte da rotina quando questionado",
+         "Depois do lanche, diz ou aponta o que vem a seguir no quadro de rotinas."],
+        ["Repete sequências de 2 elementos (palavras, gestos ou objetos)",
+         "Reproduz \"bate palmas, bate no joelho\" pela mesma ordem."],
+        ["Reconhece onde ficam os materiais que usa todos os dias",
+         "Vai buscar os lápis à caixa certa sem que lhe indiquem o local."],
+        ["Recorda o nome dos colegas do grupo e do adulto de referência",
+         "Chama os colegas pelo nome durante a brincadeira."]],
+      inibicao:[
+        ["Espera pela sua vez em jogos curtos com apoio do adulto",
+         "Num jogo de lançar a bola, aguarda a vez quando o adulto assinala com um gesto."],
+        ["Para a ação quando é dado o sinal combinado",
+         "Ao ouvir a música parar, interrompe o movimento na maioria das vezes."],
+        ["Evita mexer em materiais quando é lembrado da regra",
+         "Depois de \"isto é só para olhar\", mantém as mãos afastadas durante a atividade."],
+        ["Fala na sua vez em conversas de pequeno grupo",
+         "Na roda da manhã, espera que o colega termine antes de contar a sua novidade."],
+        ["Trava um impulso físico quando o adulto antecipa a regra",
+         "Antes de sair para o recreio, para à porta como foi combinado."]],
+      flexibilidade:[
+        ["Aceita mudar de atividade quando é avisado com antecedência",
+         "Com o aviso \"faltam 2 minutos\", arruma sem protesto prolongado."],
+        ["Experimenta uma forma diferente de brincar sugerida por outra criança",
+         "Aceita construir a torre de outra maneira quando o colega propõe."],
+        ["Adapta-se a alterações simples da rotina com apoio",
+         "Num dia sem recreio por causa da chuva, aceita a alternativa depois de lhe ser explicada."],
+        ["Aceita partilhar ou trocar de material sem desorganizar a brincadeira",
+         "Troca o carro pelo camião quando o colega pede, mantendo o jogo a decorrer."],
+        ["Tolera que o resultado não fique como tinha imaginado",
+         "Se a construção cai, aceita recomeçar em vez de abandonar a área."]],
+      planeamento:[
+        ["Escolhe o material antes de iniciar a brincadeira",
+         "Antes de pintar, vai buscar folha e pincel por iniciativa própria."],
+        ["Arruma os materiais no local certo com orientação",
+         "No fim, coloca as peças na caixa correspondente quando lhe indicam a imagem."],
+        ["Segue uma sequência de 2 passos apoiada em imagens",
+         "Com o cartão da rotina, lava as mãos e senta-se para o lanche."],
+        ["Antecipa o que precisa para uma tarefa conhecida",
+         "Antes de ir para a rua, vai buscar o casaco sem lembrete."],
+        ["Mantém a área de trabalho arrumada durante a atividade",
+         "Vai pousando as peças na caixa em vez de as espalhar pelo chão."]],
+      iniciativa:[
+        ["Inicia uma brincadeira por iniciativa própria",
+         "Ao chegar à sala, escolhe uma área e começa a brincar sem esperar indicação."],
+        ["Pede ajuda quando não consegue continuar",
+         "Chama o adulto ou estende-lhe o material em vez de desistir em silêncio."],
+        ["Tenta novamente após a primeira dificuldade",
+         "Se o encaixe não entra, roda a peça e volta a tentar."],
+        ["Envolve-se em atividades novas propostas pelo adulto",
+         "Experimenta um material que nunca usou, mesmo hesitando no início."],
+        ["Conclui a atividade que escolheu antes de mudar",
+         "Termina o desenho que começou antes de ir para outra área."]],
+      emocional:[
+        ["Aceita o conforto do adulto quando fica frustrado",
+         "Depois de chorar, acalma-se ao colo ou junto do adulto em poucos minutos."],
+        ["Nomeia emoções básicas (alegre, triste, zangado)",
+         "Aponta a carinha que corresponde ao que sente no quadro das emoções."],
+        ["Recupera a calma em poucos minutos após um conflito",
+         "Depois de uma disputa por um brinquedo, regressa à brincadeira em cerca de 5 minutos."],
+        ["Procura o adulto em vez de reagir fisicamente",
+         "Quando lhe tiram um brinquedo, vem dizer ao adulto em vez de bater."],
+        ["Tolera esperar por algo que deseja durante um curto período",
+         "Aguarda a sua vez no baloiço com o apoio da contagem do adulto."]],
+      metacognicao:[
+        ["Reconhece quando terminou a tarefa",
+         "Diz \"já está\" ou mostra o trabalho quando acaba."],
+        ["Mostra o seu trabalho e diz o que fez",
+         "Aponta o desenho e explica o que desenhou."],
+        ["Percebe quando precisa de ajuda",
+         "Diz \"não consigo\" ou chama o adulto perante uma dificuldade."],
+        ["Nota quando algo não ficou como queria",
+         "Comenta que a peça não encaixa ou que o traço saiu fora."],
+        ["Compara o seu trabalho com o modelo apresentado",
+         "Olha para o exemplo do adulto e ajusta a sua construção."]]
     }
   },
   {
-    id:'b2', nome:'5 a 6 anos', ciclo:'Pré-escolar / 1.º ano', min:5, max:6,
-    foco:'Transição para tarefas dirigidas e cumprimento de regras de grupo.',
+    id:"b2", nome:"5 a 6 anos", ciclo:"Pré-escolar / 1.º ano", min:5, max:6,
+    foco:"Transição para tarefas dirigidas e cumprimento de regras de grupo.",
     indicadores:{
-      atencao:['Mantém atenção numa tarefa dirigida durante 10 a 15 minutos',
-               'Ignora pequenos ruídos ou movimentos à sua volta durante a tarefa',
-               'Retoma a tarefa após uma interrupção breve'],
-      memoria:['Cumpre instruções de dois passos sem que sejam repetidas',
-               'Mantém as regras de um jogo presentes ao longo da atividade',
-               'Reconta a sequência de uma história curta'],
-      inibicao:['Espera pela sua vez sem lembrete constante',
-                'Coloca o dedo no ar antes de falar no grupo',
-                'Resiste a mexer em materiais que não são para usar'],
-      flexibilidade:['Muda de estratégia quando a primeira não resulta, com pista do adulto',
-                     'Aceita jogar com regras diferentes das habituais',
-                     'Lida com mudanças de rotina sem se desorganizar'],
-      planeamento:['Prepara o material necessário antes de começar',
-                   'Organiza a tarefa em 2 ou 3 passos com apoio visual',
-                   'Arruma o espaço de trabalho no fim da atividade'],
-      iniciativa:['Começa a tarefa sem esperar por instrução individual',
-                  'Persiste numa tarefa difícil durante alguns minutos',
-                  'Pede ajuda de forma clara e específica'],
-      emocional:['Usa uma estratégia combinada para se acalmar (respirar, cantinho da calma)',
-                 'Expressa desagrado por palavras em vez de gestos bruscos',
-                 'Tolera perder num jogo sem abandonar a atividade'],
-      metacognicao:['Verifica se cumpriu o pedido antes de entregar',
-                    'Identifica a parte da tarefa que foi mais difícil',
-                    'Explica o que conseguiu fazer e porquê']
+      atencao:[
+        ["Mantém atenção numa tarefa dirigida durante 10 a 15 minutos",
+         "Numa ficha de grafismo, trabalha 10 minutos com um lembrete, no máximo."],
+        ["Ignora pequenos ruídos ou movimentos à sua volta durante a tarefa",
+         "Continua a tarefa quando alguém entra na sala."],
+        ["Retoma a tarefa após uma interrupção breve",
+         "Depois de responder a uma pergunta, volta ao trabalho sem novo pedido."],
+        ["Escuta a instrução até ao fim antes de começar",
+         "Aguarda que o adulto termine de explicar antes de pegar no lápis."],
+        ["Mantém o foco em tarefas com dois materiais em cima da mesa",
+         "Usa a tesoura e a cola sem se dispersar com o que está ao lado."]],
+      memoria:[
+        ["Cumpre instruções de dois passos sem que sejam repetidas",
+         "Perante \"guarda o livro e senta-te no tapete\", faz as duas coisas."],
+        ["Mantém as regras de um jogo presentes ao longo da atividade",
+         "Num jogo de tabuleiro, respeita a regra até ao fim sem que lha recordem."],
+        ["Reconta a sequência de uma história curta",
+         "Diz o que aconteceu no início, no meio e no fim."],
+        ["Recorda o que ficou por terminar na sessão anterior",
+         "Sabe em que ponto ficou o trabalho começado no dia anterior."],
+        ["Copia um modelo simples olhando alternadamente para o exemplo",
+         "Reproduz uma sequência de 4 cores consultando o modelo."]],
+      inibicao:[
+        ["Espera pela sua vez sem lembrete constante",
+         "Num jogo de grupo, aguarda a vez com um lembrete, no máximo."],
+        ["Coloca o dedo no ar antes de falar no grupo",
+         "Na maior parte das intervenções, espera ser chamado."],
+        ["Resiste a mexer em materiais que não são para usar",
+         "Mantém o material do colega intocado durante a tarefa."],
+        ["Corrige-se quando percebe que quebrou uma regra",
+         "Para a meio da ação e diz \"esqueci-me\" sem que o adulto intervenha."],
+        ["Controla o impulso de responder antes de ouvir a pergunta toda",
+         "Aguarda o fim da pergunta antes de levantar o dedo."]],
+      flexibilidade:[
+        ["Muda de estratégia quando a primeira não resulta, com pista do adulto",
+         "Perante \"e se tentares ao contrário?\", experimenta outra forma."],
+        ["Aceita jogar com regras diferentes das habituais",
+         "Adere a uma variante do jogo proposta pelo grupo."],
+        ["Lida com mudanças de rotina sem se desorganizar",
+         "Com o horário alterado, acompanha a mudança depois de avisado."],
+        ["Aceita trabalhar com um par que não escolheu",
+         "Participa na tarefa a pares sem recusar o colega atribuído."],
+        ["Aceita que a sua ideia não seja a escolhida pelo grupo",
+         "Continua a participar depois de o grupo optar por outra proposta."]],
+      planeamento:[
+        ["Prepara o material necessário antes de começar",
+         "Traz lápis, borracha e caderno antes de iniciar a ficha."],
+        ["Organiza a tarefa em 2 ou 3 passos com apoio visual",
+         "Segue o cartaz de passos: recortar, colar, pintar."],
+        ["Arruma o espaço de trabalho no fim da atividade",
+         "Deixa a mesa limpa sem lembrete individual."],
+        ["Guarda os trabalhos no local certo",
+         "Coloca a ficha na capa correspondente."],
+        ["Distribui o trabalho pelo tempo dado",
+         "Avisado de que tem 10 minutos, não deixa metade por fazer."]],
+      iniciativa:[
+        ["Começa a tarefa sem esperar por instrução individual",
+         "Após a explicação coletiva, inicia sem que o adulto se dirija a ele."],
+        ["Persiste numa tarefa difícil durante alguns minutos",
+         "Continua o puzzle difícil 3 a 5 minutos antes de pedir ajuda."],
+        ["Pede ajuda de forma clara e específica",
+         "Diz \"não sei onde encaixa esta peça\" em vez de \"não consigo\"."],
+        ["Oferece-se para tarefas da sala",
+         "Voluntaria-se para distribuir material ou ajudar um colega."],
+        ["Retoma o trabalho por iniciativa própria depois do intervalo",
+         "Regressa do recreio e volta à tarefa sem novo pedido."]],
+      emocional:[
+        ["Usa uma estratégia combinada para se acalmar (respirar, cantinho da calma)",
+         "Vai ao cantinho da calma quando é sinalizado e regressa mais tranquilo."],
+        ["Expressa desagrado por palavras em vez de gestos bruscos",
+         "Diz \"não gostei\" em vez de empurrar."],
+        ["Tolera perder num jogo sem abandonar a atividade",
+         "Termina o jogo mesmo quando percebe que vai perder."],
+        ["Aceita a espera quando o adulto está ocupado",
+         "Aguarda um ou dois minutos sem insistir repetidamente."],
+        ["Reconhece o que sentiu depois de um conflito",
+         "Já calmo, diz que ficou zangado e explica porquê."]],
+      metacognicao:[
+        ["Verifica se cumpriu o pedido antes de entregar",
+         "Relê ou observa a ficha e completa o que faltava."],
+        ["Identifica a parte da tarefa que foi mais difícil",
+         "Aponta o exercício em que teve mais dificuldade."],
+        ["Explica o que conseguiu fazer e porquê",
+         "Diz, por exemplo, \"consegui porque contei pelos dedos\"."],
+        ["Escolhe o material que o ajuda na tarefa",
+         "Pede a reta numérica ou os cubos quando precisa."],
+        ["Aceita corrigir sem interpretar a correção como castigo",
+         "Refaz o exercício assinalado mantendo-se envolvido."]]
     }
   },
   {
-    id:'b3', nome:'7 a 8 anos', ciclo:'1.º ciclo (2.º/3.º ano)', min:7, max:8,
-    foco:'Autonomia no trabalho escrito e organização do material.',
+    id:"b3", nome:"7 a 8 anos", ciclo:"1.º ciclo (2.º/3.º ano)", min:7, max:8,
+    foco:"Autonomia no trabalho escrito e organização do material.",
     indicadores:{
-      atencao:['Mantém o foco numa tarefa escrita durante cerca de 20 minutos',
-               'Conclui a ficha sem se distrair com o que os colegas fazem',
-               'Retoma o trabalho autonomamente após uma pausa'],
-      memoria:['Segue instruções de três passos',
-               'Copia do quadro mantendo o sentido do texto',
-               'Faz cálculo mental simples guardando resultados intermédios'],
-      inibicao:['Pensa antes de responder, evitando respostas impulsivas',
-                'Cumpre as regras da sala sem lembretes frequentes',
-                'Adia uma vontade (falar, mexer no material) até ao momento adequado'],
-      flexibilidade:['Corrige o método quando percebe que o resultado está errado',
-                     'Aceita sugestões dos colegas no trabalho de grupo',
-                     'Passa de uma tarefa para outra sem resistência'],
-      planeamento:['Regista os trabalhos de casa na caderneta',
-                   'Mantém o caderno e o material organizados por disciplina',
-                   'Divide a tarefa em passos antes de começar'],
-      iniciativa:['Inicia o trabalho autonomamente após a instrução coletiva',
-                  'Termina o que começou dentro do tempo dado',
-                  'Tenta pelo menos duas estratégias antes de desistir'],
-      emocional:['Gere a frustração perante o erro sem interromper o trabalho',
-                 'Pede uma pausa em vez de reagir com agressividade',
-                 'Aceita a correção do professor sem se desmotivar'],
-      metacognicao:['Revê o trabalho antes de entregar',
-                    'Identifica os erros que comete com mais frequência',
-                    'Explica o raciocínio que usou para chegar à resposta']
+      atencao:[
+        ["Mantém o foco numa tarefa escrita durante cerca de 20 minutos",
+         "Completa uma ficha de 20 minutos com um ou dois desvios curtos."],
+        ["Conclui a ficha sem se distrair com o que os colegas fazem",
+         "Não interrompe o trabalho para observar a mesa ao lado."],
+        ["Retoma o trabalho autonomamente após uma pausa",
+         "Depois do intervalo, senta-se e continua no ponto onde ia."],
+        ["Mantém a atenção durante uma explicação de 10 minutos",
+         "Acompanha o quadro e responde a uma pergunta feita no fim."],
+        ["Trabalha com ruído de fundo da sala sem perder o fio",
+         "Mantém o ritmo enquanto os colegas trabalham a pares."]],
+      memoria:[
+        ["Segue instruções de três passos",
+         "Perante \"abre o manual na 24, resolve o 3 e corrige a lápis\", executa a sequência completa."],
+        ["Copia do quadro mantendo o sentido do texto",
+         "O texto copiado está completo e sem palavras trocadas."],
+        ["Faz cálculo mental simples guardando resultados intermédios",
+         "Resolve 27+15 mentalmente sem perder o valor parcial."],
+        ["Recorda o que foi combinado na aula anterior",
+         "Sabe o que ficou como tarefa sem consultar ninguém."],
+        ["Mantém o enunciado em mente enquanto resolve",
+         "Responde ao que é pedido, sem se desviar a meio do problema."]],
+      inibicao:[
+        ["Pensa antes de responder, evitando respostas impulsivas",
+         "Faz uma pausa curta em vez de dizer o primeiro número que lhe ocorre."],
+        ["Cumpre as regras da sala sem lembretes frequentes",
+         "Precisa de menos de dois lembretes por aula."],
+        ["Adia uma vontade (falar, mexer no material) até ao momento adequado",
+         "Guarda a novidade para o momento de partilha."],
+        ["Termina o exercício antes de mudar de tarefa",
+         "Não salta para o exercício seguinte deixando o anterior a meio."],
+        ["Mantém-se no lugar durante o tempo de trabalho combinado",
+         "Levanta-se apenas com autorização ou por um motivo concreto."]],
+      flexibilidade:[
+        ["Corrige o método quando percebe que o resultado está errado",
+         "Refaz a conta por outro processo depois de detetar o erro."],
+        ["Aceita sugestões dos colegas no trabalho de grupo",
+         "Integra uma ideia do par no trabalho final."],
+        ["Passa de uma tarefa para outra sem resistência",
+         "Muda de Matemática para Português no tempo previsto."],
+        ["Resolve o mesmo problema por mais do que um caminho",
+         "Mostra duas formas de chegar ao resultado."],
+        ["Lida com um imprevisto na aula sem se desorganizar",
+         "Adapta-se a um professor substituto ou a uma sala diferente."]],
+      planeamento:[
+        ["Regista os trabalhos de casa na caderneta",
+         "A caderneta tem o registo completo no fim do dia."],
+        ["Mantém o caderno e o material organizados por disciplina",
+         "Encontra a folha certa em menos de um minuto."],
+        ["Divide a tarefa em passos antes de começar",
+         "Antes de escrever o texto, faz uma lista de ideias ou um plano."],
+        ["Traz o material necessário para a aula",
+         "Raramente pede material emprestado."],
+        ["Verifica se entregou tudo o que era pedido",
+         "Confirma os exercícios em falta antes de fechar o caderno."]],
+      iniciativa:[
+        ["Inicia o trabalho autonomamente após a instrução coletiva",
+         "Começa nos primeiros minutos, sem apoio individual."],
+        ["Termina o que começou dentro do tempo dado",
+         "Entrega a tarefa concluída no tempo previsto."],
+        ["Tenta pelo menos duas estratégias antes de desistir",
+         "Perante um problema difícil, experimenta desenhar e depois calcular."],
+        ["Pede esclarecimento quando não percebeu o enunciado",
+         "Levanta o dedo e pergunta em vez de ficar parado."],
+        ["Aproveita o tempo que sobra para rever ou avançar",
+         "Ao terminar, relê o trabalho ou passa ao exercício seguinte."]],
+      emocional:[
+        ["Gere a frustração perante o erro sem interromper o trabalho",
+         "Depois de errar, apaga e continua sem se recusar a trabalhar."],
+        ["Pede uma pausa em vez de reagir com agressividade",
+         "Usa o sinal combinado para sair um momento."],
+        ["Aceita a correção do professor sem se desmotivar",
+         "Depois do reparo, mantém o envolvimento na tarefa."],
+        ["Resolve desentendimentos com colegas falando",
+         "Explica o que aconteceu em vez de gritar ou empurrar."],
+        ["Mantém-se calmo perante uma tarefa que considera difícil",
+         "Começa a tarefa mesmo dizendo que \"não vai conseguir\"."]],
+      metacognicao:[
+        ["Revê o trabalho antes de entregar",
+         "Relê e corrige pelo menos um erro por iniciativa própria."],
+        ["Identifica os erros que comete com mais frequência",
+         "Diz que costuma falhar nos sinais ou na acentuação."],
+        ["Explica o raciocínio que usou para chegar à resposta",
+         "Descreve os passos que seguiu quando é questionado."],
+        ["Sabe dizer o que ainda não percebeu",
+         "Identifica a parte da matéria em que tem dúvidas."],
+        ["Compara o seu trabalho com os critérios dados",
+         "Usa a lista de verificação antes de entregar."]]
     }
   },
   {
-    id:'b4', nome:'9 a 11 anos', ciclo:'4.º a 6.º ano', min:9, max:11,
-    foco:'Gestão de tarefas com vários passos e início do estudo autónomo.',
+    id:"b4", nome:"9 a 11 anos", ciclo:"4.º a 6.º ano", min:9, max:11,
+    foco:"Gestão de tarefas com vários passos e início do estudo autónomo.",
     indicadores:{
-      atencao:['Mantém-se concentrado cerca de 30 minutos numa tarefa exigente',
-               'Filtra distrações do ambiente durante o estudo',
-               'Mantém o ritmo de trabalho até ao fim da aula'],
-      memoria:['Segue instruções múltiplas dadas oralmente uma só vez',
-               'Toma notas enquanto ouve a explicação',
-               'Resolve problemas de vários passos sem perder os dados'],
-      inibicao:['Evita comentários fora de tempo durante a aula',
-                'Adia atividades de lazer até concluir a tarefa',
-                'Controla a impulsividade em situações de conflito'],
-      flexibilidade:['Usa uma estratégia alternativa quando a primeira falha',
-                     'Aceita mudanças de plano ou de grupo sem desmotivar',
-                     'Considera outros pontos de vista numa discussão'],
-      planeamento:['Planeia as etapas de um trabalho com prazo de vários dias',
-                   'Estima o tempo necessário para cada tarefa',
-                   'Traz o material certo para cada aula'],
-      iniciativa:['Inicia o estudo em casa sem ser lembrado',
-                  'Persiste em tarefas longas ou pouco motivadoras',
-                  'Procura recursos (manual, colega, professor) para avançar'],
-      emocional:['Mantém o desempenho em situações de avaliação',
-                 'Recupera o foco após um contratempo',
-                 'Expressa desacordo de forma assertiva'],
-      metacognicao:['Avalia a qualidade do próprio trabalho com critérios dados',
-                    'Reconhece que estratégia de estudo lhe resulta melhor',
-                    'Define uma meta de melhoria concreta']
+      atencao:[
+        ["Mantém-se concentrado cerca de 30 minutos numa tarefa exigente",
+         "Trabalha 30 minutos com uma pausa curta, no máximo."],
+        ["Filtra distrações do ambiente durante o estudo",
+         "Mantém a tarefa apesar da conversa de fundo na sala."],
+        ["Mantém o ritmo de trabalho até ao fim da aula",
+         "A qualidade dos últimos exercícios é semelhante à dos primeiros."],
+        ["Acompanha uma explicação longa tomando notas",
+         "Regista os pontos principais ao longo de 15 minutos de exposição."],
+        ["Retoma rapidamente depois de uma interrupção",
+         "Volta ao ponto onde ia em menos de um minuto."]],
+      memoria:[
+        ["Segue instruções múltiplas dadas oralmente uma só vez",
+         "Executa quatro indicações seguidas sem pedir repetição."],
+        ["Toma notas enquanto ouve a explicação",
+         "As notas cobrem os pontos essenciais e são legíveis mais tarde."],
+        ["Resolve problemas de vários passos sem perder os dados",
+         "Num problema de três etapas, usa todos os dados corretos."],
+        ["Relaciona a matéria nova com o que já sabia",
+         "Refere um conteúdo anterior ao explicar o novo."],
+        ["Recorda prazos e compromissos combinados na semana",
+         "Sabe que trabalhos tem para entregar sem consultar o colega."]],
+      inibicao:[
+        ["Evita comentários fora de tempo durante a aula",
+         "Intervém quando lhe é dada a palavra."],
+        ["Adia atividades de lazer até concluir a tarefa",
+         "Só pega no jogo depois de terminar o trabalho."],
+        ["Controla a impulsividade em situações de conflito",
+         "Afasta-se ou fala, em vez de responder na mesma moeda."],
+        ["Lê o enunciado todo antes de responder",
+         "Não começa a resolver a partir da primeira linha apenas."],
+        ["Mantém-se na tarefa mesmo quando os colegas conversam",
+         "Não adere à conversa iniciada ao lado."]],
+      flexibilidade:[
+        ["Usa uma estratégia alternativa quando a primeira falha",
+         "Muda de método por iniciativa própria após duas tentativas."],
+        ["Aceita mudanças de plano ou de grupo sem desmotivar",
+         "Continua a trabalhar depois de o grupo ser reorganizado."],
+        ["Considera outros pontos de vista numa discussão",
+         "Reformula a sua posição depois de ouvir um argumento."],
+        ["Ajusta o trabalho ao feedback recebido",
+         "A segunda versão incorpora as correções indicadas."],
+        ["Adapta-se a diferentes formatos de tarefa",
+         "Passa de exercícios para um trabalho de projeto sem bloquear."]],
+      planeamento:[
+        ["Planeia as etapas de um trabalho com prazo de vários dias",
+         "Apresenta um plano com as fases e as datas."],
+        ["Estima o tempo necessário para cada tarefa",
+         "A estimativa aproxima-se do tempo realmente gasto."],
+        ["Traz o material certo para cada aula",
+         "Menos de uma falha de material por semana."],
+        ["Organiza os apontamentos de forma a poder estudar por eles",
+         "Os cadernos estão datados e com títulos."],
+        ["Começa os trabalhos com antecedência em relação ao prazo",
+         "Não deixa a totalidade do trabalho para a véspera."]],
+      iniciativa:[
+        ["Inicia o estudo em casa sem ser lembrado",
+         "No registo combinado com a família, começa por iniciativa própria na maioria dos dias."],
+        ["Persiste em tarefas longas ou pouco motivadoras",
+         "Conclui a tarefa mesmo dizendo que é aborrecida."],
+        ["Procura recursos (manual, colega, professor) para avançar",
+         "Consulta o manual antes de pedir a resposta."],
+        ["Propõe ideias no trabalho de grupo",
+         "Contribui com pelo menos uma proposta concreta."],
+        ["Retoma um trabalho interrompido em dias diferentes",
+         "Continua o projeto na sessão seguinte sem recomeçar do zero."]],
+      emocional:[
+        ["Mantém o desempenho em situações de avaliação",
+         "O resultado do teste aproxima-se do trabalho diário."],
+        ["Recupera o foco após um contratempo",
+         "Depois de uma discussão no recreio, retoma a aula."],
+        ["Expressa desacordo de forma assertiva",
+         "Diz que discorda e explica porquê, sem elevar a voz."],
+        ["Lida com a crítica sem se desorganizar",
+         "Ouve o reparo e continua a trabalhar."],
+        ["Pede ajuda quando se sente sobrecarregado",
+         "Sinaliza ao professor ou ao encarregado de educação."]],
+      metacognicao:[
+        ["Avalia a qualidade do próprio trabalho com critérios dados",
+         "A autoavaliação aproxima-se da avaliação do professor."],
+        ["Reconhece que estratégia de estudo lhe resulta melhor",
+         "Explica porque prefere resumos ou exercícios."],
+        ["Define uma meta de melhoria concreta",
+         "Formula um objetivo específico e verificável."],
+        ["Identifica o tipo de erro que cometeu",
+         "Distingue erro de distração de erro de conteúdo."],
+        ["Verifica o resultado antes de dar a tarefa por terminada",
+         "Confirma se a resposta faz sentido no contexto do problema."]]
     }
   },
   {
-    id:'b5', nome:'12 a 14 anos', ciclo:'3.º ciclo', min:12, max:14,
-    foco:'Gestão de prazos, método de estudo e regulação em avaliação.',
+    id:"b5", nome:"12 a 14 anos", ciclo:"3.º ciclo", min:12, max:14,
+    foco:"Gestão de prazos, método de estudo e regulação em avaliação.",
     indicadores:{
-      atencao:['Mantém atenção em aulas de 45 a 50 minutos com registo de notas',
-               'Estuda 30 a 40 minutos com o telemóvel afastado',
-               'Retoma rapidamente o foco após interrupções'],
-      memoria:['Relaciona conteúdos de aulas anteriores com a matéria nova',
-               'Segue enunciados complexos sem precisar de reler várias vezes',
-               'Organiza informação de várias fontes num só resumo'],
-      inibicao:['Resiste a distrações digitais durante o trabalho',
-                'Pensa nas consequências antes de agir em situações de conflito',
-                'Cumpre prazos mesmo perante atividades mais apelativas'],
-      flexibilidade:['Reformula o trabalho após o feedback do professor',
-                     'Alterna entre métodos de resolução conforme o problema',
-                     'Adapta-se a professores e metodologias diferentes'],
-      planeamento:['Usa agenda ou calendário para gerir testes e entregas',
-                   'Distribui o estudo ao longo dos dias em vez da véspera',
-                   'Prepara materiais e etapas de um trabalho de grupo'],
-      iniciativa:['Assume tarefas no grupo sem lhe serem atribuídas',
-                  'Retoma trabalhos em atraso por iniciativa própria',
-                  'Procura esclarecer dúvidas junto do professor'],
-      emocional:['Gere a ansiedade antes e durante os testes',
-                 'Lida com o insucesso sem generalizar ("não sou capaz")',
-                 'Resolve conflitos com os pares através do diálogo'],
-      metacognicao:['Analisa os erros do teste e regista o que deve melhorar',
-                    'Ajusta o método de estudo aos resultados obtidos',
-                    'Monitoriza o tempo que dedica realmente a cada tarefa']
+      atencao:[
+        ["Mantém atenção em aulas de 45 a 50 minutos com registo de notas",
+         "As notas cobrem a aula do início ao fim."],
+        ["Estuda 30 a 40 minutos com o telemóvel afastado",
+         "No seu próprio registo, cumpre o bloco sem consultar o telemóvel."],
+        ["Retoma rapidamente o foco após interrupções",
+         "Volta à tarefa em menos de um minuto."],
+        ["Mantém a atenção em tarefas de leitura longa",
+         "Lê um texto de duas páginas e resume-o."],
+        ["Gere o cansaço ao longo do dia escolar",
+         "Mantém o envolvimento nas últimas aulas do dia."]],
+      memoria:[
+        ["Relaciona conteúdos de aulas anteriores com a matéria nova",
+         "Refere espontaneamente o que aprendeu antes."],
+        ["Segue enunciados complexos sem precisar de reler várias vezes",
+         "Responde a todas as alíneas do enunciado."],
+        ["Organiza informação de várias fontes num só resumo",
+         "O resumo integra manual e apontamentos sem repetições."],
+        ["Retém instruções de trabalho dadas com antecedência",
+         "Executa o combinado uma semana depois, sem novo aviso."],
+        ["Trabalha com vários critérios em simultâneo",
+         "Cumpre extensão, estrutura e vocabulário pedidos num texto."]],
+      inibicao:[
+        ["Resiste a distrações digitais durante o trabalho",
+         "Mantém as notificações silenciadas durante o estudo."],
+        ["Pensa nas consequências antes de agir em situações de conflito",
+         "Afasta-se de uma provocação em vez de responder."],
+        ["Cumpre prazos mesmo perante atividades mais apelativas",
+         "Entrega no prazo apesar de outros compromissos."],
+        ["Revê antes de entregar, em vez de entregar de imediato",
+         "Usa os últimos minutos do teste para verificar."],
+        ["Mantém o tom adequado quando discorda de um adulto",
+         "Argumenta sem partir para o confronto."]],
+      flexibilidade:[
+        ["Reformula o trabalho após o feedback do professor",
+         "A nova versão responde ao que foi assinalado."],
+        ["Alterna entre métodos de resolução conforme o problema",
+         "Escolhe o método mais eficaz em vez de repetir sempre o mesmo."],
+        ["Adapta-se a professores e metodologias diferentes",
+         "Ajusta a forma de trabalhar entre disciplinas."],
+        ["Aceita rever uma conclusão perante nova informação",
+         "Muda de posição quando surgem dados novos."],
+        ["Gere alterações de horário ou de grupo sem quebra de rendimento",
+         "Mantém o trabalho apesar da mudança."]],
+      planeamento:[
+        ["Usa agenda ou calendário para gerir testes e entregas",
+         "A agenda tem os prazos das próximas duas semanas."],
+        ["Distribui o estudo ao longo dos dias em vez da véspera",
+         "Estuda em pelo menos três sessões antes do teste."],
+        ["Prepara materiais e etapas de um trabalho de grupo",
+         "Divide tarefas e define quem faz o quê."],
+        ["Prevê o tempo de que precisa para cada disciplina",
+         "O plano semanal reflete a dificuldade de cada disciplina."],
+        ["Reorganiza o plano quando surge um imprevisto",
+         "Ajusta o estudo depois de um teste ser adiado ou antecipado."]],
+      iniciativa:[
+        ["Assume tarefas no grupo sem lhe serem atribuídas",
+         "Toma a seu cargo uma parte do trabalho."],
+        ["Retoma trabalhos em atraso por iniciativa própria",
+         "Recupera o que ficou por fazer sem ser pressionado."],
+        ["Procura esclarecer dúvidas junto do professor",
+         "Coloca dúvidas na aula ou no fim dela."],
+        ["Prepara-se para as aulas com leitura prévia",
+         "Chega com o texto ou o capítulo lido."],
+        ["Mantém o esforço quando a nota não melhora de imediato",
+         "Continua a aplicar o método combinado ao longo de semanas."]],
+      emocional:[
+        ["Gere a ansiedade antes e durante os testes",
+         "Consegue começar a prova e gerir o tempo."],
+        ["Lida com o insucesso sem generalizar (\"não sou capaz\")",
+         "Fala do resultado sem se desvalorizar globalmente."],
+        ["Resolve conflitos com os pares através do diálogo",
+         "Procura conversar ou pedir mediação."],
+        ["Reconhece o que o desregula e antecipa essas situações",
+         "Identifica o que o irrita e prepara-se para isso."],
+        ["Mantém a motivação em disciplinas de que gosta menos",
+         "Continua a cumprir as tarefas dessas disciplinas."]],
+      metacognicao:[
+        ["Analisa os erros do teste e regista o que deve melhorar",
+         "Tem um registo dos erros organizado por tipo."],
+        ["Ajusta o método de estudo aos resultados obtidos",
+         "Muda de estratégia quando a anterior não resultou."],
+        ["Monitoriza o tempo que dedica realmente a cada tarefa",
+         "Sabe estimar quanto estudou durante a semana."],
+        ["Distingue o que sabe do que julga saber",
+         "Testa-se antes de dar a matéria por estudada."],
+        ["Justifica a nota que atribuiu a si próprio",
+         "Fundamenta a autoavaliação nos critérios."]]
     }
   },
   {
-    id:'b6', nome:'15 a 18 anos', ciclo:'Ensino secundário', min:15, max:18,
-    foco:'Autonomia plena: projetos longos, metas pessoais e gestão do stress.',
+    id:"b6", nome:"15 a 18 anos", ciclo:"Ensino secundário", min:15, max:18,
+    foco:"Autonomia plena: projetos longos, metas pessoais e gestão do stress.",
     indicadores:{
-      atencao:['Sustenta blocos de estudo de 45 a 60 minutos com pausas planeadas',
-               'Organiza o ambiente de trabalho para reduzir distrações',
-               'Mantém a qualidade do trabalho em tarefas prolongadas'],
-      memoria:['Integra informação de várias disciplinas numa mesma resposta',
-               'Trabalha com enunciados extensos mantendo todos os critérios',
-               'Sintetiza textos longos sem apoio permanente'],
-      inibicao:['Adia gratificações imediatas a favor de objetivos de médio prazo',
-                'Mantém uma postura adequada em situações de tensão',
-                'Gere o uso de redes sociais durante os períodos de trabalho'],
-      flexibilidade:['Reformula objetivos quando as condições mudam',
-                     'Integra críticas de pares e professores no seu trabalho',
-                     'Aborda o mesmo problema por vias diferentes'],
-      planeamento:['Planeia um projeto de longa duração com metas intermédias',
-                   'Antecipa obstáculos e prevê alternativas',
-                   'Concilia estudo, atividades e vida pessoal'],
-      iniciativa:['Define objetivos pessoais de aprendizagem e trabalha para eles',
-                  'Mantém o esforço em tarefas sem recompensa imediata',
-                  'Procura autonomamente recursos e apoios adequados'],
-      emocional:['Regula o stress em períodos de avaliação intensa',
-                 'Mantém a motivação após resultados abaixo do esperado',
-                 'Pede apoio quando reconhece sobrecarga'],
-      metacognicao:['Autoavalia o desempenho usando os critérios de avaliação',
-                    'Justifica as escolhas de estratégia que faz',
-                    'Ajusta o plano de trabalho com base na autoavaliação']
+      atencao:[
+        ["Sustenta blocos de estudo de 45 a 60 minutos com pausas planeadas",
+         "Cumpre o bloco e a pausa conforme tinha planeado."],
+        ["Organiza o ambiente de trabalho para reduzir distrações",
+         "Prepara o espaço antes de começar."],
+        ["Mantém a qualidade do trabalho em tarefas prolongadas",
+         "A parte final do trabalho tem o mesmo cuidado que a inicial."],
+        ["Mantém o foco em aulas seguidas da mesma disciplina",
+         "Acompanha blocos de 90 minutos."],
+        ["Gere a fadiga em períodos de maior exigência",
+         "Ajusta pausas e descanso em época de avaliações."]],
+      memoria:[
+        ["Integra informação de várias disciplinas numa mesma resposta",
+         "Cruza conteúdos de duas disciplinas de forma pertinente."],
+        ["Trabalha com enunciados extensos mantendo todos os critérios",
+         "A resposta cobre todos os pontos pedidos."],
+        ["Sintetiza textos longos sem apoio permanente",
+         "Produz um resumo fiel de um capítulo."],
+        ["Recupera conteúdos estudados semanas antes",
+         "Responde sobre matéria antiga numa revisão."],
+        ["Mantém vários projetos em curso sem perder o estado de cada um",
+         "Sabe o ponto de situação de cada trabalho."]],
+      inibicao:[
+        ["Adia gratificações imediatas a favor de objetivos de médio prazo",
+         "Abdica de uma saída para preparar uma avaliação importante."],
+        ["Mantém uma postura adequada em situações de tensão",
+         "Gere uma discussão sem a fazer escalar."],
+        ["Gere o uso de redes sociais durante os períodos de trabalho",
+         "Aplica os limites que definiu para si próprio."],
+        ["Evita decisões precipitadas em tarefas com prazo",
+         "Planeia antes de começar a produzir."],
+        ["Mantém o compromisso assumido perante o grupo",
+         "Cumpre a parte que ficou de fazer."]],
+      flexibilidade:[
+        ["Reformula objetivos quando as condições mudam",
+         "Ajusta o plano depois de uma alteração de calendário."],
+        ["Integra críticas de pares e professores no seu trabalho",
+         "A versão final reflete o feedback recebido."],
+        ["Aborda o mesmo problema por vias diferentes",
+         "Apresenta uma alternativa quando a via inicial falha."],
+        ["Trabalha com pessoas de perspetivas diferentes",
+         "Chega a acordo num grupo com visões distintas."],
+        ["Muda de método de estudo quando os resultados não acompanham",
+         "Substitui a estratégia depois de duas avaliações."]],
+      planeamento:[
+        ["Planeia um projeto de longa duração com metas intermédias",
+         "Tem um cronograma com etapas datadas."],
+        ["Antecipa obstáculos e prevê alternativas",
+         "Identifica riscos e define um plano alternativo."],
+        ["Concilia estudo, atividades e vida pessoal",
+         "O plano semanal contempla as várias áreas."],
+        ["Prioriza tarefas por urgência e importância",
+         "Justifica por onde começa."],
+        ["Cumpre as etapas intermédias que definiu",
+         "Chega às datas intermédias com o previsto feito."]],
+      iniciativa:[
+        ["Define objetivos pessoais de aprendizagem e trabalha para eles",
+         "Enuncia metas próprias, para além das do professor."],
+        ["Mantém o esforço em tarefas sem recompensa imediata",
+         "Prepara conteúdos que só serão avaliados mais tarde."],
+        ["Procura autonomamente recursos e apoios adequados",
+         "Recorre a apoio, bibliografia ou plataformas por iniciativa própria."],
+        ["Toma a iniciativa de recuperar matéria em atraso",
+         "Organiza sozinho o plano de recuperação."],
+        ["Assume responsabilidades no grupo ou na escola",
+         "Coordena uma tarefa ou representa a turma."]],
+      emocional:[
+        ["Regula o stress em períodos de avaliação intensa",
+         "Mantém rotinas de descanso e trabalho na época de exames."],
+        ["Mantém a motivação após resultados abaixo do esperado",
+         "Retoma o trabalho já na semana seguinte."],
+        ["Pede apoio quando reconhece sobrecarga",
+         "Procura o diretor de turma ou outro adulto de referência."],
+        ["Gere a pressão do grupo mantendo as suas decisões",
+         "Mantém o plano de estudo apesar do convite dos pares."],
+        ["Separa a crítica ao trabalho da avaliação da sua pessoa",
+         "Fala do reparo sem o ler como desvalorização própria."]],
+      metacognicao:[
+        ["Autoavalia o desempenho usando os critérios de avaliação",
+         "A autoavaliação é próxima da classificação obtida."],
+        ["Justifica as escolhas de estratégia que faz",
+         "Explica porque estudou daquela forma."],
+        ["Ajusta o plano de trabalho com base na autoavaliação",
+         "O plano seguinte reflete o que correu mal."],
+        ["Reconhece os seus limites e planeia em função deles",
+         "Prevê mais tempo para aquilo que lhe custa mais."],
+        ["Antecipa a dificuldade de uma tarefa antes de a iniciar",
+         "A estimativa aproxima-se do esforço real."]]
     }
   }
 ];
+
+/* Estratégias de intervenção sugeridas, específicas de cada domínio E faixa etária.
+   Aparecem na leitura pedagógica da ficha do aluno e no separador Referencial. */
+const ESTRATEGIAS = {
+  b1:{
+    atencao:'Reduzir o número de materiais à vista e propor tarefas de 5 minutos, terminando antes de a criança se dispersar.',
+    memoria:'Dar uma instrução de cada vez, acompanhada de gesto ou imagem, e pedir que a repita antes de a executar.',
+    inibicao:'Usar sempre o mesmo sinal sonoro ou visual para parar, treinado em jogos como "estátua" antes de ser exigido em tarefa.',
+    flexibilidade:'Avisar as mudanças com 2 minutos de antecedência, com a mesma fórmula e um apoio visual do que vem a seguir.',
+    planeamento:'Afixar a rotina em imagens à altura dos olhos e percorrê-la com a criança no início do dia.',
+    iniciativa:'Oferecer duas opções em vez de pergunta aberta e reforçar a escolha feita ("escolheste os blocos, boa").',
+    emocional:'Nomear a emoção pela criança ("estás zangado porque querias o carro") e ter um espaço de calma sempre disponível.',
+    metacognicao:'Fechar cada atividade com "o que fizeste?" e "de que gostaste mais?", aceitando respostas curtas.'
+  },
+  b2:{
+    atencao:'Dividir a tarefa em duas metades com uma pausa de movimento entre elas e marcar o tempo com uma ampulheta visível.',
+    memoria:'Passar a instruções de dois passos, pedindo que a criança as repita por palavras suas antes de começar.',
+    inibicao:'Combinar com o grupo um gesto para "espera a tua vez" e reforçar em voz alta quem o cumpriu.',
+    flexibilidade:'Introduzir pequenas variações propositadas nos jogos conhecidos e valorizar quem se adapta.',
+    planeamento:'Usar na mesa um cartão com 3 passos ilustrados, riscando cada um à medida que é feito.',
+    iniciativa:'Definir com a criança o primeiro passo e afastar-se, voltando apenas para reforçar o que já fez.',
+    emocional:'Ensaiar a estratégia de regulação em momentos calmos, para que esteja disponível no momento difícil.',
+    metacognicao:'Terminar a tarefa com uma lista de verificação de 2 itens que a criança confirma sozinha.'
+  },
+  b3:{
+    atencao:'Blocos de 15 a 20 minutos com objetivo visível ("faz 4 exercícios") e mesa livre de material desnecessário.',
+    memoria:'Escrever no quadro os passos da instrução e mantê-los à vista durante toda a tarefa.',
+    inibicao:'Combinar um sinal discreto entre professor e aluno para "para e pensa" antes de responder.',
+    flexibilidade:'Pedir explicitamente uma segunda forma de resolver o mesmo exercício, valorizando o processo e não só o resultado.',
+    planeamento:'Verificar a caderneta no fim do dia com um colega tutor e usar capas de cor por disciplina.',
+    iniciativa:'Entregar o primeiro exercício já começado, para que o arranque não dependa do aluno.',
+    emocional:'Acordar um cartão de pausa que o aluno pode usar sem ter de pedir autorização em voz alta.',
+    metacognicao:'Introduzir uma verificação de 3 pontos antes de entregar: li tudo? respondi a tudo? reli?'
+  },
+  b4:{
+    atencao:'Negociar blocos de 25 minutos com uma pausa curta planeada e registar o que consegue cumprir.',
+    memoria:'Ensinar a tomar notas em tópicos, fornecendo o esqueleto do resumo até que o faça sozinho.',
+    inibicao:'Treinar a leitura completa do enunciado, sublinhando o que é pedido antes de começar a resolver.',
+    flexibilidade:'Propor problemas que só se resolvem mudando de método e discutir depois porque a primeira via falhou.',
+    planeamento:'Planear em conjunto um trabalho de vários dias, dividido em etapas datadas visíveis na agenda.',
+    iniciativa:'Combinar uma hora fixa para iniciar o estudo em casa, com um registo simples partilhado com a família.',
+    emocional:'Preparar a avaliação com simulações curtas em contexto calmo, reduzindo o efeito de novidade no dia do teste.',
+    metacognicao:'Usar os critérios de avaliação como grelha de autoavaliação antes da entrega e comparar com a correção.'
+  },
+  b5:{
+    atencao:'Introduzir blocos de estudo cronometrados com o telemóvel noutra divisão e registo do que rendeu cada bloco.',
+    memoria:'Pedir, no início de cada apontamento, a ligação explícita entre a matéria nova e a anterior.',
+    inibicao:'Definir com o aluno regras próprias de uso do telemóvel durante o trabalho e rever o cumprimento todas as semanas.',
+    flexibilidade:'Exigir uma versão revista após o feedback, avaliando também a qualidade da revisão.',
+    planeamento:'Construir um plano semanal com o aluno, com os prazos das próximas duas semanas visíveis num único sítio.',
+    iniciativa:'Atribuir um papel concreto no trabalho de grupo e responsabilizar publicamente por essa parte.',
+    emocional:'Ensinar uma rotina de prova: o que fazer na véspera, à chegada e nos primeiros cinco minutos do teste.',
+    metacognicao:'Instituir a análise de erros após cada teste, registando o tipo de erro e o que muda no estudo seguinte.'
+  },
+  b6:{
+    atencao:'Acordar blocos de 45 minutos com pausas planeadas e avaliar semanalmente o que resultou.',
+    memoria:'Propor sínteses que cruzem disciplinas, com critérios explícitos do que tem de constar.',
+    inibicao:'Tornar visível o objetivo de médio prazo e o custo de cada desvio, trabalhando o adiamento da gratificação.',
+    flexibilidade:'Pedir sistematicamente uma abordagem alternativa e a justificação da escolha entre as duas.',
+    planeamento:'Construir um cronograma com metas intermédias verificáveis e rever o cumprimento em cada etapa.',
+    iniciativa:'Passar a definição de objetivos para o aluno, ficando o professor no papel de quem confirma e revê.',
+    emocional:'Definir antecipadamente a quem recorre em caso de sobrecarga e normalizar esse pedido de apoio.',
+    metacognicao:'Exigir autoavaliação fundamentada nos critérios antes de conhecer a classificação e comparar depois.'
+  }
+};
+function estrategia(faixaId, domId){
+  return (ESTRATEGIAS[faixaId] && ESTRATEGIAS[faixaId][domId]) || '';
+}
 
 const FAIXA_POR_ID = Object.fromEntries(FAIXAS.map(f => [f.id, f]));
 const DOM_POR_ID   = Object.fromEntries(DOMINIOS.map(d => [d.id, d]));
@@ -338,8 +828,8 @@ function idIndicador(faixaId, domId, i){ return faixaId + '.' + domId + '.' + i;
 function indicadoresDaFaixa(faixaId){
   const f = FAIXA_POR_ID[faixaId]; if(!f) return [];
   const lista = [];
-  DOMINIOS.forEach(d => (f.indicadores[d.id]||[]).forEach((texto,i) =>
-    lista.push({ id: idIndicador(faixaId, d.id, i), dominio: d.id, texto })));
+  DOMINIOS.forEach(d => (f.indicadores[d.id]||[]).forEach(([texto, evidencia], i) =>
+    lista.push({ id: idIndicador(faixaId, d.id, i), dominio: d.id, texto, evidencia })));
   return lista;
 }
 function faixaPorIdade(idade){
@@ -354,7 +844,7 @@ function faixaPorIdade(idade){
    ===================================================================== */
 
 const CHAVE = 'monitor-fe-v1';
-let dados = { alunos: [], avaliacoes: [] };
+let dados = { alunos: [], avaliacoes: [], metas: [], autoavaliacoes: [] };
 let ui = { tab:'painel', alunoSel:null, filtroTurma:'', filtroFaixa:'', busca:'', rascunho:null };
 
 function carregar(){
@@ -364,6 +854,8 @@ function carregar(){
       const obj = JSON.parse(bruto);
       dados.alunos = Array.isArray(obj.alunos) ? obj.alunos : [];
       dados.avaliacoes = Array.isArray(obj.avaliacoes) ? obj.avaliacoes : [];
+      dados.metas = Array.isArray(obj.metas) ? obj.metas : [];   /* ficheiros anteriores não têm metas */
+      dados.autoavaliacoes = Array.isArray(obj.autoavaliacoes) ? obj.autoavaliacoes : [];
     }
   } catch(e){ console.warn('Não foi possível ler os dados guardados', e); }
 }
@@ -607,7 +1099,7 @@ function renderPainel(){
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
       ${kpi('users', lista.length, 'Alunos monitorizados', '#4f46e5')}
-      ${kpi('clipboard-check', dados.avaliacoes.filter(av => lista.some(a=>a.id===av.alunoId)).length, 'Observações registadas', '#0891b2')}
+      ${kpi('target', metasAtivas().filter(m => lista.some(a=>a.id===m.alunoId)).length, 'Metas em curso', '#0891b2')}
       ${kpi('gauge', mediaTurma===null?'—':mediaTurma+'%', 'Média de consolidação', '#059669')}
       ${kpi('alert-circle', semAv.length, 'Sem qualquer observação', '#e11d48')}
     </div>
@@ -634,6 +1126,20 @@ function renderPainel(){
               <div><p class="text-sm font-medium">${d.nome}</p>
                    <p class="text-xs text-slate-500">Média da turma: ${d.media}% — ${rotuloPontuacao(d.media)}</p></div>
             </li>`).join('')}</ol>`}
+        ${(() => {
+          const atrasadas = metasAtivas().filter(m => metaEmAtraso(m) && lista.some(a => a.id === m.alunoId));
+          if(!atrasadas.length) return '';
+          return `<div class="mt-5 pt-4 border-t border-slate-100">
+            <p class="text-xs font-semibold text-rose-700 mb-2">Metas por rever (prazo ultrapassado)</p>
+            <div class="space-y-1.5">${atrasadas.slice(0,5).map(m => {
+              const a = alunoPorId(m.alunoId);
+              return `<button onclick="irPara('progresso','${m.alunoId}')" class="w-full text-left text-xs bg-rose-50 border border-rose-200 px-2 py-1.5 rounded-md hover:bg-rose-100">
+                <span class="font-medium">${esc(a ? a.nome : '')}</span> — ${esc(m.descricao)}
+                <span class="text-rose-700">(${Math.abs(diasAte(m.prazo))} dia(s))</span></button>`;
+            }).join('')}</div>
+            ${atrasadas.length > 5 ? `<p class="text-xs text-slate-500 mt-1">+${atrasadas.length-5}</p>` : ''}
+          </div>`;
+        })()}
         ${semAv.length ? `<div class="mt-5 pt-4 border-t border-slate-100">
           <p class="text-xs font-semibold text-slate-600 mb-2">Aguardam primeira observação</p>
           <div class="flex flex-wrap gap-1.5">${semAv.slice(0,12).map(a =>
@@ -819,6 +1325,8 @@ function apagarAluno(id){
   if(!confirm(`Eliminar "${a.nome}"${n?` e as suas ${n} observação(ões)`:''}? Esta ação não pode ser anulada.`)) return;
   dados.alunos = dados.alunos.filter(x => x.id !== id);
   dados.avaliacoes = dados.avaliacoes.filter(x => x.alunoId !== id);
+  dados.metas = dados.metas.filter(x => x.alunoId !== id);
+  dados.autoavaliacoes = dados.autoavaliacoes.filter(x => x.alunoId !== id);
   if(ui.alunoSel === id) ui.alunoSel = null;
   guardar(); render(); icones(); toast('Aluno eliminado.');
 }
@@ -834,6 +1342,8 @@ function iniciarRascunho(alunoId){
   ui.rascunho = {
     alunoId, data: hoje(),
     faixaId: (ult && ult.faixaId) || faixaDoAluno(a).id,
+    contexto: (ult && ult.contexto) || 'individual',
+    autor: 'professor',
     respostas: {}, observacoes: '', editandoId: null
   };
 }
@@ -849,9 +1359,11 @@ function renderAvaliacao(){
 
   const r = ui.rascunho, aluno = alunoPorId(r.alunoId), faixa = FAIXA_POR_ID[r.faixaId];
   const faixaEsperada = faixaDoAluno(aluno);
-  const total = indicadoresDaFaixa(r.faixaId).length;
+  const total = r.autor === 'aluno' ? DOMINIOS.length : indicadoresDaFaixa(r.faixaId).length;
   const respondidos = Object.values(r.respostas).filter(v => v !== undefined && v !== null).length;
-  const parcial = pontuacaoGeral({ faixaId:r.faixaId, respostas:r.respostas });
+  const parcial = r.autor === 'aluno'
+    ? (respondidos ? Math.round(Object.values(r.respostas).reduce((a,b)=>a+b,0)/(respondidos*3)*100) : null)
+    : pontuacaoGeral({ faixaId:r.faixaId, respostas:r.respostas });
 
   el.innerHTML = `
     <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
@@ -876,9 +1388,27 @@ function renderAvaliacao(){
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Referencial aplicado</label>
-          <select onchange="trocarFaixaAvaliacao(this.value)" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <select onchange="trocarFaixaAvaliacao(this.value)" ${r.autor==='aluno'?'disabled':''} class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-slate-100 disabled:text-slate-500">
             ${FAIXAS.map(f => `<option value="${f.id}" ${f.id===r.faixaId?'selected':''}>${f.nome} — ${esc(f.ciclo)}</option>`).join('')}
           </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Contexto observado</label>
+          <select onchange="ui.rascunho.contexto=this.value" ${r.autor==='aluno'?'disabled':''} class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white disabled:bg-slate-100 disabled:text-slate-500">
+            ${CONTEXTOS.map(c => `<option value="${c.id}" ${c.id===r.contexto?'selected':''}>${esc(c.nome)}</option>`).join('')}
+          </select>
+          <p class="text-[11px] text-slate-500 mt-1">O mesmo aluno pode ter perfis diferentes conforme a situação.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Quem responde</label>
+          <div class="flex gap-2">
+            <button type="button" onclick="trocarAutor('professor')" class="flex-1 text-sm px-3 py-2 rounded-lg border ${r.autor==='professor'?'bg-indigo-600 text-white border-indigo-600':'border-slate-300 hover:bg-slate-50'}">Professor</button>
+            <button type="button" onclick="trocarAutor('aluno')" ${temAutoavaliacao(faixaEsperada.id)?'':'disabled title="Disponível a partir dos 9 anos"'}
+              class="flex-1 text-sm px-3 py-2 rounded-lg border ${r.autor==='aluno'?'bg-indigo-600 text-white border-indigo-600':'border-slate-300 hover:bg-slate-50'} disabled:opacity-40 disabled:cursor-not-allowed">O próprio aluno</button>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">${temAutoavaliacao(faixaEsperada.id) ? 'A autoavaliação usa 8 afirmações em linguagem do aluno.' : 'Autoavaliação disponível a partir dos 9 anos.'}</p>
         </div>
       </div>
       <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
@@ -903,7 +1433,7 @@ function renderAvaliacao(){
           <p class="text-[11px] text-slate-500">consolidação</p>
         </div>
         <button onclick="guardarAvaliacao()" class="flex items-center gap-1.5 bg-emerald-600 text-white text-sm px-4 py-2.5 rounded-lg font-medium hover:bg-emerald-700">
-          <i data-lucide="save" class="w-4 h-4"></i> Guardar observação
+          <i data-lucide="save" class="w-4 h-4"></i> ${r.autor==='aluno' ? 'Guardar autoavaliação' : 'Guardar observação'}
         </button>
       </div>
       <div class="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-100">
@@ -914,9 +1444,11 @@ function renderAvaliacao(){
 
     <p class="text-sm text-slate-600 mb-3 flex items-center gap-2">
       <i data-lucide="book-open" class="w-4 h-4 text-indigo-600"></i>
-      <span><strong>${faixa.nome}</strong> — ${esc(faixa.foco)}</span></p>
+      <span><strong>${faixa.nome}</strong> — ${r.autor==='aluno' ? 'autoavaliação, uma afirmação por domínio' : esc(faixa.foco)}</span></p>
 
-    <div class="space-y-4">${DOMINIOS.map(d => blocoDominio(d, faixa, r)).join('')}</div>
+    ${r.autor === 'aluno'
+      ? blocoAutoavaliacao(faixa, r)
+      : `<div class="space-y-4">${DOMINIOS.map(d => blocoDominio(d, faixa, r)).join('')}</div>`}
 
     <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mt-4">
       <label class="block text-sm font-semibold mb-2 flex items-center gap-2"><i data-lucide="notebook-pen" class="w-4 h-4 text-indigo-600"></i> Observações qualitativas</label>
@@ -942,11 +1474,14 @@ function blocoDominio(d, faixa, r){
       </div>
     </div>
     <div class="divide-y divide-slate-100">
-      ${itens.map((texto,i) => {
+      ${itens.map(([texto, evidencia], i) => {
         const id = idIndicador(faixa.id, d.id, i);
         const atual = r.respostas[id];
-        return `<div class="px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-          <p class="text-sm text-slate-700 flex-1">${esc(texto)}</p>
+        return `<div class="px-5 py-3 flex flex-col sm:flex-row sm:items-start gap-3">
+          <div class="flex-1">
+            <p class="text-sm text-slate-700">${esc(texto)}</p>
+            <p class="text-xs text-slate-500 mt-0.5 flex gap-1.5"><span class="text-slate-400 shrink-0">Observa-se quando:</span><span>${esc(evidencia)}</span></p>
+          </div>
           <div class="flex gap-1.5 shrink-0">
             ${NIVEIS.map(n => `<button onclick="responder('${id}',${n.v})" title="${esc(n.nome)}: ${esc(n.desc)}"
               class="nivel-btn w-11 h-9 rounded-lg text-xs font-bold border"
@@ -957,6 +1492,42 @@ function blocoDominio(d, faixa, r){
       }).join('')}
     </div>
   </section>`;
+}
+
+/* Grelha da autoavaliação: uma afirmação por domínio, em linguagem do aluno */
+function blocoAutoavaliacao(faixa, r){
+  const perguntas = AUTOAVALIACAO[faixa.id] || {};
+  return `<section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100 bg-indigo-50/50">
+      <h3 class="font-semibold text-sm flex items-center gap-2"><i data-lucide="user-round-check" class="w-4 h-4 text-indigo-600"></i>
+        Como me vejo</h3>
+      <p class="text-xs text-slate-600 mt-0.5">Responde com sinceridade — não há respostas certas nem erradas, e isto não é uma nota.</p>
+    </div>
+    <div class="divide-y divide-slate-100">
+      ${DOMINIOS.map(d => {
+        const atual = r.respostas[d.id];
+        return `<div class="px-5 py-3">
+          <p class="text-sm text-slate-800 mb-2 flex gap-2">
+            <i data-lucide="${d.icone}" class="w-4 h-4 shrink-0 mt-0.5" style="color:${d.cor}"></i>
+            <span>${esc(perguntas[d.id] || d.nome)}</span></p>
+          <div class="flex flex-wrap gap-1.5 pl-6">
+            ${NIVEIS_ALUNO.map((rotulo, v) => `<button onclick="responder('${d.id}',${v})"
+              class="nivel-btn px-3 h-9 rounded-lg text-xs font-medium border"
+              style="${atual===v ? `background:${NIVEIS[v].cor}; color:${NIVEIS[v].texto}; border-color:${NIVEIS[v].texto}55; box-shadow:0 0 0 2px ${NIVEIS[v].texto}22;`
+                                 : 'background:#fff; color:#64748b; border-color:#e2e8f0;'}">${rotulo}</button>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </section>`;
+}
+
+function trocarAutor(autor){
+  const r = ui.rascunho; if(!r || r.autor === autor) return;
+  if(Object.keys(r.respostas).length && !confirm('Mudar de quem responde limpa as respostas já dadas. Continuar?')){ renderAvaliacao(); icones(); return; }
+  r.autor = autor; r.respostas = {}; r.editandoId = null;
+  if(autor === 'aluno') r.faixaId = faixaDoAluno(alunoPorId(r.alunoId)).id;
+  renderAvaliacao(); icones();
 }
 
 function responder(indicadorId, valor){
@@ -980,8 +1551,10 @@ function limparRespostas(){
 }
 function copiarUltima(){
   const r = ui.rascunho, ult = ultimaAvaliacao(r.alunoId);
+  if(r.autor === 'aluno'){ toast('Disponível apenas no registo do professor.', true); return; }
   if(!ult){ toast('Este aluno ainda não tem observações anteriores.', true); return; }
   r.faixaId = ult.faixaId;
+  r.contexto = ult.contexto || r.contexto;
   r.respostas = { ...ult.respostas };
   r.observacoes = '';
   renderAvaliacao(); icones();
@@ -992,11 +1565,22 @@ function guardarAvaliacao(){
   if(!r) return;
   const n = Object.values(r.respostas).filter(v => v !== undefined && v !== null).length;
   if(n === 0){ toast('Classifique pelo menos um indicador antes de guardar.', true); return; }
+
+  if(r.autor === 'aluno'){
+    dados.autoavaliacoes.push({ id: uid(), alunoId:r.alunoId, data:r.data, faixaId:r.faixaId,
+      respostas:{...r.respostas}, comentario:r.observacoes, criadoEm: Date.now() });
+    guardar();
+    const id = r.alunoId; ui.rascunho = null;
+    toast('Autoavaliação guardada.');
+    irPara('progresso', id);
+    return;
+  }
+
   if(r.editandoId){
     const av = dados.avaliacoes.find(a => a.id === r.editandoId);
-    if(av){ Object.assign(av, { data:r.data, faixaId:r.faixaId, respostas:{...r.respostas}, observacoes:r.observacoes }); }
+    if(av){ Object.assign(av, { data:r.data, faixaId:r.faixaId, contexto:r.contexto, respostas:{...r.respostas}, observacoes:r.observacoes }); }
   } else {
-    dados.avaliacoes.push({ id: uid(), alunoId:r.alunoId, data:r.data, faixaId:r.faixaId,
+    dados.avaliacoes.push({ id: uid(), alunoId:r.alunoId, data:r.data, faixaId:r.faixaId, contexto:r.contexto,
       respostas:{...r.respostas}, observacoes:r.observacoes, criadoEm: Date.now() });
   }
   guardar();
@@ -1009,6 +1593,7 @@ function editarAvaliacao(id){
   const av = dados.avaliacoes.find(a => a.id === id); if(!av) return;
   ui.alunoSel = av.alunoId;
   ui.rascunho = { alunoId:av.alunoId, data:av.data, faixaId:av.faixaId,
+                  contexto: av.contexto || 'individual', autor: 'professor',
                   respostas:{...av.respostas}, observacoes:av.observacoes||'', editandoId:av.id };
   irPara('avaliacao');
 }
@@ -1017,6 +1602,321 @@ function apagarAvaliacao(id){
   if(!confirm('Eliminar a observação de ' + dataPT(av.data) + '?')) return;
   dados.avaliacoes = dados.avaliacoes.filter(a => a.id !== id);
   guardar(); render(); icones(); toast('Observação eliminada.');
+}
+
+/* Contexto em que a observação foi feita. As funções executivas variam muito
+   com a situação, por isso o mesmo aluno pode ter perfis diferentes conforme
+   o contexto — e essa diferença é informação pedagógica útil. */
+const CONTEXTOS = [
+  { id:'individual', nome:'Trabalho individual na aula', icone:'pencil-line' },
+  { id:'grupo',      nome:'Trabalho de grupo ou a pares', icone:'users' },
+  { id:'coletivo',   nome:'Momento coletivo / exposição', icone:'presentation' },
+  { id:'pratica',    nome:'Atividade prática ou experimental', icone:'flask-conical' },
+  { id:'avaliacao',  nome:'Momento de avaliação', icone:'file-check' },
+  { id:'livre',      nome:'Recreio, transições ou tempo livre', icone:'trees' },
+  { id:'apoio',      nome:'Apoio individual ou tutoria', icone:'user-round-check' }
+];
+const CONTEXTO_POR_ID = Object.fromEntries(CONTEXTOS.map(c => [c.id, c]));
+const nomeContexto = id => (CONTEXTO_POR_ID[id] || {}).nome || 'Não indicado';
+
+/* Média do perfil global por contexto, para as observações de um aluno */
+function mediasPorContexto(alunoId){
+  const porCtx = {};
+  avaliacoesDe(alunoId).forEach(av => {
+    const p = pontuacaoGeral(av);
+    if(p === null || !av.contexto) return;
+    (porCtx[av.contexto] = porCtx[av.contexto] || []).push(p);
+  });
+  return Object.entries(porCtx)
+    .map(([id, vs]) => ({ id, nome: nomeContexto(id), n: vs.length,
+                          media: Math.round(vs.reduce((a,b)=>a+b,0)/vs.length) }))
+    .sort((a,b) => b.media - a.media);
+}
+
+/* =====================================================================
+   AUTOAVALIAÇÃO DO ALUNO (a partir dos 9 anos)
+   Uma afirmação por domínio, na primeira pessoa. Comparar a perceção do
+   aluno com a observação do professor é, em si, trabalho de metacognição.
+   ===================================================================== */
+
+const NIVEIS_ALUNO = ['Ainda não', 'Às vezes', 'Quase sempre', 'Sempre'];
+
+const AUTOAVALIACAO = {
+  b4:{
+    atencao:'Consigo estar concentrado no trabalho sem me distrair com o que está à minha volta.',
+    memoria:'Consigo seguir instruções com vários passos sem me esquecer de nenhum.',
+    inibicao:'Consigo esperar pela minha vez e pensar antes de responder ou de agir.',
+    flexibilidade:'Quando uma forma de resolver não resulta, consigo experimentar outra.',
+    planeamento:'Organizo o meu material e penso nos passos antes de começar o trabalho.',
+    iniciativa:'Começo os trabalhos sozinho e não desisto quando são difíceis.',
+    emocional:'Quando fico nervoso ou zangado, consigo acalmar-me e continuar.',
+    metacognicao:'Sei dizer o que fiz bem, o que correu mal e o que preciso de melhorar.'
+  },
+  b5:{
+    atencao:'Consigo estudar sem ir ao telemóvel e volto depressa ao trabalho quando me distraio.',
+    memoria:'Ligo a matéria nova ao que já aprendi e consigo trabalhar com enunciados longos.',
+    inibicao:'Cumpro os prazos mesmo quando me apetece fazer outra coisa.',
+    flexibilidade:'Aceito o que os professores me apontam e mudo o meu trabalho a partir disso.',
+    planeamento:'Uso a agenda e distribuo o estudo pelos dias, em vez de deixar para a véspera.',
+    iniciativa:'Esclareço dúvidas e recupero o que está em atraso sem esperar que me digam.',
+    emocional:'Consigo lidar com os nervos dos testes e com as notas más sem desistir.',
+    metacognicao:'Depois dos testes analiso os meus erros e mudo a forma como estudo.'
+  },
+  b6:{
+    atencao:'Consigo manter blocos longos de estudo, com pausas que eu próprio planeio.',
+    memoria:'Consigo cruzar matéria de várias disciplinas e resumir textos longos sozinho.',
+    inibicao:'Adio o que me apetece fazer para cumprir objetivos que são importantes para mim.',
+    flexibilidade:'Mudo de método ou de plano quando percebo que o que estou a fazer não resulta.',
+    planeamento:'Planeio trabalhos longos por etapas e cumpro as datas que defini.',
+    iniciativa:'Defino objetivos meus e procuro sozinho os apoios de que preciso.',
+    emocional:'Consigo gerir o stress das avaliações e pedir ajuda quando fico sobrecarregado.',
+    metacognicao:'Consigo avaliar o meu trabalho pelos critérios e ajustar o plano seguinte.'
+  }
+};
+const temAutoavaliacao = faixaId => !!AUTOAVALIACAO[faixaId];
+
+const autoavaliacoesDe = alunoId => dados.autoavaliacoes
+  .filter(a => a.alunoId === alunoId)
+  .sort((x,y) => x.data < y.data ? -1 : 1);
+const ultimaAutoavaliacao = alunoId => { const l = autoavaliacoesDe(alunoId); return l.length ? l[l.length-1] : null; };
+
+function pontuacaoAuto(aa, domId){
+  if(!aa) return null;
+  const v = aa.respostas[domId];
+  return (v === undefined || v === null) ? null : Math.round(v/3*100);
+}
+
+/* Compara a perceção do aluno com a observação do professor, por domínio */
+function comparacaoAluno(alunoId){
+  const aa = ultimaAutoavaliacao(alunoId), av = ultimaAvaliacao(alunoId);
+  if(!aa || !av) return null;
+  const linhas = DOMINIOS.map(d => {
+    const prof = pontuacaoDominio(av, d.id), aluno = pontuacaoAuto(aa, d.id);
+    return { ...d, prof, aluno, dif: (prof !== null && aluno !== null) ? aluno - prof : null };
+  });
+  return { aa, av, linhas, divergentes: linhas.filter(l => l.dif !== null && Math.abs(l.dif) >= 30) };
+}
+
+function apagarAutoavaliacao(id){
+  const aa = dados.autoavaliacoes.find(a => a.id === id); if(!aa) return;
+  if(!confirm('Eliminar a autoavaliação de ' + dataPT(aa.data) + '?')) return;
+  dados.autoavaliacoes = dados.autoavaliacoes.filter(a => a.id !== id);
+  guardar(); render(); icones(); toast('Autoavaliação eliminada.');
+}
+
+/* =====================================================================
+   METAS E PLANO DE INTERVENÇÃO
+   Cada meta liga um domínio frágil a uma estratégia concreta, com prazo
+   e revisão. É o passo que transforma a observação em intervenção.
+   ===================================================================== */
+
+const ESTADOS_META = {
+  ativa:         { nome:'Em curso',       cor:'#4f46e5', fundo:'#eef2ff' },
+  atingida:      { nome:'Atingida',       cor:'#059669', fundo:'#ecfdf5' },
+  descontinuada: { nome:'Descontinuada',  cor:'#64748b', fundo:'#f1f5f9' }
+};
+
+const metasDe = alunoId => dados.metas
+  .filter(m => m.alunoId === alunoId)
+  .sort((a,b) => (a.estado === b.estado ? (a.prazo < b.prazo ? -1 : 1) : (a.estado === 'ativa' ? -1 : 1)));
+
+const metasAtivas = () => dados.metas.filter(m => m.estado === 'ativa');
+
+/* Dias que faltam até ao prazo (negativo se já passou) */
+function diasAte(iso){
+  if(!iso) return null;
+  const alvo = new Date(iso + 'T00:00:00'), hj = new Date(hoje() + 'T00:00:00');
+  return Math.round((alvo - hj) / (24*3600*1000));
+}
+const metaEmAtraso = m => m.estado === 'ativa' && diasAte(m.prazo) !== null && diasAte(m.prazo) < 0;
+
+function abrirModalMeta(alunoId, metaId){
+  const aluno = alunoPorId(alunoId); if(!aluno) return;
+  const m = metaId ? dados.metas.find(x => x.id === metaId) : null;
+  const faixa = FAIXA_POR_ID[(ultimaAvaliacao(alunoId)||{}).faixaId] || faixaDoAluno(aluno);
+
+  /* por omissão, propõe o domínio mais frágil da última observação */
+  let domSugerido = DOMINIOS[0].id;
+  const ult = ultimaAvaliacao(alunoId);
+  if(ult){
+    const ord = DOMINIOS.map(d => ({ id:d.id, p:pontuacaoDominio(ult, d.id) }))
+                        .filter(x => x.p !== null).sort((a,b) => a.p - b.p);
+    if(ord.length) domSugerido = ord[0].id;
+  }
+  const prazoPadrao = new Date(Date.now() + 30*24*3600*1000).toISOString().slice(0,10);
+
+  document.getElementById('meta-id').value = m ? m.id : '';
+  document.getElementById('meta-aluno').value = alunoId;
+  document.getElementById('meta-dominio').innerHTML = DOMINIOS.map(d =>
+    `<option value="${d.id}" ${(m ? m.dominio : domSugerido) === d.id ? 'selected' : ''}>${esc(d.nome)}</option>`).join('');
+  document.getElementById('meta-descricao').value = m ? m.descricao : '';
+  document.getElementById('meta-estrategia').value = m ? m.estrategia : estrategia(faixa.id, domSugerido);
+  document.getElementById('meta-prazo').value = m ? m.prazo : prazoPadrao;
+  document.getElementById('modal-meta-titulo').innerHTML =
+    `<i data-lucide="target" class="w-5 h-5 text-indigo-600"></i> ${m ? 'Editar meta' : 'Nova meta'} — ${esc(aluno.nome)}`;
+  document.getElementById('modal-meta').dataset.faixa = faixa.id;
+  document.getElementById('modal-meta').classList.remove('hidden');
+  icones();
+}
+function fecharModalMeta(){ document.getElementById('modal-meta').classList.add('hidden'); }
+
+/* Ao mudar de domínio, propõe a estratégia dessa faixa se o campo ainda não foi personalizado */
+function sugerirEstrategia(){
+  const faixaId = document.getElementById('modal-meta').dataset.faixa;
+  const campo = document.getElementById('meta-estrategia');
+  const sugeridas = FAIXAS.flatMap(f => DOMINIOS.map(d => estrategia(f.id, d.id)));
+  if(!campo.value.trim() || sugeridas.includes(campo.value.trim()))
+    campo.value = estrategia(faixaId, document.getElementById('meta-dominio').value);
+}
+
+function estadoMeta(id, estado){
+  const m = dados.metas.find(x => x.id === id); if(!m) return;
+  m.estado = estado;
+  m.fechadaEm = estado === 'ativa' ? null : hoje();
+  guardar(); render(); icones();
+  toast(estado === 'atingida' ? 'Meta assinalada como atingida.' : estado === 'descontinuada' ? 'Meta descontinuada.' : 'Meta reaberta.');
+}
+function apagarMeta(id){
+  const m = dados.metas.find(x => x.id === id); if(!m) return;
+  if(!confirm('Eliminar esta meta?')) return;
+  dados.metas = dados.metas.filter(x => x.id !== id);
+  guardar(); render(); icones(); toast('Meta eliminada.');
+}
+
+function seccaoMetas(aluno){
+  const metas = metasDe(aluno.id);
+  return `<div class="bg-white rounded-2xl border border-slate-200 shadow-sm mb-4 overflow-hidden print-block">
+    <div class="px-5 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+      <h3 class="font-semibold text-sm flex items-center gap-2"><i data-lucide="target" class="w-4 h-4 text-indigo-600"></i>
+        Metas e plano de intervenção ${metas.length ? `<span class="text-xs font-normal text-slate-500">(${metas.filter(m=>m.estado==='ativa').length} em curso)</span>` : ''}</h3>
+      <button onclick="abrirModalMeta('${aluno.id}')" class="no-print flex items-center gap-1.5 text-xs border border-slate-300 px-2.5 py-1.5 rounded-lg hover:bg-slate-50">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nova meta</button>
+    </div>
+    ${metas.length === 0 ? `<div class="px-5 py-6 text-center">
+        <p class="text-sm text-slate-500">Sem metas definidas. Uma meta liga um domínio frágil a uma estratégia, com prazo de revisão.</p>
+      </div>` : `<div class="divide-y divide-slate-100">${metas.map(m => cartaoMeta(m)).join('')}</div>`}
+  </div>`;
+}
+
+function cartaoMeta(m){
+  const d = DOM_POR_ID[m.dominio] || { nome:'—', cor:'#64748b', icone:'target' };
+  const e = ESTADOS_META[m.estado] || ESTADOS_META.ativa;
+  const dias = diasAte(m.prazo);
+  const prazoTexto = m.estado !== 'ativa'
+    ? (m.fechadaEm ? 'fechada a ' + dataPT(m.fechadaEm) : '')
+    : dias === null ? ''
+    : dias < 0 ? `em atraso há ${Math.abs(dias)} dia(s)`
+    : dias === 0 ? 'revisão marcada para hoje'
+    : `revisão daqui a ${dias} dia(s)`;
+  return `<div class="px-5 py-4">
+    <div class="flex flex-wrap items-start justify-between gap-2 mb-1">
+      <span class="text-xs font-medium flex items-center gap-1.5" style="color:${d.cor}">
+        <i data-lucide="${d.icone}" class="w-3.5 h-3.5"></i>${esc(d.nome)}</span>
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] px-2 py-0.5 rounded font-medium" style="background:${e.fundo}; color:${e.cor}">${e.nome}</span>
+        <span class="text-[11px] ${dias !== null && dias < 0 && m.estado === 'ativa' ? 'text-rose-600 font-medium' : 'text-slate-500'}">${prazoTexto}</span>
+      </div>
+    </div>
+    <p class="text-sm font-medium text-slate-800">${esc(m.descricao)}</p>
+    ${m.estrategia ? `<p class="text-xs text-slate-600 mt-1 border-l-2 border-slate-200 pl-2">${esc(m.estrategia)}</p>` : ''}
+    <p class="text-[11px] text-slate-400 mt-1">Definida a ${dataPT(m.criadaEm)} • prazo ${dataPT(m.prazo)}</p>
+    <div class="flex flex-wrap gap-1.5 mt-2 no-print">
+      ${m.estado === 'ativa' ? `
+        <button onclick="estadoMeta('${m.id}','atingida')" class="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">Atingida</button>
+        <button onclick="estadoMeta('${m.id}','descontinuada')" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">Descontinuar</button>`
+      : `<button onclick="estadoMeta('${m.id}','ativa')" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">Reabrir</button>`}
+      <button onclick="abrirModalMeta('${m.alunoId}','${m.id}')" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50">Editar</button>
+      <button onclick="apagarMeta('${m.id}')" class="text-xs px-2.5 py-1.5 rounded-lg text-rose-600 border border-rose-200 hover:bg-rose-50">Eliminar</button>
+    </div>
+  </div>`;
+}
+
+/* =====================================================================
+   SINAIS A CONSIDERAR
+   Critérios de leitura do padrão de observações que justificam conversa
+   com a família e, se necessário, articulação com a equipa de apoio da
+   escola. Não constituem diagnóstico nem substituem avaliação
+   especializada — apenas assinalam padrões que merecem atenção.
+   ===================================================================== */
+
+const CRITERIOS_ALERTA = [
+  'Um ou mais domínios abaixo de 25% na observação mais recente.',
+  'Ausência de evolução num domínio ao longo de três observações espaçadas por, pelo menos, dois meses.',
+  'Descida de 15 ou mais pontos percentuais no perfil global face à observação anterior.',
+  'Perfil global abaixo de 40% quando é aplicado o referencial da própria idade.',
+  'Diferença marcada entre a perceção do aluno e a observação do professor em vários domínios.'
+];
+
+const MES_MS = 30 * 24 * 3600 * 1000;
+
+/* Devolve a lista de sinais efetivamente presentes nos dados deste aluno. */
+function sinaisDeAlerta(aluno){
+  const avs = avaliacoesDe(aluno.id);
+  if(!avs.length) return [];
+  const ult = avs[avs.length-1], pen = avs.length > 1 ? avs[avs.length-2] : null;
+  const sinais = [];
+
+  const muitoBaixos = DOMINIOS.filter(d => { const p = pontuacaoDominio(ult, d.id); return p !== null && p < 25; });
+  if(muitoBaixos.length) sinais.push({
+    titulo: muitoBaixos.length === 1 ? 'Domínio em nível de apoio intensivo' : muitoBaixos.length + ' domínios em nível de apoio intensivo',
+    detalhe: muitoBaixos.map(d => d.nome).join(', ') + ' — abaixo de 25% na observação de ' + dataPT(ult.data) + '.'
+  });
+
+  /* estagnação: mesma faixa, 3+ observações, 2+ meses, sem ganho */
+  const mesmaFaixa = avs.filter(a => a.faixaId === ult.faixaId);
+  if(mesmaFaixa.length >= 3){
+    const prim = mesmaFaixa[0];
+    const meses = (new Date(ult.data) - new Date(prim.data)) / MES_MS;
+    if(meses >= 2){
+      const parados = DOMINIOS.filter(d => {
+        const a = pontuacaoDominio(prim, d.id), b = pontuacaoDominio(ult, d.id);
+        return a !== null && b !== null && b - a <= 0;
+      });
+      if(parados.length) sinais.push({
+        titulo: 'Sem evolução ao longo de ' + Math.round(meses) + ' meses',
+        detalhe: parados.map(d => d.nome).join(', ') + ' — sem ganho entre ' + dataPT(prim.data) + ' e ' + dataPT(ult.data) + '.'
+      });
+    }
+  }
+
+  if(pen && pen.faixaId === ult.faixaId){
+    const g = pontuacaoGeral(ult), ga = pontuacaoGeral(pen);
+    if(g !== null && ga !== null && ga - g >= 15) sinais.push({
+      titulo: 'Descida acentuada face à observação anterior',
+      detalhe: 'O perfil global passou de ' + ga + '% para ' + g + '% entre ' + dataPT(pen.data) + ' e ' + dataPT(ult.data) + '.'
+    });
+  }
+
+  const comp = comparacaoAluno(aluno.id);
+  if(comp && comp.divergentes.length >= 3) sinais.push({
+    titulo: 'Perceção do aluno muito distante da observação',
+    detalhe: 'Diferença de 30 ou mais pontos em ' + comp.divergentes.length + ' domínios (' +
+             comp.divergentes.map(l => l.nome.toLowerCase()).join(', ') + ').'
+  });
+
+  const geral = pontuacaoGeral(ult);
+  if(geral !== null && geral < 40 && ult.faixaId === faixaDoAluno(aluno).id) sinais.push({
+    titulo: 'Perfil global abaixo do esperado para a idade',
+    detalhe: geral + '% com o referencial dos ' + FAIXA_POR_ID[ult.faixaId].nome + ', que corresponde à idade do aluno.'
+  });
+
+  return sinais;
+}
+
+function cartaoAlertas(aluno){
+  const sinais = sinaisDeAlerta(aluno);
+  if(!sinais.length) return '';
+  return `<div class="bg-white rounded-2xl border border-amber-300 shadow-sm p-5 mb-4 print-block">
+    <h3 class="font-semibold text-sm mb-1 flex items-center gap-2 text-amber-800">
+      <i data-lucide="alert-triangle" class="w-4 h-4"></i> Sinais a considerar</h3>
+    <p class="text-xs text-slate-500 mb-3">Padrões nos registos que merecem atenção. Não são diagnóstico.</p>
+    <ul class="space-y-2">${sinais.map(s => `<li class="text-sm">
+      <span class="font-medium text-slate-800">${esc(s.titulo)}</span>
+      <p class="text-xs text-slate-600">${esc(s.detalhe)}</p></li>`).join('')}</ul>
+    <p class="text-xs text-slate-600 mt-3 pt-3 border-t border-slate-100">
+      Sugere-se registar o que já foi tentado, falar com o encarregado de educação e, mantendo-se o padrão,
+      articular com o diretor de turma ou com a equipa de apoio da escola.</p>
+  </div>`;
 }
 
 /* =====================================================================
@@ -1091,9 +1991,11 @@ function renderProgresso(){
       </div>
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm print-block">
         <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i data-lucide="lightbulb" class="w-4 h-4 text-amber-500"></i> Leitura pedagógica</h3>
-        ${leituraPedagogica(dominios, geral)}
+        ${leituraPedagogica(dominios, geral, faixa.id)}
       </div>
     </div>
+
+    ${cartaoAlertas(aluno)}
 
     <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mb-4 print-block">
       <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i data-lucide="trending-up" class="w-4 h-4 text-indigo-600"></i> Evolução ao longo do tempo</h3>
@@ -1114,7 +2016,7 @@ function renderProgresso(){
             </div>
             ${barra(d.atual, d.cor)}
             <ul class="mt-3 space-y-1.5">
-              ${(faixa.indicadores[d.id]||[]).map((texto,i) => {
+              ${(faixa.indicadores[d.id]||[]).map(([texto, evidencia],i) => {
                 const iid = idIndicador(faixa.id, d.id, i);
                 const v = ult.respostas[iid];
                 const va = pen ? pen.respostas[iid] : undefined;
@@ -1122,7 +2024,7 @@ function renderProgresso(){
                 const mudou = (v!==undefined && va!==undefined && v!==va) ? (v>va?'subiu':'desceu') : null;
                 return `<li class="flex items-start gap-2 text-xs">
                   <span class="px-1.5 py-0.5 rounded font-bold shrink-0" style="background:${v===undefined?'#f1f5f9':n.cor}; color:${v===undefined?'#94a3b8':n.texto}">${v===undefined?'—':n.curto}</span>
-                  <span class="text-slate-700 flex-1">${esc(texto)}</span>
+                  <span class="text-slate-700 flex-1" title="${esc(evidencia)}">${esc(texto)}</span>
                   ${mudou==='subiu'?'<span class="text-emerald-600 font-semibold shrink-0">▲</span>':mudou==='desceu'?'<span class="text-rose-600 font-semibold shrink-0">▼</span>':''}
                 </li>`;
               }).join('')}
@@ -1130,6 +2032,12 @@ function renderProgresso(){
           </div>`).join('')}
       </div>
     </div>
+
+    ${seccaoContextos(aluno)}
+
+    ${seccaoAutoavaliacao(aluno)}
+
+    ${seccaoMetas(aluno)}
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print-block">
       <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-sm flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-indigo-600"></i> Histórico de observações (${avs.length})</h3></div>
@@ -1142,7 +2050,7 @@ function renderProgresso(){
               <p class="text-xs" style="color:${corPontuacao(p)}">${p===null?'—':p+'%'}</p>
             </div>
             <div class="flex-1 min-w-[200px]">
-              <p class="text-xs text-slate-500">${FAIXA_POR_ID[av.faixaId]?.nome || '—'} • ${preenchimento(av)}% classificado</p>
+              <p class="text-xs text-slate-500">${FAIXA_POR_ID[av.faixaId]?.nome || '—'} • ${esc(nomeContexto(av.contexto))} • ${preenchimento(av)}% classificado</p>
               ${av.observacoes ? `<p class="text-sm text-slate-700 mt-1">${esc(av.observacoes)}</p>` : '<p class="text-xs text-slate-400 mt-1 italic">Sem notas qualitativas.</p>'}
             </div>
             <div class="flex gap-1 no-print">
@@ -1155,18 +2063,92 @@ function renderProgresso(){
     </div>`;
 }
 
-/* Sugestões automáticas a partir dos pontos fortes e frágeis */
-const SUGESTOES = {
-  atencao:'Fracionar a tarefa em blocos curtos com pausa marcada e reduzir estímulos na mesa de trabalho.',
-  memoria:'Usar apoios visuais dos passos da tarefa e pedir que repita a instrução por palavras próprias.',
-  inibicao:'Combinar sinais não verbais de paragem e antecipar as regras antes de cada atividade.',
-  flexibilidade:'Avisar as mudanças com antecedência e treinar "e se resolvermos de outra forma?".',
-  planeamento:'Introduzir checklist visível da tarefa e revisão do material no início e no fim da aula.',
-  iniciativa:'Definir o primeiro passo em conjunto e reforçar o esforço, não apenas o resultado.',
-  emocional:'Combinar uma estratégia de regulação (pausa, respiração) e nomear a emoção antes de agir.',
-  metacognicao:'Terminar a tarefa com duas perguntas: "o que correu bem?" e "o que faço diferente?".'
-};
-function leituraPedagogica(dominios, geral){
+/* Perfil por contexto: só faz sentido quando há observações em contextos diferentes */
+function seccaoContextos(aluno){
+  const ctxs = mediasPorContexto(aluno.id);
+  if(ctxs.length < 2) return '';
+  const melhor = ctxs[0], pior = ctxs[ctxs.length-1];
+  return `<div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mb-4 print-block">
+    <h3 class="font-semibold text-sm mb-1 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-indigo-600"></i> Perfil por contexto</h3>
+    <p class="text-xs text-slate-500 mb-3">Média das observações registadas em cada situação.</p>
+    ${ctxs.map(c => `<div class="mb-3">
+      <div class="flex justify-between text-xs mb-1">
+        <span class="text-slate-700">${esc(c.nome)}</span>
+        <span class="text-slate-500">${c.media}% <span class="text-slate-400">(${c.n})</span></span>
+      </div>${barra(c.media)}</div>`).join('')}
+    ${melhor.media - pior.media >= 15 ? `<p class="text-xs text-slate-600 mt-3 pt-3 border-t border-slate-100">
+      Diferença de ${melhor.media - pior.media} pontos entre <strong>${esc(melhor.nome.toLowerCase())}</strong> e
+      <strong>${esc(pior.nome.toLowerCase())}</strong>: vale a pena perceber o que muda entre as duas situações
+      e transportar para a segunda o que resulta na primeira.</p>` : ''}
+  </div>`;
+}
+
+/* Comparação entre a perceção do aluno e a observação do professor */
+function seccaoAutoavaliacao(aluno){
+  const faixa = faixaDoAluno(aluno);
+  const historico = autoavaliacoesDe(aluno.id);
+  if(!temAutoavaliacao(faixa.id) && !historico.length) return '';
+
+  const c = comparacaoAluno(aluno.id);
+  return `<div class="bg-white rounded-2xl border border-slate-200 shadow-sm mb-4 overflow-hidden print-block">
+    <div class="px-5 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+      <h3 class="font-semibold text-sm flex items-center gap-2"><i data-lucide="user-round-check" class="w-4 h-4 text-indigo-600"></i>
+        Como o aluno se vê</h3>
+      <button onclick="irParaAutoavaliacao('${aluno.id}')" class="no-print flex items-center gap-1.5 text-xs border border-slate-300 px-2.5 py-1.5 rounded-lg hover:bg-slate-50">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nova autoavaliação</button>
+    </div>
+    ${!c ? `<div class="px-5 py-6 text-center">
+        <p class="text-sm text-slate-500">${historico.length ? 'É preciso uma observação do professor para comparar.' : 'Sem autoavaliação registada. Comparar as duas perceções é, em si, trabalho de metacognição.'}</p>
+      </div>` : `
+    <div class="px-5 py-4">
+      <p class="text-xs text-slate-500 mb-3">Autoavaliação de ${dataPT(c.aa.data)} face à observação de ${dataPT(c.av.data)}.</p>
+      ${c.linhas.map(l => `<div class="mb-3">
+        <div class="flex justify-between text-xs mb-1">
+          <span class="text-slate-700">${esc(l.nome)}</span>
+          <span class="text-slate-500">${l.dif === null ? '—' : (l.dif > 0 ? '+' : '') + l.dif + ' pp'}</span>
+        </div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-[10px] text-slate-400 w-14 shrink-0">professor</span>
+          <div class="flex-1">${barra(l.prof, '#4f46e5')}</div>
+          <span class="text-[10px] text-slate-500 w-9 text-right">${l.prof===null?'—':l.prof+'%'}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] text-slate-400 w-14 shrink-0">aluno</span>
+          <div class="flex-1">${barra(l.aluno, '#0891b2')}</div>
+          <span class="text-[10px] text-slate-500 w-9 text-right">${l.aluno===null?'—':l.aluno+'%'}</span>
+        </div>
+      </div>`).join('')}
+      ${c.divergentes.length ? `<p class="text-xs text-slate-600 mt-3 pt-3 border-t border-slate-100">
+        Diferença marcada em ${c.divergentes.map(l => esc(l.nome.toLowerCase())).join(', ')}.
+        Confrontar as duas leituras com o aluno costuma ser mais produtivo do que corrigir a dele.</p>` : ''}
+    </div>`}
+    ${historico.length ? `<div class="border-t border-slate-100 px-5 py-3">
+      <p class="text-[11px] font-semibold text-slate-500 mb-2">Autoavaliações registadas</p>
+      <div class="flex flex-wrap gap-1.5">${historico.slice().reverse().map(aa => `
+        <span class="text-xs bg-slate-100 border border-slate-200 px-2 py-1 rounded-md flex items-center gap-1.5">
+          ${dataPT(aa.data)}
+          <button onclick="apagarAutoavaliacao('${aa.id}')" class="no-print text-slate-400 hover:text-rose-600" title="Eliminar">
+            <i data-lucide="x" class="w-3 h-3"></i></button></span>`).join('')}</div>
+    </div>` : ''}
+  </div>`;
+}
+
+/* Abre o formulário já no modo de autoavaliação */
+function irParaAutoavaliacao(alunoId){
+  const aluno = alunoPorId(alunoId); if(!aluno) return;
+  if(!temAutoavaliacao(faixaDoAluno(aluno).id)){
+    toast('A autoavaliação está disponível a partir dos 9 anos.', true); return;
+  }
+  ui.alunoSel = alunoId;
+  iniciarRascunho(alunoId);
+  ui.rascunho.autor = 'aluno';
+  ui.rascunho.faixaId = faixaDoAluno(aluno).id;
+  ui.rascunho.respostas = {};
+  irPara('avaliacao');
+}
+
+/* Leitura pedagógica: pontos fortes, domínios frágeis e estratégia própria da faixa etária. */
+function leituraPedagogica(dominios, geral, faixaId){
   const comDados = dominios.filter(d => d.atual !== null);
   if(!comDados.length) return '<p class="text-sm text-slate-500">Sem dados suficientes.</p>';
   const ord = comDados.slice().sort((a,b) => a.atual - b.atual);
@@ -1177,7 +2159,7 @@ function leituraPedagogica(dominios, geral){
     <p class="text-xs font-semibold text-emerald-700 mb-1">Pontos fortes</p>
     <ul class="text-xs text-slate-700 mb-3 space-y-0.5">${fortes.map(d => `<li>• ${d.nome} (${d.atual}%)</li>`).join('')}</ul>
     <p class="text-xs font-semibold text-rose-700 mb-1">A trabalhar</p>
-    <ul class="text-xs text-slate-700 space-y-1.5">${frageis.map(d => `<li><span class="font-medium">${d.nome} (${d.atual}%)</span><br><span class="text-slate-500">${SUGESTOES[d.id]}</span></li>`).join('')}</ul>
+    <ul class="text-xs text-slate-700 space-y-1.5">${frageis.map(d => `<li><span class="font-medium">${d.nome} (${d.atual}%)</span><br><span class="text-slate-500">${esc(estrategia(faixaId, d.id))}</span></li>`).join('')}</ul>
     ${progrediu.length ? `<p class="text-xs text-emerald-700 mt-3 pt-3 border-t border-slate-100">Progrediu em: ${progrediu.map(d=>d.nome).join(', ')}.</p>` : ''}`;
 }
 
@@ -1214,10 +2196,27 @@ function renderReferencial(){
         ${faixaAberta===f.id ? `<div class="border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100">
           ${DOMINIOS.map(d => `<div class="bg-white p-4">
             <p class="text-sm font-semibold flex items-center gap-2 mb-2"><i data-lucide="${d.icone}" class="w-4 h-4" style="color:${d.cor}"></i>${d.nome}</p>
-            <ul class="space-y-1 text-xs text-slate-700">${(f.indicadores[d.id]||[]).map(t => `<li class="flex gap-2"><span style="color:${d.cor}">▸</span><span>${esc(t)}</span></li>`).join('')}</ul>
+            <ul class="space-y-2 text-xs text-slate-700">${(f.indicadores[d.id]||[]).map(([t,e]) => `<li class="flex gap-2">
+              <span style="color:${d.cor}">▸</span>
+              <span>${esc(t)}<br><span class="text-slate-500">${esc(e)}</span></span></li>`).join('')}</ul>
+            <p class="text-xs mt-3 pt-2 border-t border-slate-100 flex gap-1.5">
+              <i data-lucide="lightbulb" class="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-500"></i>
+              <span class="text-slate-600"><span class="font-medium text-slate-700">Se estiver frágil:</span> ${esc(estrategia(f.id, d.id))}</span></p>
           </div>`).join('')}
         </div>` : ''}
       </div>`).join('')}
+    </div>
+    <div class="bg-white rounded-2xl border border-amber-300 p-5 shadow-sm mt-4 print-block">
+      <h3 class="font-semibold text-sm mb-1 flex items-center gap-2 text-amber-800">
+        <i data-lucide="alert-triangle" class="w-4 h-4"></i> Quando ponderar apoio especializado</h3>
+      <p class="text-xs text-slate-500 mb-3">A aplicação assinala estes padrões automaticamente na ficha de cada aluno.</p>
+      <ul class="text-xs text-slate-700 space-y-1 list-disc pl-4">
+        ${CRITERIOS_ALERTA.map(c => `<li>${esc(c)}</li>`).join('')}
+      </ul>
+      <p class="text-xs text-slate-600 mt-3 pt-3 border-t border-slate-100">
+        Nenhum destes sinais é, por si só, indicador de perturbação: as funções executivas amadurecem
+        a ritmos diferentes e são muito sensíveis ao contexto. O que justificam é registar o que já foi
+        tentado, ouvir a família e, persistindo o padrão, articular com a equipa de apoio da escola.</p>
     </div>`;
 }
 
@@ -1262,7 +2261,7 @@ function renderDados(){
     </div>
     <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mt-4">
       <h3 class="font-semibold text-sm mb-2">Resumo do armazenamento</h3>
-      <p class="text-sm text-slate-600">${dados.alunos.length} aluno(s) • ${dados.avaliacoes.length} observação(ões) • ${turmas().length} turma(s)</p>
+      <p class="text-sm text-slate-600">${dados.alunos.length} aluno(s) • ${dados.avaliacoes.length} observação(ões) • ${dados.metas.length} meta(s) • ${turmas().length} turma(s)</p>
     </div>`;
 }
 
@@ -1281,14 +2280,14 @@ function exportarJSON(){
 }
 function exportarCSV(){
   if(!dados.avaliacoes.length){ toast('Ainda não há observações para exportar.', true); return; }
-  const linhas = [['Aluno','Turma','Idade na observação','Data','Faixa','Dominio','Indicador','Nivel','Descricao nivel','Observacoes']];
+  const linhas = [['Aluno','Turma','Idade na observação','Data','Contexto','Faixa','Dominio','Indicador','Evidencia','Nivel','Descricao nivel','Observacoes']];
   dados.avaliacoes.slice().sort((a,b) => a.data < b.data ? -1 : 1).forEach(av => {
     const al = alunoPorId(av.alunoId); if(!al) return;
     const f = FAIXA_POR_ID[av.faixaId]; if(!f) return;
-    DOMINIOS.forEach(d => (f.indicadores[d.id]||[]).forEach((texto,i) => {
+    DOMINIOS.forEach(d => (f.indicadores[d.id]||[]).forEach(([texto, evidencia],i) => {
       const v = av.respostas[idIndicador(f.id, d.id, i)];
       if(v === undefined || v === null) return;
-      linhas.push([al.nome, al.turma||'', idadeDe(al.nascimento, av.data), av.data, f.nome, d.nome, texto, v, NIVEIS[v].nome, av.observacoes||'']);
+      linhas.push([al.nome, al.turma||'', idadeDe(al.nascimento, av.data), av.data, nomeContexto(av.contexto), f.nome, d.nome, texto, evidencia, v, NIVEIS[v].nome, av.observacoes||'']);
     }));
   });
   const csv = '﻿' + linhas.map(l => l.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\r\n');
@@ -1303,8 +2302,11 @@ function importarJSON(input){
     try {
       const obj = JSON.parse(e.target.result);
       if(!Array.isArray(obj.alunos) || !Array.isArray(obj.avaliacoes)) throw new Error('formato');
-      if(!confirm(`Importar ${obj.alunos.length} aluno(s) e ${obj.avaliacoes.length} observação(ões)? Os dados atuais serão substituídos.`)) return;
-      dados = { alunos: obj.alunos, avaliacoes: obj.avaliacoes };
+      const nMetas = Array.isArray(obj.metas) ? obj.metas.length : 0;
+      if(!confirm(`Importar ${obj.alunos.length} aluno(s), ${obj.avaliacoes.length} observação(ões) e ${nMetas} meta(s)? Os dados atuais serão substituídos.`)) return;
+      dados = { alunos: obj.alunos, avaliacoes: obj.avaliacoes,
+                metas: Array.isArray(obj.metas) ? obj.metas : [],
+                autoavaliacoes: Array.isArray(obj.autoavaliacoes) ? obj.autoavaliacoes : [] };
       ui.alunoSel = null; ui.rascunho = null;
       guardar(); render(); icones(); toast('Dados importados com sucesso.');
     } catch(err){ toast('Ficheiro inválido ou corrompido.', true); }
@@ -1315,7 +2317,7 @@ function importarJSON(input){
 function apagarTudo(){
   if(!confirm('Apagar TODOS os alunos e observações? Esta ação não pode ser anulada.')) return;
   if(!confirm('Confirma? Recomenda-se exportar uma cópia de segurança antes.')) return;
-  dados = { alunos:[], avaliacoes:[] }; ui.alunoSel = null; ui.rascunho = null;
+  dados = { alunos:[], avaliacoes:[], metas:[], autoavaliacoes:[] }; ui.alunoSel = null; ui.rascunho = null;
   guardar(); render(); icones(); toast('Todos os dados foram apagados.');
 }
 
@@ -1360,13 +2362,46 @@ function carregarExemplo(){
         respostas[idIndicador(faixa.id, dom.id, i)] = Math.max(0, Math.min(3, Math.round(alvo)));
       }));
       avaliacoes.push({ id: uid()+k+t, alunoId, data: d.toISOString().slice(0,10), faixaId: faixa.id,
+        contexto: ['individual','grupo','avaliacao'][t],
         respostas, observacoes: t===2 ? notas[Math.floor(rnd()*notas.length)] : '', criadoEm: Date.now()+t });
     });
   });
-  dados = { alunos, avaliacoes };
+  /* uma meta para os dois alunos com perfil mais frágil */
+  const metas = [];
+  alunos.slice().sort((a,b) =>
+    pontuacaoGeral(avaliacoes.filter(v=>v.alunoId===a.id).pop()) - pontuacaoGeral(avaliacoes.filter(v=>v.alunoId===b.id).pop())
+  ).slice(0,2).forEach((a,i) => {
+    const ult = avaliacoes.filter(v => v.alunoId === a.id).pop();
+    const fraco = DOMINIOS.map(d => ({ id:d.id, p:pontuacaoDominio(ult, d.id) }))
+                          .filter(x => x.p !== null).sort((x,y) => x.p - y.p)[0];
+    const prazo = new Date(Date.now() + (14 + i*21)*24*3600*1000).toISOString().slice(0,10);
+    metas.push({ id: uid()+'m'+i, alunoId:a.id, dominio:fraco.id,
+      descricao:'Melhorar ' + DOM_POR_ID[fraco.id].nome.toLowerCase() + ' nas tarefas de sala.',
+      estrategia: estrategia(ult.faixaId, fraco.id), prazo, estado:'ativa',
+      criadaEm: hoje(), fechadaEm: null });
+  });
+
+  /* autoavaliação para os alunos a partir dos 9 anos, com desvio face ao professor */
+  const autoavaliacoes = [];
+  alunos.forEach((a,k) => {
+    const faixa = faixaDoAluno(a);
+    if(!temAutoavaliacao(faixa.id)) return;
+    const ult = avaliacoes.filter(v => v.alunoId === a.id).pop();
+    const respostas = {};
+    DOMINIOS.forEach(dom => {
+      const prof = pontuacaoDominio(ult, dom.id);
+      const desvio = (rnd() - 0.35) * 1.6;              /* tende a sobrestimar-se, como é comum */
+      respostas[dom.id] = Math.max(0, Math.min(3, Math.round((prof/100)*3 + desvio)));
+    });
+    const d = new Date(); d.setDate(d.getDate() - 5);
+    autoavaliacoes.push({ id: uid()+'a'+k, alunoId:a.id, data: d.toISOString().slice(0,10),
+      faixaId: faixa.id, respostas, comentario:'', criadoEm: Date.now() });
+  });
+
+  dados = { alunos, avaliacoes, metas, autoavaliacoes };
   ui.alunoSel = null; ui.rascunho = null;
   guardar(); irPara('painel');
-  toast('Dados de exemplo carregados: 8 alunos e 24 observações.');
+  toast(`Dados de exemplo carregados: ${alunos.length} alunos, ${avaliacoes.length} observações, ${autoavaliacoes.length} autoavaliações e ${metas.length} metas.`);
 }
 
 /* =====================================================================
@@ -1392,11 +2427,37 @@ document.getElementById('form-aluno').addEventListener('submit', e => {
   }
   guardar(); fecharModalAluno(); render(); icones();
 });
+document.getElementById('form-meta').addEventListener('submit', e => {
+  e.preventDefault();
+  const id = document.getElementById('meta-id').value;
+  const campos = {
+    alunoId: document.getElementById('meta-aluno').value,
+    dominio: document.getElementById('meta-dominio').value,
+    descricao: document.getElementById('meta-descricao').value.trim(),
+    estrategia: document.getElementById('meta-estrategia').value.trim(),
+    prazo: document.getElementById('meta-prazo').value
+  };
+  if(!campos.descricao){ toast('Descreva o que se pretende alcançar.', true); return; }
+  if(!campos.prazo){ toast('Defina a data de revisão.', true); return; }
+  if(id){
+    const m = dados.metas.find(x => x.id === id);
+    if(m) Object.assign(m, campos);
+    toast('Meta atualizada.');
+  } else {
+    dados.metas.push({ id: uid(), ...campos, estado:'ativa', criadaEm: hoje(), fechadaEm: null });
+    toast('Meta criada.');
+  }
+  guardar(); fecharModalMeta(); render(); icones();
+});
+document.getElementById('modal-meta').addEventListener('click', e => {
+  if(e.target.id === 'modal-meta') fecharModalMeta();
+});
+
 document.getElementById('aluno-nascimento').addEventListener('change', atualizarFaixaInfo);
 document.getElementById('modal-aluno').addEventListener('click', e => {
   if(e.target.id === 'modal-aluno') fecharModalAluno();
 });
-document.addEventListener('keydown', e => { if(e.key === 'Escape') fecharModalAluno(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape'){ fecharModalAluno(); fecharModalMeta(); } });
 
 /* Se o CDN de estilos não carregar, ativa os estilos alternativos definidos no <head>. */
 (function detetarCDN(){
