@@ -57,7 +57,13 @@
     /* --------------------------------------------------------------------- */
     var cache = null;
 
+    /* Com a nuvem ligada, a "base" é o espelho sincronizado do Firestore. */
+    function modoNuvem() {
+        return !!(global.Nuvem && global.Nuvem.ligada());
+    }
+
     function base() {
+        if (modoNuvem()) { return global.Nuvem.espelho(); }
         if (cache) { return cache; }
         var bruto = null;
         try { bruto = global.localStorage.getItem(CHAVE_DB); } catch (e) { bruto = null; }
@@ -78,11 +84,23 @@
         return cache;
     }
 
-    function gravar() {
+    /* Os dados deste navegador, mesmo quando a nuvem está ligada.
+       Serve para o envio inicial para o Firestore. */
+    function baseLocal() {
         try {
-            global.localStorage.setItem(CHAVE_DB, JSON.stringify(cache));
-        } catch (e) {
-            console.warn('Não foi possível gravar os dados localmente:', e);
+            var bruto = global.localStorage.getItem(CHAVE_DB);
+            if (bruto) { return JSON.parse(bruto); }
+        } catch (e) { /* sem acesso ao armazenamento */ }
+        return cache || dadosIniciais();
+    }
+
+    function gravar() {
+        if (!modoNuvem()) {
+            try {
+                global.localStorage.setItem(CHAVE_DB, JSON.stringify(cache));
+            } catch (e) {
+                console.warn('Não foi possível salvar os dados localmente:', e);
+            }
         }
         if (typeof global.dispatchEvent === 'function') {
             global.dispatchEvent(new CustomEvent('store:alterado'));
@@ -109,6 +127,7 @@
         novo.id = novo.id || uid(colecao.slice(0, 3));
         novo.criadoEm = novo.criadoEm || agora();
         db[colecao].push(novo);
+        if (modoNuvem()) { global.Nuvem.escrever(colecao, novo.id, novo); }
         gravar();
         return clonar(novo);
     }
@@ -120,6 +139,7 @@
             if (lista[i].id === id) {
                 Object.keys(alteracoes).forEach(function (k) { lista[i][k] = alteracoes[k]; });
                 lista[i].atualizadoEm = agora();
+                if (modoNuvem()) { global.Nuvem.escrever(colecao, id, lista[i]); }
                 gravar();
                 return clonar(lista[i]);
             }
@@ -131,6 +151,7 @@
         var db = base();
         var antes = (db[colecao] || []).length;
         db[colecao] = (db[colecao] || []).filter(function (i) { return i.id !== id; });
+        if (modoNuvem()) { global.Nuvem.apagar(colecao, id); }
         gravar();
         return db[colecao].length < antes;
     }
@@ -145,13 +166,15 @@
             autor = u ? u.id : null;
         }
         var db = base();
-        db.auditoria.unshift({
+        var registo = {
             id: uid('log'),
             quando: agora(),
             usuarioId: autor || null,
             acao: acao,
             detalhe: detalhe || ''
-        });
+        };
+        db.auditoria.unshift(registo);
+        if (modoNuvem()) { global.Nuvem.escrever('auditoria', registo.id, registo); }
         // Mantem o registro com um tamanho razoavel no browser.
         if (db.auditoria.length > 400) { db.auditoria.length = 400; }
         gravar();
@@ -461,6 +484,8 @@
         uid: uid,
         agora: agora,
         base: base,
+        modoNuvem: modoNuvem,
+        baseLocal: baseLocal,
         listar: listar,
         encontrar: encontrar,
         inserir: inserir,

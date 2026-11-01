@@ -36,20 +36,88 @@
     }
 
     /* --------------------------------------------------------------------- */
-    function entrar(email, senha) {
+    /* Entrar. Como o Firebase responde mais tarde, o resultado chega por
+       callback: em modo local ele é chamado logo, sem esperar nada. */
+    function entrar(email, senha, pronto) {
+        pronto = pronto || function () {};
         var alvo = (email || '').trim().toLowerCase();
+
+        if (global.Nuvem && global.Nuvem.disponivel()) {
+            global.Nuvem.entrar(alvo, senha, function (r) {
+                if (!r.ok && r.rede) {
+                    /* Sem internet: continua a dar para demonstrar neste computador. */
+                    if (global.UI) { UI.toast('Sem ligação à nuvem — entrou no modo demonstração.', 'aviso'); }
+                    entrarLocal(alvo, senha, pronto);
+                    return;
+                }
+                if (!r.ok) { pronto(r); return; }
+                /* Já autenticado: agora sincroniza e descobre o perfil na plataforma. */
+                global.Nuvem.sincronizar(false, function (sincronizou) {
+                    if (!sincronizou) {
+                        pronto({ ok: false, erro: 'Entrou, mas não foi possível ler os dados. Verifique as regras do Firestore.' });
+                        return;
+                    }
+                    var utilizador = null;
+                    if (r.usuarioId) { utilizador = Store.encontrar('usuarios', r.usuarioId); }
+                    if (!utilizador) {
+                        utilizador = Store.listar('usuarios').filter(function (u) {
+                            return (u.email || '').toLowerCase() === alvo;
+                        })[0];
+                    }
+                    if (!utilizador && r.perfil === 'supra') {
+                        /* Projeto ainda vazio: a primeira entrada da coordenação
+                           cria o próprio registro, para não ficar um nó cego. */
+                        utilizador = Store.inserir('usuarios', {
+                            id: r.uid,
+                            nome: 'Coordenação do Protagonismo',
+                            email: r.email || alvo,
+                            cargo: 'Supra Admin',
+                            perfil: 'supra',
+                            funcaoId: 'fun_supra',
+                            frenteIds: [], comissaoIds: [],
+                            ativo: true, ultimoAcesso: null
+                        });
+                        if (!Store.encontrar('funcoes', 'fun_supra')) {
+                            Store.inserir('funcoes', {
+                                id: 'fun_supra', nome: 'Supra Admin', sistema: true, escopo: 'global',
+                                descricao: 'Coordenação geral do Protagonismo. Vê toda a plataforma.',
+                                permissoes: Store.PERMISSOES.map(function (pm) { return pm.chave; })
+                            });
+                        }
+                    }
+                    if (!utilizador) {
+                        pronto({
+                            ok: false,
+                            erro: 'A conta entrou, mas não há nenhum coordenador com este e-mail cadastrado na plataforma.'
+                        });
+                        return;
+                    }
+                    Store.atualizar('usuarios', utilizador.id, { ultimoAcesso: Store.agora() });
+                    guardarSessao({ usuarioId: utilizador.id, perfil: r.perfil || utilizador.perfil, uid: r.uid, iniciadaEm: Store.agora() });
+                    Store.registar('Início de sessão', utilizador.nome + ' entrou no painel.', utilizador.id);
+                    pronto({ ok: true, usuario: utilizador });
+                });
+            });
+            return;
+        }
+
+        entrarLocal(alvo, senha, pronto);
+    }
+
+    /* Login de demonstração: as contas que vivem no próprio navegador. */
+    function entrarLocal(alvo, senha, pronto) {
         var utilizador = Store.listar('usuarios').filter(function (u) {
-            return u.email.toLowerCase() === alvo;
+            return (u.email || '').toLowerCase() === alvo;
         })[0];
 
-        if (!utilizador) { return { ok: false, erro: 'Não existe nenhuma conta com esse e-mail.' }; }
-        if (!utilizador.ativo) { return { ok: false, erro: 'Esta conta esta desativada. Fale com a coordenação.' }; }
-        if (utilizador.senha !== senha) { return { ok: false, erro: 'Senha incorreta.' }; }
+        if (!utilizador) { pronto({ ok: false, erro: 'Não existe nenhuma conta com esse e-mail.' }); return; }
+        if (!utilizador.ativo) { pronto({ ok: false, erro: 'Esta conta está desativada. Fale com a coordenação.' }); return; }
+        if (utilizador.senha !== senha) { pronto({ ok: false, erro: 'Senha incorreta.' }); return; }
 
         Store.atualizar('usuarios', utilizador.id, { ultimoAcesso: Store.agora() });
         guardarSessao({ usuarioId: utilizador.id, perfil: utilizador.perfil, iniciadaEm: Store.agora() });
         Store.registar('Início de sessão', utilizador.nome + ' entrou no painel.', utilizador.id);
-        return { ok: true, usuario: utilizador };
+        pronto({ ok: true, usuario: utilizador });
     }
 
     function entrarComoPublico() {
@@ -78,6 +146,7 @@
     function sair() {
         var u = usuarioAtual();
         if (u) { Store.registar('Fim de sessão', u.nome + ' saiu do painel.', u.id); }
+        if (global.Nuvem && global.Nuvem.ligada()) { global.Nuvem.sair(); }
         guardarSessao(false);
     }
 
@@ -170,6 +239,7 @@
     global.Auth = {
         entrar: entrar,
         entrarComoPublico: entrarComoPublico,
+        sessaoGuardada: carregarSessao,
         assumirPerfil: assumirPerfil,
         sair: sair,
         autenticado: autenticado,

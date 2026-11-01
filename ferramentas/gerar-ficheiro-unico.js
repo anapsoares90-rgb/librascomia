@@ -40,6 +40,11 @@ var estilos = embutirTipos(ler('assets/css/app.css')) + '\n' + ler('assets/css/t
 
 var scripts = [
     'assets/js/vendor/lucide.min.js',
+    'assets/js/vendor/firebase/firebase-app-compat.js',
+    'assets/js/vendor/firebase/firebase-auth-compat.js',
+    'assets/js/vendor/firebase/firebase-firestore-compat.js',
+    'assets/js/config.js',
+    'assets/js/nuvem.js',
     'assets/js/store.js',
     'assets/js/auth.js',
     'assets/js/ui.js',

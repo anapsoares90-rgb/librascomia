@@ -104,6 +104,19 @@
     /* --------------------------------------------------------------------- */
     /* Cabecalho                                                              */
     /* --------------------------------------------------------------------- */
+    function desenharModo() {
+        var alvo = document.getElementById('modo-dados');
+        if (!alvo) { return; }
+        var naNuvem = global.Nuvem && Nuvem.ligada();
+        var s = global.Nuvem ? Nuvem.situacao() : { estado: 'local' };
+        alvo.innerHTML = naNuvem
+            ? '<span class="pingo-vivo" style="margin:0"></span> Nuvem ligada · ' + UI.esc(s.projeto || '')
+            : (s.estado === 'erro'
+                ? UI.icone('cloud-off', 13) + ' Sem ligação à nuvem'
+                : UI.icone('hard-drive', 13) + ' Só neste computador');
+        UI.icones();
+    }
+
     function desenharUtilizador() {
         var alvo = document.getElementById('cartao-utilizador');
         if (!alvo) { return; }
@@ -281,6 +294,7 @@
 
         desenharMenu();
         desenharUtilizador();
+        desenharModo();
         desenharTopo();
         // Em telas pequenos, navegar fecha o menu lateral.
         if (global.innerWidth < 1024) { fecharLateral(); }
@@ -330,23 +344,35 @@
 
         form.addEventListener('submit', function (e) {
             e.preventDefault();
+            var botao = form.querySelector('button[type=submit]');
             var email = document.getElementById('login-email').value;
             var senha = document.getElementById('login-senha').value;
-            var r = Auth.entrar(email, senha);
-            if (!r.ok) {
-                erro.textContent = r.erro;
-                erro.classList.remove('hidden');
-                return;
-            }
+
+            botao.disabled = true;
+            botao.textContent = 'A entrar...';
             erro.classList.add('hidden');
-            rotaAtual = 'visao';
-            global.location.hash = '#/visao';
-            render();
-            UI.toast('Bem-vindo(a), ' + r.usuario.nome.split(' ')[0] + '!', 'sucesso');
+
+            Auth.entrar(email, senha, function (r) {
+                botao.disabled = false;
+                botao.textContent = 'Entrar no painel';
+                if (!r.ok) {
+                    erro.textContent = r.erro;
+                    erro.classList.remove('hidden');
+                    return;
+                }
+                rotaAtual = 'visao';
+                global.location.hash = '#/visao';
+                render();
+                UI.toast('Bem-vindo(a), ' + r.usuario.nome.split(' ')[0] + '!', 'sucesso');
+            });
         });
 
         document.getElementById('btn-publico').addEventListener('click', function () {
             Auth.entrarComoPublico();
+            if (global.Nuvem && Nuvem.disponivel() && !Nuvem.ligada()) {
+                Nuvem.sincronizar(true, function () { render(); });
+                return;
+            }
             render();
         });
 
@@ -387,6 +413,33 @@
                 Auth.assumirPerfil('publico');
                 render();
             });
+        }
+
+        var sessao = Auth.sessaoGuardada();
+
+        if (global.Nuvem && Nuvem.disponivel()) {
+            Nuvem.aoMudar(function () { if (Auth.autenticado()) { render(); } });
+            Nuvem.iniciar();
+
+            if (sessao && sessao.uid) {
+                /* Sessão da equipe: sincroniza tudo antes de desenhar. */
+                Nuvem.sincronizar(false, function (ok) {
+                    if (!ok) {
+                        Auth.sair();
+                        mostrarLogin();
+                        UI.toast('A sessão expirou ou as regras do Firestore recusaram a leitura.', 'aviso');
+                        return;
+                    }
+                    tratarHash();
+                });
+                UI.icones();
+                return;
+            }
+            if (sessao && sessao.perfil === 'publico') {
+                Nuvem.sincronizar(true, function () { render(); });
+                UI.icones();
+                return;
+            }
         }
 
         if (Auth.autenticado()) {

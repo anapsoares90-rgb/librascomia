@@ -9,6 +9,9 @@
             var registos = Store.listar('auditoria');
             var html = UI.cabecalho('Acompanhamento', 'Registro de atividade',
                 'Histórico das ações feitas na plataforma pelos coordenadores.',
+                (Auth.ehSupra() && global.Nuvem && Nuvem.disponivel()
+                    ? '<button class="btn" data-acao="nuvem">' + UI.icone('cloud-upload', 15) + ' Enviar dados para a nuvem</button>'
+                    : '') +
                 '<button class="btn" data-acao="exportar">' + UI.icone('download', 15) + ' Exportar dados</button>' +
                 '<button class="btn btn--perigo" data-acao="repor">' + UI.icone('rotate-ccw', 15) + ' Repor demonstração</button>');
 
@@ -36,6 +39,29 @@
                     UI.guardarFicheiro('protagonismo-dados.json', Store.exportar(), 'application/json');
                 });
             }
+            var nuvem = raiz.querySelector('[data-acao="nuvem"]');
+            if (nuvem) {
+                nuvem.addEventListener('click', function () {
+                    UI.confirmar({
+                        titulo: 'Enviar os dados para o Firebase',
+                        mensagem: 'Copia tudo o que está neste navegador para o projeto na nuvem. ' +
+                                  'Documentos com o mesmo identificador são substituídos. Faça isto uma vez, ' +
+                                  'a partir do computador que tem os dados certos.',
+                        confirmar: 'Enviar',
+                        aoConfirmar: function () {
+                            UI.toast('A enviar...', 'info');
+                            Nuvem.enviarTudo(Store.baseLocal(), function (r) {
+                                if (r.ok) {
+                                    UI.toast(r.total + ' registros enviados para a nuvem.', 'sucesso');
+                                } else {
+                                    UI.toast('Falhou: ' + r.erro, 'erro');
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+
             var rep = raiz.querySelector('[data-acao="repor"]');
             if (rep) {
                 rep.addEventListener('click', function () {

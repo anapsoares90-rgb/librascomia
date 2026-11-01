@@ -1,0 +1,122 @@
+rules_version = '2';
+
+// =============================================================================
+// Regras de segurança do Painel do Protagonismo (projeto siv-protagonismo)
+// -----------------------------------------------------------------------------
+// Três níveis:
+//   1. Visitante (sem login) — só lê o que é público: postagens liberadas,
+//      eventos públicos e a lista de frentes e comitês.
+//   2. Equipe (login feito)  — lê tudo da escola e escreve no dia a dia.
+//   3. Supra admin           — único que mexe na estrutura (frentes, comitês,
+//      funções, usuários e papéis).
+//
+// O papel de cada pessoa vem da coleção "papeis", onde o ID do documento é o
+// UID do Firebase Auth:
+//      papeis/{uid} = { perfil: "supra" | "admin", email: "nome@escola.pt" }
+//
+// O controle fino (qual comitê cada coordenador vê) continua na aplicação.
+// Estas regras garantem o essencial: ninguém de fora escreve, visitante só lê
+// o que foi liberado, e só a coordenação geral altera a estrutura.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------- apoio --
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function temPapel() {
+      return autenticado() && exists(/databases/$(database)/documents/papeis/$(request.auth.uid));
+    }
+
+    function perfil() {
+      return get(/databases/$(database)/documents/papeis/$(request.auth.uid)).data.perfil;
+    }
+
+    function ehSupra() {
+      return temPapel() && perfil() == 'supra';
+    }
+
+    // Equipe = qualquer pessoa com papel registrado (supra ou admin).
+    function ehEquipe() {
+      return temPapel();
+    }
+
+    // ------------------------------------------------------- estrutura -------
+    // Visitante lê (o portal mostra os nomes das frentes e comitês).
+    // Só o supra admin altera.
+    match /frentes/{id} {
+      allow read: if true;
+      allow write: if ehSupra();
+    }
+
+    match /comissoes/{id} {
+      allow read: if true;
+      allow write: if ehSupra();
+    }
+
+    match /funcoes/{id} {
+      allow read: if ehEquipe();
+      allow write: if ehSupra();
+    }
+
+    match /usuarios/{id} {
+      allow read: if ehEquipe();
+      allow write: if ehSupra();
+    }
+
+    // Quem é quem. Só o supra admin cria ou muda papéis; cada pessoa pode ler
+    // o seu próprio, para a aplicação saber com que perfil entrar.
+    match /papeis/{uid} {
+      allow read: if ehSupra() || (autenticado() && request.auth.uid == uid);
+      allow write: if ehSupra();
+    }
+
+    // -------------------------------------------------------- conteúdo -------
+    // Postagens: o visitante só enxerga as liberadas e marcadas como públicas.
+    // Para isso funcionar em listagens, a aplicação consulta sem login usando
+    // where('visibilidade','==','publico') e where('status','==','aprovado').
+    match /postagens/{id} {
+      allow read: if ehEquipe()
+                  || (resource.data.visibilidade == 'publico' && resource.data.status == 'aprovado');
+      allow create, update: if ehEquipe();
+      allow delete: if ehEquipe();
+    }
+
+    // Agenda: o visitante só vê os eventos marcados como públicos.
+    match /eventos/{id} {
+      allow read: if ehEquipe() || resource.data.publico == true;
+      allow write: if ehEquipe();
+    }
+
+    // ------------------------------------------- dia a dia da equipe ---------
+    match /membros/{id}     { allow read, write: if ehEquipe(); }
+    match /mensagens/{id}   { allow read, write: if ehEquipe(); }
+    match /delegacoes/{id}  { allow read, write: if ehEquipe(); }
+    match /sessoes/{id}     { allow read, write: if ehEquipe(); }
+    match /discursos/{id}   { allow read, write: if ehEquipe(); }
+    match /mocoes/{id}      { allow read, write: if ehEquipe(); }
+    match /inscricoes/{id}  { allow read, write: if ehEquipe(); }
+
+    // Dinheiro: qualquer pessoa da equipe lê, mas só o supra admin apaga.
+    match /pagamentos/{id} {
+      allow read: if ehEquipe();
+      allow create, update: if ehEquipe();
+      allow delete: if ehSupra();
+    }
+
+    // Registro de atividade: escreve-se, não se reescreve.
+    match /auditoria/{id} {
+      allow read: if ehEquipe();
+      allow create: if ehEquipe();
+      allow update, delete: if ehSupra();
+    }
+
+    // Tudo o que não está acima fica fechado.
+    match /{documento=**} {
+      allow read, write: if false;
+    }
+  }
+}

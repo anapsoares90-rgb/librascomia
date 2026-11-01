@@ -122,13 +122,17 @@ netlify.toml                     configuração de publicação
 tailwind.config.js               configuração usada para gerar o CSS
 ferramentas/
 └── gerar-ficheiro-unico.js      junta tudo num único HTML para compartilhar
+firestore.rules                  regras de segurança do Firebase
+firebase.json                    configuração do Firebase CLI
 assets/
 ├── fonts/                       Fraunces e IBM Plex Sans (licenças incluídas)
 ├── css/
 │   ├── app.css                  cores, tipografia e componentes do painel
 │   └── tailwind.css             utilitários de grade e espaçamento (gerado)
 └── js/
-    ├── store.js                 camada de dados (única que toca no localStorage)
+    ├── config.js                liga/desliga a nuvem e guarda a configuração do Firebase
+    ├── nuvem.js                 ponte com o Firestore e o Authentication
+    ├── store.js                 camada de dados (localStorage ou espelho da nuvem)
     ├── auth.js                  sessão, perfis, permissões e escopo de cada usuário
     ├── ui.js                    toasts, modais, formulários, métricas, tabelas
     ├── dados.js                 consultas de domínio já filtradas pelo escopo
@@ -165,13 +169,75 @@ node ferramentas/gerar-ficheiro-unico.js
 Gera `painel-protagonismo.html` com CSS, JavaScript e fontes embutidos — um só arquivo que
 abre em qualquer computador, sem servidor.
 
-## Ligar a um servidor (Firebase, Supabase ou API própria)
+## Firebase (projeto `siv-protagonismo`)
+
+O painel já vem com a ligação ao Firebase pronta — Firestore para os dados e
+Authentication para o login. Ela fica **desligada** até você concluir os passos abaixo,
+para a demonstração continuar funcionando em qualquer computador.
+
+### Como funciona
+
+As telas leem os dados de forma síncrona (`Store.listar(...)` devolve logo um array) e o
+Firestore é assíncrono. Em vez de reescrever as 17 telas, `assets/js/nuvem.js` mantém um
+**espelho em memória** alimentado por `onSnapshot`: a leitura continua instantânea e,
+quando alguém muda alguma coisa noutro computador, o espelho atualiza e a tela se redesenha
+sozinha. Na prática, o cronômetro e a lista de oradores da mesa aparecem ao vivo na tela
+*Ao vivo* do organizador, noutro aparelho.
+
+As escritas vão para o Firestore e para o espelho ao mesmo tempo, para a interface
+responder na hora; se a gravação falhar, aparece um aviso.
+
+### Ligar — quatro passos no console do Firebase
+
+1. **Authentication → Sign-in method → Email/senha → Ativar.**
+   (Hoje está desativado: o painel responde *"The given sign-in provider is disabled"*.)
+2. **Authentication → Users → Add user**: o e-mail e a senha da coordenação geral.
+   Copie o **UID** que aparece na lista.
+3. **Firestore → Start collection `papeis`** → ID do documento = esse UID, campos:
+   `perfil` = `supra` (texto) e `email` = o e-mail da conta.
+4. **Firestore → Rules** → cole o conteúdo de [`firestore.rules`](firestore.rules) e
+   publique. (Hoje as regras recusam tudo: o painel responde *"Missing or insufficient
+   permissions"*.)
+
+Depois, no código: mude `usarNuvem` para `true` em
+[`assets/js/config.js`](assets/js/config.js) e abra o painel.
+
+Na primeira entrada, se o banco estiver vazio, a conta com perfil `supra` cria
+automaticamente o próprio registro de coordenação. A seguir, vá a **Atividade → Enviar
+dados para a nuvem** para subir os comitês, delegações e o resto que já existe neste
+navegador.
+
+### Contas dos coordenadores
+
+Cada coordenador precisa de duas coisas: uma conta em **Authentication** (criada por você
+no console) e um documento em **papeis/{UID}** com `perfil: "admin"`. O que ele enxerga
+dentro do painel continua sendo definido em *Coordenadores* → função e comitês liberados.
+
+### O que as regras garantem
+
+* Visitante sem login lê apenas: frentes, comitês, postagens liberadas e públicas, e
+  eventos marcados como públicos.
+* Só quem tem papel registrado escreve qualquer coisa.
+* Só o supra admin altera estrutura (frentes, comitês, funções, usuários, papéis), apaga
+  pagamentos ou mexe no registro de atividade.
+
+> A configuração do Firebase em `config.js` **não é um segredo** — ela identifica o projeto
+> e vai dentro de qualquer página que use o Firebase. Quem protege os dados são as regras.
+
+> O Google Analytics fica desligado de propósito: o painel é usado por alunos e medir o
+> comportamento deles não faz parte do projeto. Para ligar, carregue também o
+> `firebase-analytics-compat.js` e mude `usarAnalytics` para `true`.
+
+### Sem internet
+
+Com `usarNuvem: true` e a internet em baixo, o login cai automaticamente no modo
+demonstração e o rodapé da barra lateral avisa: *"Só neste computador"*.
+
+## Ligar a outro servidor (Supabase ou API própria)
 
 Nenhuma tela fala com o `localStorage` diretamente: todas passam por `store.js`
-(`listar`, `encontrar`, `inserir`, `atualizar`, `remover`, `registar`). Para migrar para um
-banco real basta reescrever essas seis funções — o resto do painel continua igual. Nessa
-hora, troque também o login de demonstração por autenticação de verdade e desligue o
-`MODO_TESTE`.
+(`listar`, `encontrar`, `inserir`, `atualizar`, `remover`, `registar`). Para migrar para
+outro banco basta reescrever essas seis funções — ou copiar o que `nuvem.js` faz.
 
 ## Regerar o CSS
 
