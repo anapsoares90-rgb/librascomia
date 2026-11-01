@@ -1,5 +1,5 @@
 /* =========================================================================
-   App — arranque, navegacao e montagem dos paineis
+   App — arranque, navegacao e montagem dos painéis
    ========================================================================= */
 (function (global) {
     'use strict';
@@ -8,36 +8,47 @@
         {
             grupo: 'Painel',
             itens: [
-                { rota: 'visao',      rotulo: 'Visao geral',  icone: 'layout-dashboard', permissao: null },
+                { rota: 'visao',      rotulo: 'Visão geral',  icone: 'layout-dashboard', permissao: null },
                 { rota: 'postagens',  rotulo: 'Postagens',    icone: 'megaphone',        permissao: ['postagens.criar', 'postagens.publicar'] },
-                { rota: 'mensagens',  rotulo: 'Comunicacao',  icone: 'messages-square',  permissao: null, contador: 'mensagens' },
-                { rota: 'calendario', rotulo: 'Calendario',   icone: 'calendar-days',    permissao: null },
+                { rota: 'mensagens',  rotulo: 'Comunicação',  icone: 'messages-square',  permissao: null, contador: 'mensagens' },
+                { rota: 'calendario', rotulo: 'Calendário',   icone: 'calendar-days',    permissao: null },
                 { rota: 'membros',    rotulo: 'Membros',      icone: 'users',            permissao: ['membros.gerir'] }
             ]
         },
         {
-            grupo: 'Gestao do Protagonismo',
+            grupo: 'SiV — Simulação Viva',
+            itens: [
+                { rota: 'debate',     rotulo: 'Mesa de debate', icone: 'gavel',       permissao: ['debate.presidir'] },
+                { rota: 'aovivo',     rotulo: 'Ao vivo',        icone: 'radio-tower', permissao: ['plataforma.total'] },
+                { rota: 'delegacoes', rotulo: 'Delegações',     icone: 'flag',        permissao: ['delegacoes.gerir'] },
+                { rota: 'inscricoes', rotulo: 'Inscrições',     icone: 'clipboard-list', permissao: ['inscricoes.gerir'] },
+                { rota: 'financeiro', rotulo: 'Pagamentos',     icone: 'wallet',      permissao: ['financeiro.gerir'] }
+            ]
+        },
+        {
+            grupo: 'Gestão do Protagonismo',
             itens: [
                 { rota: 'frentes',    rotulo: 'Frentes',            icone: 'layers',      permissao: ['frentes.gerir'] },
-                { rota: 'comissoes',  rotulo: 'Comissoes',          icone: 'users-round', permissao: null },
+                { rota: 'comissoes',  rotulo: 'Comitês',          icone: 'users-round', permissao: null },
                 { rota: 'usuarios',   rotulo: 'Coordenadores',      icone: 'id-card',     permissao: ['usuarios.gerir'] },
-                { rota: 'funcoes',    rotulo: 'Funcoes do painel',  icone: 'key-round',   permissao: ['funcoes.gerir'] }
+                { rota: 'funcoes',    rotulo: 'Funções do painel',  icone: 'key-round',   permissao: ['funcoes.gerir'] }
             ]
         },
         {
             grupo: 'Acompanhamento',
             itens: [
-                { rota: 'relatorios', rotulo: 'Relatorios', icone: 'bar-chart-3', permissao: ['relatorios.ver'] },
+                { rota: 'relatorios', rotulo: 'Relatórios', icone: 'bar-chart-3', permissao: ['relatorios.ver'] },
                 { rota: 'auditoria',  rotulo: 'Atividade',  icone: 'history',     permissao: ['auditoria.ver'] },
-                { rota: 'portal',     rotulo: 'Portal publico', icone: 'globe',   permissao: null }
+                { rota: 'portal',     rotulo: 'Portal público', icone: 'globe',   permissao: null }
             ]
         }
     ];
 
     var rotaAtual = 'visao';
+    var vistaAnterior = null;
 
-    /* Ajuda de demonstracao: o seletor "Modo de teste" no topo permite saltar
-       entre os tres perfis sem sair da sessao. Poe a false quando o painel
+    /* Ajuda de demonstração: o seletor "Modo de teste" no topo permite saltar
+       entre os três perfis sem sair da sessão. Poe a false quando o painel
        passar a ser usado a serio (ver README). */
     var MODO_TESTE = true;
 
@@ -102,7 +113,7 @@
             UI.avatar(eu ? eu.nome : 'Visitante', Auth.ehSupra() ? 'violet' : 'indigo', 'grande') +
             '<div class="min-w-0">' +
                 '<p class="cartao-utilizador__nome truncate">' + UI.esc(eu ? eu.nome : 'Visitante') + '</p>' +
-                '<p class="cartao-utilizador__papel truncate">' + UI.esc(funcao ? funcao.nome : 'Sem funcao') + '</p>' +
+                '<p class="cartao-utilizador__papel truncate">' + UI.esc(funcao ? funcao.nome : 'Sem função') + '</p>' +
             '</div>';
     }
 
@@ -111,8 +122,8 @@
         var perfil = Auth.perfilAtual();
         var opcoes = [
             { chave: 'supra', rotulo: 'Supra Admin' },
-            { chave: 'admin', rotulo: 'Admin (comissao)' },
-            { chave: 'publico', rotulo: 'Publico' }
+            { chave: 'admin', rotulo: 'Admin (comitê)' },
+            { chave: 'publico', rotulo: 'Público' }
         ];
         return '<div class="trocador">' +
                     '<span class="trocador__rotulo hidden sm:inline">Modo de teste</span>' +
@@ -150,8 +161,8 @@
                             '<p class="truncate" style="font-size:.75rem;font-weight:500">' + UI.esc(eu ? eu.email : '') + '</p>' +
                             '<p class="nota" style="font-size:.6875rem">' + UI.esc(eu && eu.cargo ? eu.cargo : '') + '</p>' +
                         '</div>' +
-                        '<a href="#/portal">' + UI.icone('globe', 14) + ' Portal publico</a>' +
-                        '<button id="btn-sair" style="color:var(--sinal)">' + UI.icone('log-out', 14) + ' Terminar sessao</button>' +
+                        '<a href="#/portal">' + UI.icone('globe', 14) + ' Portal público</a>' +
+                        '<button id="btn-sair" style="color:var(--sinal)">' + UI.icone('log-out', 14) + ' Terminar sessão</button>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -204,7 +215,7 @@
     }
 
     /* --------------------------------------------------------------------- */
-    /* Portal publico (sem barra lateral)                                     */
+    /* Portal público (sem barra lateral)                                     */
     /* --------------------------------------------------------------------- */
     function desenharPublico() {
         document.getElementById('tela-login').classList.add('hidden');
@@ -220,7 +231,7 @@
                     '</div>' +
                     '<div class="flex items-center gap-3">' +
                         trocadorHTML() +
-                        '<button id="btn-entrar-painel" class="ligacao hidden sm:block">Area de coordenacao</button>' +
+                        '<button id="btn-entrar-painel" class="ligacao hidden sm:block">Área de coordenação</button>' +
                     '</div>' +
                 '</div>' +
             '</header>' +
@@ -259,10 +270,19 @@
         var vista = Views[rotaAtual];
         if (!vista) { rotaAtual = 'visao'; vista = Views.visao; }
 
+        /* Vistas com cronometros ou intervalos limpam-se antes de sair. */
+        if (vistaAnterior && vistaAnterior !== vista && typeof vistaAnterior.desligar === 'function') {
+            vistaAnterior.desligar();
+        }
+        if (vistaAnterior === vista && typeof vista.desligar === 'function') {
+            vista.desligar();
+        }
+        vistaAnterior = vista;
+
         desenharMenu();
         desenharUtilizador();
         desenharTopo();
-        // Em ecras pequenos, navegar fecha o menu lateral.
+        // Em telas pequenos, navegar fecha o menu lateral.
         if (global.innerWidth < 1024) { fecharLateral(); }
 
         var conteudo = document.getElementById('conteudo');
@@ -301,7 +321,7 @@
         rotaAtual = 'visao';
         global.location.hash = '';
         mostrarLogin();
-        UI.toast('Sessao terminada.', 'info');
+        UI.toast('Sessão terminada.', 'info');
     }
 
     function ligarLogin() {

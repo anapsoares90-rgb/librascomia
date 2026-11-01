@@ -55,6 +55,11 @@ var scripts = [
     'assets/js/views/calendario.js',
     'assets/js/views/relatorios.js',
     'assets/js/views/auditoria.js',
+    'assets/js/views/debate.js',
+    'assets/js/views/aovivo.js',
+    'assets/js/views/delegacoes.js',
+    'assets/js/views/inscricoes.js',
+    'assets/js/views/financeiro.js',
     'assets/js/views/portal.js',
     'assets/js/app.js'
 ].map(function (f) {

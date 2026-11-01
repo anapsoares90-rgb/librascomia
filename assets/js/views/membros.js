@@ -7,17 +7,17 @@
     function formulario(membro) {
         var edicao = !!membro;
         var comissoes = Dados.opcoesComissoes();
-        if (!comissoes.length) { UI.toast('Nao tens comissoes disponiveis.', 'aviso'); return; }
+        if (!comissoes.length) { UI.toast('Não tem comitês disponíveis.', 'aviso'); return; }
         var eu = Auth.usuarioAtual();
 
         UI.formulario({
             titulo: edicao ? 'Editar membro' : 'Cadastrar membro',
-            subtitulo: 'Os membros recebem as postagens internas e os comunicados da comissao.',
+            subtitulo: 'Os membros recebem as postagens internas e os comunicados do comitê.',
             botao: edicao ? 'Guardar' : 'Cadastrar',
             campos: [
                 { nome: 'nome', rotulo: 'Nome do aluno', tipo: 'text', valor: edicao ? membro.nome : '', obrigatorio: true },
                 { nome: 'turma', rotulo: 'Turma', tipo: 'text', largura: 'metade', valor: edicao ? membro.turma : '', placeholder: 'Ex.: 9.º B' },
-                { nome: 'papel', rotulo: 'Funcao na comissao', tipo: 'text', largura: 'metade', valor: edicao ? membro.papel : '', placeholder: 'Ex.: Delegado, Reporter' },
+                { nome: 'papel', rotulo: 'Função no comitê', tipo: 'text', largura: 'metade', valor: edicao ? membro.papel : '', placeholder: 'Ex.: Delegado, Reporter' },
                 { nome: 'email', rotulo: 'E-mail (opcional)', tipo: 'email', largura: 'metade', valor: edicao ? membro.email : '' },
                 {
                     nome: 'comissaoId', rotulo: 'Comissao', tipo: 'select', largura: 'metade', obrigatorio: true,
@@ -28,13 +28,13 @@
                     nome: 'status', rotulo: 'Situacao', tipo: 'select', largura: 'metade', valor: edicao ? membro.status : 'ativo',
                     opcoes: [
                         { valor: 'ativo', rotulo: 'Ativo' },
-                        { valor: 'pendente', rotulo: 'Inscricao pendente' },
+                        { valor: 'pendente', rotulo: 'Inscrição pendente' },
                         { valor: 'inativo', rotulo: 'Inativo' }
                     ]
                 }
             ],
             validar: function (d) {
-                if (!Auth.veComissao(d.comissaoId)) { return 'Nao tens acesso a essa comissao.'; }
+                if (!Auth.veComissao(d.comissaoId)) { return 'Não tem acesso a esse comitê.'; }
                 return null;
             },
             aoGuardar: function (d) {
@@ -55,7 +55,7 @@
     function eliminar(membro) {
         UI.confirmar({
             titulo: 'Remover membro',
-            mensagem: 'Queres remover "' + membro.nome + '" da comissao?',
+            mensagem: 'Quer remover "' + membro.nome + '" do comitê?',
             confirmar: 'Remover',
             aoConfirmar: function () {
                 Store.remover('membros', membro.id);
@@ -84,21 +84,21 @@
                 return true;
             });
 
-            var html = UI.cabecalho('Comissoes', 'Membros',
-                'Alunos inscritos nas comissoes a que tens acesso.',
+            var html = UI.cabecalho('Comitês', 'Membros',
+                'Alunos inscritos nos comitês a que tem acesso.',
                 (pode ? '<button class="btn btn--principal" data-acao="novo">' + UI.icone('user-plus', 15) + ' Cadastrar membro</button>' : ''));
 
             html += UI.metricas([
                 { rotulo: 'Total de membros', valor: todos.length, tom: 'indigo' },
                 { rotulo: 'Ativos', valor: todos.filter(function (m) { return m.status === 'ativo'; }).length, tom: 'emerald' },
-                { rotulo: 'Inscricoes pendentes', valor: todos.filter(function (m) { return m.status === 'pendente'; }).length, tom: 'amber' },
-                { rotulo: 'Comissoes', valor: Auth.comissoesVisiveis().length, tom: 'sky' }
+                { rotulo: 'Inscrições pendentes', valor: todos.filter(function (m) { return m.status === 'pendente'; }).length, tom: 'amber' },
+                { rotulo: 'Comitês', valor: Auth.comissoesVisiveis().length, tom: 'sky' }
             ]);
 
             html += '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" style="max-width:44rem">' +
-                '<input id="m-busca" type="search" value="' + UI.esc(filtro.busca) + '" placeholder="Procurar por nome, turma ou funcao..." class="campo">' +
+                '<input id="m-busca" type="search" value="' + UI.esc(filtro.busca) + '" placeholder="Procurar por nome, turma ou função..." class="campo">' +
                 '<select id="m-comissao" class="campo">' +
-                    '<option value="">Todas as comissoes</option>' +
+                    '<option value="">Todos os comitês</option>' +
                     Dados.opcoesComissoes().map(function (o) {
                         return '<option value="' + o.valor + '"' + (filtro.comissaoId === o.valor ? ' selected' : '') + '>' + UI.esc(o.rotulo) + '</option>';
                     }).join('') +
@@ -111,7 +111,7 @@
 
             html += UI.painel('', '<div class="overflow-x-auto"><table class="tabela">' +
                 '<thead><tr><th>Aluno</th><th>Comissao</th><th>Funcao</th><th>Situacao</th>' +
-                (pode ? '<th class="text-right">Acoes</th>' : '') + '</tr></thead><tbody>' +
+                (pode ? '<th class="text-right">Ações</th>' : '') + '</tr></thead><tbody>' +
                 lista.map(function (m) {
                     var comissao = Store.encontrar('comissoes', m.comissaoId);
                     return '<tr>' +

@@ -1,4 +1,4 @@
-/* ===================== Registo de atividade (log) ====================== */
+/* ===================== Registro de atividade (log) ====================== */
 (function (global) {
     'use strict';
 
@@ -7,13 +7,13 @@
         titulo: 'Atividade',
         render: function () {
             var registos = Store.listar('auditoria');
-            var html = UI.cabecalho('Acompanhamento', 'Registo de atividade',
-                'Historico das acoes feitas na plataforma pelos coordenadores.',
+            var html = UI.cabecalho('Acompanhamento', 'Registro de atividade',
+                'Histórico das ações feitas na plataforma pelos coordenadores.',
                 '<button class="btn" data-acao="exportar">' + UI.icone('download', 15) + ' Exportar dados</button>' +
-                '<button class="btn btn--perigo" data-acao="repor">' + UI.icone('rotate-ccw', 15) + ' Repor demonstracao</button>');
+                '<button class="btn btn--perigo" data-acao="repor">' + UI.icone('rotate-ccw', 15) + ' Repor demonstração</button>');
 
             if (!registos.length) {
-                return html + UI.painel('', UI.vazio('Ainda nao ha atividade registada.', 'history'));
+                return html + UI.painel('', UI.vazio('Ainda não ha atividade registrada.', 'history'));
             }
 
             html += UI.painel('', registos.slice(0, 120).map(function (r) {
@@ -40,8 +40,8 @@
             if (rep) {
                 rep.addEventListener('click', function () {
                     UI.confirmar({
-                        titulo: 'Repor dados de demonstracao',
-                        mensagem: 'Isto apaga tudo o que foi criado neste browser e volta aos dados iniciais. Queres continuar?',
+                        titulo: 'Repor dados de demonstração',
+                        mensagem: 'Isto apaga tudo o que foi criado neste browser e volta aos dados iniciais. Quer continuar?',
                         confirmar: 'Repor tudo',
                         aoConfirmar: function () {
                             Store.repor();

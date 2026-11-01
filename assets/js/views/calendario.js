@@ -1,4 +1,4 @@
-/* ============================== Calendario ============================= */
+/* ============================== Calendário ============================= */
 (function (global) {
     'use strict';
 
@@ -20,14 +20,14 @@
     function formulario(evento, dataSugerida) {
         var edicao = !!evento;
         var frentes = Dados.opcoesFrentes();
-        if (!frentes.length) { UI.toast('Sem frentes disponiveis.', 'aviso'); return; }
+        if (!frentes.length) { UI.toast('Sem frentes disponíveis.', 'aviso'); return; }
         var eu = Auth.usuarioAtual();
 
         UI.formulario({
             titulo: edicao ? 'Editar evento' : 'Novo evento na agenda',
-            subtitulo: 'Reunioes, formacoes, prazos e sessoes das frentes do Protagonismo.',
+            subtitulo: 'Reunioes, formacoes, prazos e sessões das frentes do Protagonismo.',
             largura: 'max-w-2xl',
-            botao: edicao ? 'Guardar evento' : 'Agendar',
+            botao: edicao ? 'Salvar evento' : 'Agendar',
             campos: [
                 { nome: 'titulo', rotulo: 'Titulo do evento', tipo: 'text', valor: edicao ? evento.titulo : '', obrigatorio: true },
                 { nome: 'data', rotulo: 'Data', tipo: 'date', largura: 'metade', obrigatorio: true, valor: edicao ? evento.data : (dataSugerida || UI.dataHoje()) },
@@ -48,7 +48,7 @@
                     opcoes: Dados.opcoesComissoes(null, '— toda a frente —')
                 },
                 { nome: 'descricao', rotulo: 'Descricao', tipo: 'textarea', linhas: 3, valor: edicao ? evento.descricao : '' },
-                { nome: 'publico', rotulo: 'Mostrar no calendario publico', tipo: 'checkbox', valor: edicao ? evento.publico : false, ajuda: 'Eventos publicos aparecem no portal da escola.' }
+                { nome: 'publico', rotulo: 'Mostrar no calendário público', tipo: 'checkbox', valor: edicao ? evento.publico : false, ajuda: 'Eventos publicos aparecem no portal da escola.' }
             ],
             aoGuardar: function (d) {
                 d.comissaoId = d.comissaoId || null;
@@ -78,12 +78,12 @@
                     UI.etiqueta(t.rotulo, t.cor, { forte: true }) +
                     UI.etiqueta(Dados.nomeFrente(evento.frenteId), Dados.corFrente(evento.frenteId)) +
                     UI.etiqueta(Dados.nomeComissao(evento.comissaoId), 'slate') +
-                    UI.etiqueta(evento.publico ? 'Publico' : 'Interno', evento.publico ? 'emerald' : 'slate') +
+                    UI.etiqueta(evento.publico ? 'Público' : 'Interno', evento.publico ? 'emerald' : 'slate') +
                 '</div>' +
                 (evento.local ? '<p class="texto-medio" style="margin-bottom:.6rem">' + UI.icone('map-pin', 14) + ' ' + UI.esc(evento.local) + '</p>' : '') +
-                '<p class="corpo-texto">' + UI.nl2br(evento.descricao || 'Sem descricao.') + '</p>',
+                '<p class="corpo-texto">' + UI.nl2br(evento.descricao || 'Sem descrição.') + '</p>',
             rodape:
-                (pode ? '<button type="button" class="btn btn--perigo" id="ev-eliminar">Eliminar</button>' +
+                (pode ? '<button type="button" class="btn btn--perigo" id="ev-eliminar">Excluir</button>' +
                         '<button type="button" class="btn" id="ev-editar">Editar</button>' : '') +
                 '<button type="button" data-fechar="1" class="btn btn--principal">Fechar</button>',
             aoAbrir: function (raiz) {
@@ -94,11 +94,11 @@
                     e2.addEventListener('click', function () {
                         UI.fecharModal();
                         UI.confirmar({
-                            titulo: 'Eliminar evento',
-                            mensagem: 'Queres remover "' + evento.titulo + '" da agenda?',
+                            titulo: 'Excluir evento',
+                            mensagem: 'Quer remover "' + evento.titulo + '" da agenda?',
                             aoConfirmar: function () {
                                 Store.remover('eventos', evento.id);
-                                Store.registar('Evento eliminado', evento.titulo);
+                                Store.registar('Evento excluído', evento.titulo);
                                 UI.toast('Evento removido.', 'sucesso');
                                 App.recarregar();
                             }
@@ -161,12 +161,12 @@
 
     global.Views = global.Views || {};
     global.Views.calendario = {
-        titulo: 'Calendario',
+        titulo: 'Calendário',
         formulario: formulario,
         render: function () {
             var pode = Auth.pode('calendario.gerir');
-            var html = UI.cabecalho('Agenda', 'Calendario do Protagonismo',
-                'Reunioes, formacoes, prazos e sessoes de todas as frentes, num so calendario.',
+            var html = UI.cabecalho('Agenda', 'Calendário do Protagonismo',
+                'Reunioes, formacoes, prazos e sessões de todas as frentes, num só calendário.',
                 (pode ? '<button class="btn btn--principal" data-acao="novo">' + UI.icone('calendar-plus', 15) + ' Novo evento</button>' : ''));
 
             html += '<div class="flex flex-wrap items-center justify-between gap-3 mb-4">' +

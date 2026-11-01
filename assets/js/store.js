@@ -2,9 +2,9 @@
    Store — camada de dados do Dashboard Protagonismo
    -------------------------------------------------------------------------
    Toda a persistencia da aplicacao passa por aqui (localStorage do browser).
-   O resto do codigo NUNCA acede ao localStorage diretamente: assim, para
+   O resto do código NUNCA acede ao localStorage diretamente: assim, para
    migrar mais tarde para um servidor real (Supabase, Firebase, API propria)
-   basta reescrever as funcoes deste ficheiro.
+   basta reescrever as funções deste arquivo.
    ========================================================================= */
 (function (global) {
     'use strict';
@@ -12,25 +12,30 @@
     var CHAVE_DB = 'protagonismo.db.v1';
 
     /* ---------------------------------------------------------------------
-       Catalogo de permissoes (as "funcoes do painel" sao combinacoes destas)
+       Catalogo de permissões (as "funções do painel" sao combinacoes destas)
        --------------------------------------------------------------------- */
     var PERMISSOES = [
-        { chave: 'plataforma.total',  grupo: 'Plataforma', rotulo: 'Acesso total a plataforma', descricao: 'Ve e edita tudo, em todas as frentes e comissoes.' },
-        { chave: 'frentes.gerir',     grupo: 'Plataforma', rotulo: 'Gerir frentes',             descricao: 'Criar e editar frentes do protagonismo (SIV, Cine Club, ...).' },
-        { chave: 'comissoes.gerir',   grupo: 'Plataforma', rotulo: 'Gerir comissoes',           descricao: 'Criar comissoes e nomear coordenadores.' },
-        { chave: 'funcoes.gerir',     grupo: 'Plataforma', rotulo: 'Gerir funcoes do painel',   descricao: 'Cadastrar perfis de acesso e as suas permissoes.' },
-        { chave: 'usuarios.gerir',    grupo: 'Plataforma', rotulo: 'Gerir coordenadores',       descricao: 'Adicionar coordenadores e atribuir funcoes.' },
-        { chave: 'membros.gerir',     grupo: 'Comissao',   rotulo: 'Gerir membros',             descricao: 'Cadastrar os alunos membros da comissao.' },
-        { chave: 'postagens.criar',   grupo: 'Conteudo',   rotulo: 'Criar postagens',           descricao: 'Escrever comunicados para membros ou para o publico.' },
-        { chave: 'postagens.publicar',grupo: 'Conteudo',   rotulo: 'Liberar postagens',         descricao: 'Aprovar / liberar postagens no portal publico.' },
-        { chave: 'mensagens.enviar',  grupo: 'Comunicacao',rotulo: 'Enviar mensagens',          descricao: 'Comunicar com a propria comissao.' },
-        { chave: 'mensagens.geral',   grupo: 'Comunicacao',rotulo: 'Comunicado geral',          descricao: 'Enviar mensagens para todas as comissoes de uma frente ou para a plataforma inteira.' },
-        { chave: 'calendario.gerir',  grupo: 'Agenda',     rotulo: 'Gerir calendario',          descricao: 'Criar e editar eventos da agenda.' },
-        { chave: 'relatorios.ver',    grupo: 'Gestao',     rotulo: 'Ver relatorios',            descricao: 'Acompanhar indicadores e producao das comissoes.' },
-        { chave: 'auditoria.ver',     grupo: 'Gestao',     rotulo: 'Ver registo de atividade',  descricao: 'Consultar o historico de acoes na plataforma.' }
+        { chave: 'plataforma.total',  grupo: 'Plataforma', rotulo: 'Acesso total a plataforma', descricao: 'Ve e edita tudo, em todas as frentes e comitês.' },
+        { chave: 'frentes.gerir',     grupo: 'Plataforma', rotulo: 'Gerenciar frentes',             descricao: 'Criar e editar frentes do protagonismo (SIV, Cine Club, ...).' },
+        { chave: 'comissoes.gerir',   grupo: 'Plataforma', rotulo: 'Gerenciar comitês',           descricao: 'Criar comitês e nomear coordenadores.' },
+        { chave: 'funcoes.gerir',     grupo: 'Plataforma', rotulo: 'Gerenciar funções do painel',   descricao: 'Cadastrar perfis de acesso e as suas permissões.' },
+        { chave: 'usuarios.gerir',    grupo: 'Plataforma', rotulo: 'Gerenciar coordenadores',       descricao: 'Adicionar coordenadores e atribuir funções.' },
+        { chave: 'membros.gerir',     grupo: 'Comissao',   rotulo: 'Gerenciar membros',             descricao: 'Cadastrar os alunos membros do comitê.' },
+        { chave: 'postagens.criar',   grupo: 'Conteudo',   rotulo: 'Criar postagens',           descricao: 'Escrever comunicados para membros ou para o público.' },
+        { chave: 'postagens.publicar',grupo: 'Conteudo',   rotulo: 'Liberar postagens',         descricao: 'Aprovar / liberar postagens no portal público.' },
+        { chave: 'mensagens.enviar',  grupo: 'Comunicação',rotulo: 'Enviar mensagens',          descricao: 'Comunicar com a propria comitê.' },
+        { chave: 'mensagens.geral',   grupo: 'Comunicação',rotulo: 'Comunicado geral',          descricao: 'Enviar mensagens para todos os comitês de uma frente ou para a plataforma inteira.' },
+        { chave: 'calendario.gerir',  grupo: 'Agenda',     rotulo: 'Gerenciar calendário',          descricao: 'Criar e editar eventos da agenda.' },
+        { chave: 'debate.presidir',   grupo: 'Debate',     rotulo: 'Presidir a mesa',           descricao: 'Conduzir a sessão: chamada, lista de oradores, cronometro e moções.' },
+        { chave: 'delegacoes.gerir',  grupo: 'Debate',     rotulo: 'Gerenciar delegações',          descricao: 'Alocar paises as delegações e acompanhar os DPOs.' },
+        { chave: 'inscricoes.gerir',  grupo: 'Inscrições', rotulo: 'Gerenciar inscrições',          descricao: 'Receber, aceitar e alocar as inscrições dos participantes.' },
+        { chave: 'financeiro.gerir',  grupo: 'Inscrições', rotulo: 'Gerenciar pagamentos',          descricao: 'Registrar pagamentos das inscrições e ver os totais.' },
+        { chave: 'relatorios.ver',    grupo: 'Gestao',     rotulo: 'Ver relatórios',            descricao: 'Acompanhar indicadores e produção dos comitês.' },
+        { chave: 'auditoria.ver',     grupo: 'Gestao',     rotulo: 'Ver registro de atividade',  descricao: 'Consultar o histórico de ações na plataforma.' }
     ];
 
-    var COLECOES = ['frentes', 'comissoes', 'funcoes', 'usuarios', 'membros', 'postagens', 'mensagens', 'eventos', 'auditoria'];
+    var COLECOES = ['frentes', 'comissoes', 'funcoes', 'usuarios', 'membros', 'postagens', 'mensagens', 'eventos', 'auditoria',
+                    'delegacoes', 'sessoes', 'discursos', 'mocoes', 'inscricoes', 'pagamentos'];
 
     /* --------------------------------------------------------------------- */
     /* Utilitarios                                                            */
@@ -66,7 +71,7 @@
         } catch (e) {
             cache = dadosIniciais();
         }
-        // Garante que colecoes novas nao rebentam bases antigas.
+        // Garante que colecoes novas não rebentam bases antigas.
         COLECOES.forEach(function (nome) {
             if (!Array.isArray(cache[nome])) { cache[nome] = []; }
         });
@@ -77,7 +82,7 @@
         try {
             global.localStorage.setItem(CHAVE_DB, JSON.stringify(cache));
         } catch (e) {
-            console.warn('Nao foi possivel gravar os dados localmente:', e);
+            console.warn('Não foi possível gravar os dados localmente:', e);
         }
         if (typeof global.dispatchEvent === 'function') {
             global.dispatchEvent(new CustomEvent('store:alterado'));
@@ -131,7 +136,7 @@
     }
 
     /* --------------------------------------------------------------------- */
-    /* Registo de atividade (auditoria)                                       */
+    /* Registro de atividade (auditoria)                                       */
     /* --------------------------------------------------------------------- */
     function registar(acao, detalhe, usuarioId) {
         var autor = usuarioId;
@@ -147,7 +152,7 @@
             acao: acao,
             detalhe: detalhe || ''
         });
-        // Mantem o registo com um tamanho razoavel no browser.
+        // Mantem o registro com um tamanho razoavel no browser.
         if (db.auditoria.length > 400) { db.auditoria.length = 400; }
         gravar();
     }
@@ -168,14 +173,14 @@
     function importar(texto) {
         var dados = JSON.parse(texto);
         COLECOES.forEach(function (nome) {
-            if (!Array.isArray(dados[nome])) { throw new Error('Ficheiro invalido: falta a coleccao "' + nome + '".'); }
+            if (!Array.isArray(dados[nome])) { throw new Error('Arquivo invalido: falta a coleccao "' + nome + '".'); }
         });
         cache = dados;
         gravar();
     }
 
     /* --------------------------------------------------------------------- */
-    /* Dados de demonstracao                                                  */
+    /* Dados de demonstração                                                  */
     /* --------------------------------------------------------------------- */
     function dataRelativa(dias, hora) {
         var d = new Date();
@@ -191,47 +196,54 @@
         var frentes = [
             {
                 id: siv, nome: 'SIV — Simulado da ONU', sigla: 'SIV', cor: 'indigo', icone: 'globe',
-                descricao: 'Simulacao das Nacoes Unidas da escola: comites, delegacoes, imprensa e cerimonial.',
-                responsavel: 'Coordenacao do Protagonismo', ativo: true, criadoEm: agora()
+                descricao: 'Simulação das Nacoes Unidas da escola: comitês, delegações, imprensa e cerimonial.',
+                responsavel: 'Coordenação do Protagonismo', ativo: true, criadoEm: agora()
             },
             {
                 id: cine, nome: 'Cine Club', sigla: 'CINE', cor: 'amber', icone: 'clapperboard',
-                descricao: 'Sessoes de cinema comentadas, curadoria de filmes e rodas de debate.',
-                responsavel: 'Coordenacao do Protagonismo', ativo: true, criadoEm: agora()
+                descricao: 'Sessões de cinema comentadas, curadoria de filmes e rodas de debate.',
+                responsavel: 'Coordenação do Protagonismo', ativo: true, criadoEm: agora()
             }
         ];
 
         var comissoes = [
             { id: 'com_secretariado', frenteId: siv, nome: 'Secretariado-Geral', sigla: 'SEC', descricao: 'Coordena os trabalhos, regimento e resolucao final.', coordenadorId: 'usu_helena', ativo: true, criadoEm: agora() },
-            { id: 'com_seguranca',    frenteId: siv, nome: 'Conselho de Seguranca', sigla: 'CS', descricao: 'Comite de crise e negociacao entre delegacoes.', coordenadorId: null, ativo: true, criadoEm: agora() },
-            { id: 'com_assembleia',   frenteId: siv, nome: 'Assembleia Geral', sigla: 'AG', descricao: 'Debate tematico aberto a todas as delegacoes.', coordenadorId: null, ativo: true, criadoEm: agora() },
-            { id: 'com_imprensa',     frenteId: siv, nome: 'Imprensa e Comunicacao', sigla: 'IMP', descricao: 'Cobertura do evento, jornal do SIV e redes sociais.', coordenadorId: 'usu_bruno', ativo: true, criadoEm: agora() },
-            { id: 'com_logistica',    frenteId: siv, nome: 'Logistica e Cerimonial', sigla: 'LOG', descricao: 'Espacos, credenciais, som, protocolo e abertura.', coordenadorId: 'usu_marta', ativo: true, criadoEm: agora() },
-            { id: 'com_curadoria',    frenteId: cine, nome: 'Curadoria', sigla: 'CUR', descricao: 'Escolhe os filmes e prepara as fichas tecnicas.', coordenadorId: 'usu_rafa', ativo: true, criadoEm: agora() },
-            { id: 'com_exibicao',     frenteId: cine, nome: 'Producao e Exibicao', sigla: 'EXI', descricao: 'Equipamento, sala, legendas e sessao.', coordenadorId: null, ativo: true, criadoEm: agora() }
+            { id: 'com_seguranca',    frenteId: siv, nome: 'Conselho de Segurança', sigla: 'CS', descricao: 'Comitê de crise e negociacao entre delegações.', coordenadorId: 'usu_helena', ativo: true, criadoEm: agora() },
+            { id: 'com_assembleia',   frenteId: siv, nome: 'Assembleia Geral', sigla: 'AG', descricao: 'Debate tematico aberto a todas as delegações.', coordenadorId: null, ativo: true, criadoEm: agora() },
+            { id: 'com_imprensa',     frenteId: siv, nome: 'Imprensa e Comunicação', sigla: 'IMP', descricao: 'Cobertura do evento, jornal do SIV e redes sociais.', coordenadorId: 'usu_bruno', ativo: true, criadoEm: agora() },
+            { id: 'com_logistica',    frenteId: siv, nome: 'Logística e Cerimonial', sigla: 'LOG', descricao: 'Espacos, credenciais, som, protocolo e abertura.', coordenadorId: 'usu_marta', ativo: true, criadoEm: agora() },
+            { id: 'com_curadoria',    frenteId: cine, nome: 'Curadoria', sigla: 'CUR', descricao: 'Escolha os filmes e prepara as fichas tecnicas.', coordenadorId: 'usu_rafa', ativo: true, criadoEm: agora() },
+            { id: 'com_exibicao',     frenteId: cine, nome: 'Produção e Exibição', sigla: 'EXI', descricao: 'Equipamento, sala, legendas e sessão.', coordenadorId: null, ativo: true, criadoEm: agora() }
         ];
 
         var funcoes = [
             {
                 id: 'fun_supra', nome: 'Supra Admin', sistema: true, escopo: 'global',
-                descricao: 'Coordenacao geral do Protagonismo. Ve toda a plataforma.',
+                descricao: 'Coordenação geral do Protagonismo. Ve toda a plataforma.',
                 permissoes: PERMISSOES.map(function (p) { return p.chave; }), criadoEm: agora()
             },
             {
-                id: 'fun_coord', nome: 'Coordenador de Comissao', sistema: true, escopo: 'comissao',
-                descricao: 'Administra a sua comissao: membros, postagens, mensagens e agenda.',
+                id: 'fun_coord', nome: 'Coordenador de Comitê', sistema: true, escopo: 'comissao',
+                descricao: 'Administra a seu comitê: membros, postagens, mensagens e agenda.',
                 permissoes: ['membros.gerir', 'postagens.criar', 'mensagens.enviar', 'calendario.gerir', 'relatorios.ver'],
                 criadoEm: agora()
             },
             {
                 id: 'fun_imprensa', nome: 'Coordenador de Imprensa', sistema: false, escopo: 'comissao',
-                descricao: 'Alem do painel normal, pode liberar postagens diretamente no portal publico.',
+                descricao: 'Alem do painel normal, pode liberar postagens diretamente no portal público.',
                 permissoes: ['membros.gerir', 'postagens.criar', 'postagens.publicar', 'mensagens.enviar', 'calendario.gerir', 'relatorios.ver'],
                 criadoEm: agora()
             },
             {
-                id: 'fun_apoio', nome: 'Apoio de Comissao', sistema: false, escopo: 'comissao',
-                descricao: 'Perfil reduzido: escreve postagens e consulta a agenda, sem gerir membros.',
+                id: 'fun_mesa', nome: 'Mesa de Comitê (presidência)', sistema: false, escopo: 'comissao',
+                descricao: 'Preside as sessões do SiV: chamada, lista de oradores, cronometro, moções e delegações.',
+                permissoes: ['debate.presidir', 'delegacoes.gerir', 'membros.gerir', 'postagens.criar',
+                             'mensagens.enviar', 'calendario.gerir', 'relatorios.ver'],
+                criadoEm: agora()
+            },
+            {
+                id: 'fun_apoio', nome: 'Apoio de Comitê', sistema: false, escopo: 'comissao',
+                descricao: 'Perfil reduzido: escreve postagens e consulta a agenda, sem gerenciar membros.',
                 permissoes: ['postagens.criar', 'mensagens.enviar'],
                 criadoEm: agora()
             }
@@ -239,14 +251,14 @@
 
         var usuarios = [
             {
-                id: 'usu_supra', nome: 'Coordenacao do Protagonismo', email: 'supra@escola.pt', senha: 'supra123',
+                id: 'usu_supra', nome: 'Coordenação do Protagonismo', email: 'supra@escola.pt', senha: 'supra123',
                 perfil: 'supra', funcaoId: 'fun_supra', frenteIds: [], comissaoIds: [], cargo: 'Supra Admin',
                 ativo: true, criadoEm: agora(), ultimoAcesso: null
             },
             {
                 id: 'usu_helena', nome: 'Helena Rocha', email: 'helena@escola.pt', senha: 'siv123',
-                perfil: 'admin', funcaoId: 'fun_coord', frenteIds: [], comissaoIds: ['com_secretariado'],
-                cargo: 'Secretaria-Geral do SIV', ativo: true, criadoEm: agora(), ultimoAcesso: null
+                perfil: 'admin', funcaoId: 'fun_mesa', frenteIds: [], comissaoIds: ['com_secretariado', 'com_seguranca'],
+                cargo: 'Secretária-Geral e mesa do Conselho de Segurança', ativo: true, criadoEm: agora(), ultimoAcesso: null
             },
             {
                 id: 'usu_bruno', nome: 'Bruno Alves', email: 'bruno@escola.pt', senha: 'siv123',
@@ -256,7 +268,7 @@
             {
                 id: 'usu_marta', nome: 'Marta Nogueira', email: 'marta@escola.pt', senha: 'siv123',
                 perfil: 'admin', funcaoId: 'fun_coord', frenteIds: [], comissaoIds: ['com_logistica'],
-                cargo: 'Coordenadora de Logistica', ativo: true, criadoEm: agora(), ultimoAcesso: null
+                cargo: 'Coordenadora de Logística', ativo: true, criadoEm: agora(), ultimoAcesso: null
             },
             {
                 id: 'usu_rafa', nome: 'Rafael Pinto', email: 'rafael@escola.pt', senha: 'cine123',
@@ -272,31 +284,31 @@
             { id: uid('mem'), comissaoId: 'com_logistica', nome: 'Tiago Nunes', turma: '9.º C', papel: 'Credenciais', email: 'tiago.n@aluno.pt', status: 'ativo', criadoEm: agora() },
             { id: uid('mem'), comissaoId: 'com_logistica', nome: 'Carolina Dias', turma: '8.º B', papel: 'Cerimonial', email: 'carolina.d@aluno.pt', status: 'ativo', criadoEm: agora() },
             { id: uid('mem'), comissaoId: 'com_secretariado', nome: 'Miguel Sousa', turma: '9.º A', papel: 'Diretor de Mesa', email: 'miguel.s@aluno.pt', status: 'ativo', criadoEm: agora() },
-            { id: uid('mem'), comissaoId: 'com_seguranca', nome: 'Ines Carvalho', turma: '9.º B', papel: 'Delegada', email: 'ines.c@aluno.pt', status: 'ativo', criadoEm: agora() },
+            { id: uid('mem'), comissaoId: 'com_seguranca', nome: 'Inês Carvalho', turma: '9.º B', papel: 'Delegada', email: 'ines.c@aluno.pt', status: 'ativo', criadoEm: agora() },
             { id: uid('mem'), comissaoId: 'com_curadoria', nome: 'Pedro Antunes', turma: '8.º C', papel: 'Pesquisa', email: 'pedro.a@aluno.pt', status: 'ativo', criadoEm: agora() }
         ];
 
         var postagens = [
             {
-                id: uid('pos'), titulo: 'Abertura das inscricoes para o SIV 2026',
-                resumo: 'As delegacoes ja podem inscrever-se nos comites do Simulado da ONU da escola.',
-                conteudo: 'Estao abertas as inscricoes para o SIV 2026. Cada aluno pode escolher ate duas comissoes de preferencia. As vagas do Conselho de Seguranca sao limitadas e a selecao tem em conta a participacao nas formacoes preparatorias.\n\nAs inscricoes decorrem na biblioteca, durante os intervalos, ate ao final do mes.',
+                id: uid('pos'), titulo: 'Abertura das inscrições para o SIV 2026',
+                resumo: 'As delegações já podem inscrever-se nos comitês do Simulado da ONU da escola.',
+                conteudo: 'Estao abertas as inscrições para o SIV 2026. Cada aluno pode escolher ate dois comitês de preferencia. As vagas do Conselho de Segurança sao limitadas e a selecao tem em conta a participacao nas formacoes preparatorias.\n\nAs inscrições decorrem na biblioteca, durante os intervalos, ate ao final do mes.',
                 autorId: 'usu_bruno', frenteId: siv, comissaoId: 'com_imprensa',
                 visibilidade: 'publico', status: 'aprovado', destaque: true,
                 tags: ['inscricoes', 'siv'], criadoEm: agora(), publicadoEm: agora()
             },
             {
                 id: uid('pos'), titulo: 'Guia de trajes e protocolo do cerimonial',
-                resumo: 'Como se apresentar na sessao de abertura do SIV.',
-                conteudo: 'A comissao de Logistica e Cerimonial preparou o guia de traje formal para a sessao de abertura. Delegados devem apresentar-se com traje social e o cracha de identificacao entregue na receccao.',
+                resumo: 'Como se apresentar na sessão de abertura do SIV.',
+                conteudo: 'O comitê de Logística e Cerimonial preparou o guia de traje formal para a sessão de abertura. Delegados devem apresentar-se com traje social e o cracha de identificação entregue na receccao.',
                 autorId: 'usu_marta', frenteId: siv, comissaoId: 'com_logistica',
                 visibilidade: 'interno', status: 'aprovado', destaque: false,
                 tags: ['cerimonial'], criadoEm: agora(), publicadoEm: agora()
             },
             {
-                id: uid('pos'), titulo: 'Cine Club: sessao sobre cinema e memoria',
-                resumo: 'A proxima sessao do Cine Club discute memoria historica atraves do cinema.',
-                conteudo: 'A curadoria selecionou um filme que aborda memoria historica e identidade. A sessao termina com uma roda de conversa mediada pelos alunos do 9.º ano.',
+                id: uid('pos'), titulo: 'Cine Club: sessão sobre cinema e memoria',
+                resumo: 'A próxima sessão do Cine Club discute memoria historica atraves do cinema.',
+                conteudo: 'A curadoria selecionou um filme que aborda memoria historica e identidade. A sessão termina com uma roda de conversa mediada pelos alunos do 9.º ano.',
                 autorId: 'usu_rafa', frenteId: cine, comissaoId: 'com_curadoria',
                 visibilidade: 'publico', status: 'pendente', destaque: false,
                 tags: ['cineclub', 'sessao'], criadoEm: agora(), publicadoEm: null
@@ -306,24 +318,118 @@
         var mensagens = [
             {
                 id: uid('msg'), assunto: 'Reuniao geral de coordenadores',
-                corpo: 'Todos os coordenadores de comissao devem comparecer a reuniao geral de alinhamento do SIV, na sala 12, para fecharmos o cronograma do evento.',
+                corpo: 'Todos os coordenadores de comitê devem comparecer a reuniao geral de alinhamento do SIV, na sala 12, para fecharmos o cronograma do evento.',
                 autorId: 'usu_supra', alcance: 'geral', frenteId: null, comissaoId: null,
                 prioridade: 'alta', criadoEm: agora(), lidasPor: []
             },
             {
                 id: uid('msg'), assunto: 'Cobertura fotografica da abertura',
-                corpo: 'A equipa de imprensa precisa de dois fotografos para a sessao de abertura. Quem puder, responda na reuniao de quinta.',
+                corpo: 'A equipe de imprensa precisa de dois fotografos para a sessão de abertura. Quem puder, responda na reuniao de quinta.',
                 autorId: 'usu_supra', alcance: 'frente', frenteId: siv, comissaoId: null,
                 prioridade: 'normal', criadoEm: agora(), lidasPor: []
             }
         ];
 
         var eventos = [
-            { id: uid('evt'), titulo: 'Formacao: como redigir uma resolucao', data: dataRelativa(3), hora: '14:30', local: 'Biblioteca', frenteId: siv, comissaoId: 'com_secretariado', tipo: 'formacao', publico: true, descricao: 'Oficina preparatoria para delegados.', criadoEm: agora() },
-            { id: uid('evt'), titulo: 'Reuniao da comissao de Imprensa', data: dataRelativa(5), hora: '13:00', local: 'Sala 12', frenteId: siv, comissaoId: 'com_imprensa', tipo: 'reuniao', publico: false, descricao: 'Fecho do jornal do SIV.', criadoEm: agora() },
-            { id: uid('evt'), titulo: 'Sessao de abertura do SIV', data: dataRelativa(12), hora: '09:00', local: 'Auditorio', frenteId: siv, comissaoId: null, tipo: 'evento', publico: true, descricao: 'Cerimonia de abertura com todas as delegacoes.', criadoEm: agora() },
-            { id: uid('evt'), titulo: 'Cine Club — sessao de cinema e memoria', data: dataRelativa(8), hora: '15:00', local: 'Auditorio', frenteId: cine, comissaoId: 'com_curadoria', tipo: 'evento', publico: true, descricao: 'Exibicao seguida de debate.', criadoEm: agora() },
-            { id: uid('evt'), titulo: 'Entrega das credenciais', data: dataRelativa(11), hora: '10:00', local: 'Atrio', frenteId: siv, comissaoId: 'com_logistica', tipo: 'prazo', publico: false, descricao: 'Distribuicao de crachas por delegacao.', criadoEm: agora() }
+            { id: uid('evt'), titulo: 'Formação: como redigir uma resolucao', data: dataRelativa(3), hora: '14:30', local: 'Biblioteca', frenteId: siv, comissaoId: 'com_secretariado', tipo: 'formacao', publico: true, descricao: 'Oficina preparatoria para delegados.', criadoEm: agora() },
+            { id: uid('evt'), titulo: 'Reuniao do comitê de Imprensa', data: dataRelativa(5), hora: '13:00', local: 'Sala 12', frenteId: siv, comissaoId: 'com_imprensa', tipo: 'reuniao', publico: false, descricao: 'Fecho do jornal do SIV.', criadoEm: agora() },
+            { id: uid('evt'), titulo: 'Sessão de abertura do SIV', data: dataRelativa(12), hora: '09:00', local: 'Auditorio', frenteId: siv, comissaoId: null, tipo: 'evento', publico: true, descricao: 'Cerimonia de abertura com todas as delegações.', criadoEm: agora() },
+            { id: uid('evt'), titulo: 'Cine Club — sessão de cinema e memoria', data: dataRelativa(8), hora: '15:00', local: 'Auditorio', frenteId: cine, comissaoId: 'com_curadoria', tipo: 'evento', publico: true, descricao: 'Exibição seguida de debate.', criadoEm: agora() },
+            { id: uid('evt'), titulo: 'Entregue das credenciais', data: dataRelativa(11), hora: '10:00', local: 'Atrio', frenteId: siv, comissaoId: 'com_logistica', tipo: 'prazo', publico: false, descricao: 'Distribuicao de crachas por delegação.', criadoEm: agora() }
+        ];
+
+        /* ----------------------------------------------------------------
+           SiV — Simulação Viva: delegações, sessão de debate e inscrições
+           ---------------------------------------------------------------- */
+        function delegacao(id, comissaoId, pais, bandeira, delegado, turma, presenca, dpo) {
+            return {
+                id: id, comissaoId: comissaoId, pais: pais, bandeira: bandeira,
+                delegado: delegado, turma: turma, presenca: presenca, dpo: dpo,
+                inscricaoId: null, criadoEm: agora()
+            };
+        }
+
+        var delegacoes = [
+            delegacao('del_bra', 'com_seguranca', 'Brasil', '\uD83C\uDDE7\uD83C\uDDF7', 'Lucas Andrade', '9.º A', 'votante', 'entregue'),
+            delegacao('del_eua', 'com_seguranca', 'Estados Unidos', '\uD83C\uDDFA\uD83C\uDDF8', 'Beatriz Nogueira', '9.º B', 'votante', 'entregue'),
+            delegacao('del_chn', 'com_seguranca', 'China', '\uD83C\uDDE8\uD83C\uDDF3', 'Enzo Tanaka', '9.º A', 'votante', 'entregue'),
+            delegacao('del_rus', 'com_seguranca', 'Rússia', '\uD83C\uDDF7\uD83C\uDDFA', 'Mariana Lopes', '9.º C', 'votante', 'pendente'),
+            delegacao('del_fra', 'com_seguranca', 'França', '\uD83C\uDDEB\uD83C\uDDF7', 'Gabriel Moreira', '8.º A', 'presente', 'entregue'),
+            delegacao('del_gbr', 'com_seguranca', 'Reino Unido', '\uD83C\uDDEC\uD83C\uDDE7', 'Helena Vilar', '9.º B', 'presente', 'pendente'),
+            delegacao('del_jpn', 'com_seguranca', 'Japão', '\uD83C\uDDEF\uD83C\uDDF5', 'Rafaela Souza', '8.º B', 'presente', 'entregue'),
+            delegacao('del_egy', 'com_seguranca', 'Egito', '\uD83C\uDDEA\uD83C\uDDEC', 'Caio Bernardes', '9.º A', 'ausente', 'pendente'),
+            delegacao('del_zaf', 'com_seguranca', 'África do Sul', '\uD83C\uDDFF\uD83C\uDDE6', 'Lara Figueiredo', '8.º C', 'presente', 'entregue'),
+            delegacao('del_ind', 'com_seguranca', 'Índia', '\uD83C\uDDEE\uD83C\uDDF3', 'Vítor Hugo Dias', '9.º C', 'ausente', 'pendente'),
+
+            delegacao('del_prt', 'com_assembleia', 'Portugal', '\uD83C\uDDF5\uD83C\uDDF9', 'Matilde Correia', '8.º A', 'votante', 'entregue'),
+            delegacao('del_arg', 'com_assembleia', 'Argentina', '\uD83C\uDDE6\uD83C\uDDF7', 'Thiago Ramos', '8.º B', 'votante', 'entregue'),
+            delegacao('del_mex', 'com_assembleia', 'México', '\uD83C\uDDF2\uD83C\uDDFD', 'Sofia Guerra', '9.º A', 'presente', 'pendente'),
+            delegacao('del_can', 'com_assembleia', 'Canada', '\uD83C\uDDE8\uD83C\uDDE6', 'Nuno Barreto', '8.º C', 'presente', 'entregue'),
+            delegacao('del_nga', 'com_assembleia', 'Nigéria', '\uD83C\uDDF3\uD83C\uDDEC', 'Alice Monteiro', '9.º B', 'presente', 'pendente'),
+            delegacao('del_aus', 'com_assembleia', 'Austrália', '\uD83C\uDDE6\uD83C\uDDFA', 'Pedro Cavalcanti', '8.º A', 'ausente', 'pendente')
+        ];
+
+        var sessaoCS = {
+            id: 'ses_cs', comissaoId: 'com_seguranca', aberta: true,
+            modo: 'lista', topico: 'Crise hídrica e segurança regional',
+            tempoOrador: 90, tempoTotal: 0,
+            oradorAtual: 'del_bra', fila: ['del_chn', 'del_eua', 'del_jpn'],
+            cronometro: { correndo: false, inicio: null, acumulado: 0 },
+            abertaEm: agora(), encerradaEm: null, criadoEm: agora()
+        };
+
+        var discursos = [
+            { id: uid('dis'), comissaoId: 'com_seguranca', sessaoId: 'ses_cs', delegacaoId: 'del_eua', segundos: 88, quando: agora() },
+            { id: uid('dis'), comissaoId: 'com_seguranca', sessaoId: 'ses_cs', delegacaoId: 'del_rus', segundos: 90, quando: agora() },
+            { id: uid('dis'), comissaoId: 'com_seguranca', sessaoId: 'ses_cs', delegacaoId: 'del_bra', segundos: 76, quando: agora() },
+            { id: uid('dis'), comissaoId: 'com_seguranca', sessaoId: 'ses_cs', delegacaoId: 'del_fra', segundos: 61, quando: agora() },
+            { id: uid('dis'), comissaoId: 'com_seguranca', sessaoId: 'ses_cs', delegacaoId: 'del_eua', segundos: 90, quando: agora() }
+        ];
+
+        var mocoes = [
+            {
+                id: uid('moc'), comissaoId: 'com_seguranca', tipo: 'moderado',
+                descricao: 'Caucus moderado sobre o acesso a água potável',
+                proponenteId: 'del_bra', tempoTotal: 600, tempoOrador: 60,
+                votos: { favor: 7, contra: 1, abstencao: 1 },
+                estado: 'aprovada', quando: agora(), criadoEm: agora()
+            },
+            {
+                id: uid('moc'), comissaoId: 'com_seguranca', tipo: 'simples',
+                descricao: 'Caucus não moderado para redigir o documento de trabalho',
+                proponenteId: 'del_chn', tempoTotal: 480, tempoOrador: 0,
+                votos: { favor: 0, contra: 0, abstencao: 0 },
+                estado: 'proposta', quando: agora(), criadoEm: agora()
+            }
+        ];
+
+        var inscricoes = [
+            {
+                id: 'ins_1', nome: 'Clara Benevides', email: 'clara.b@aluno.pt', turma: '9.º A',
+                frenteId: siv, comissaoId: 'com_seguranca', paisPreferido: 'Alemanha', tipo: 'delegado',
+                status: 'recebida', delegacaoId: null, criadoEm: agora()
+            },
+            {
+                id: 'ins_2', nome: 'Henrique Vasques', email: 'henrique.v@aluno.pt', turma: '8.º B',
+                frenteId: siv, comissaoId: 'com_assembleia', paisPreferido: 'Itália', tipo: 'delegado',
+                status: 'recebida', delegacaoId: null, criadoEm: agora()
+            },
+            {
+                id: 'ins_3', nome: 'Lucas Andrade', email: 'lucas.a@aluno.pt', turma: '9.º A',
+                frenteId: siv, comissaoId: 'com_seguranca', paisPreferido: 'Brasil', tipo: 'delegado',
+                status: 'alocada', delegacaoId: 'del_bra', criadoEm: agora()
+            },
+            {
+                id: 'ins_4', nome: 'Joana Pires', email: 'joana.p@aluno.pt', turma: '7.º B',
+                frenteId: siv, comissaoId: 'com_imprensa', paisPreferido: '', tipo: 'imprensa',
+                status: 'aceite', delegacaoId: null, criadoEm: agora()
+            }
+        ];
+
+        var pagamentos = [
+            { id: uid('pag'), inscricaoId: 'ins_3', nome: 'Lucas Andrade', descricao: 'Inscrição de delegado', valor: 5, estado: 'pago', metodo: 'Secretaria', data: agora(), criadoEm: agora() },
+            { id: uid('pag'), inscricaoId: 'ins_4', nome: 'Joana Pires', descricao: 'Inscrição de imprensa', valor: 5, estado: 'pendente', metodo: '', data: null, criadoEm: agora() },
+            { id: uid('pag'), inscricaoId: 'ins_1', nome: 'Clara Benevides', descricao: 'Inscrição de delegado', valor: 5, estado: 'isento', metodo: 'Bolsa', data: agora(), criadoEm: agora() }
         ];
 
         return {
@@ -336,8 +442,14 @@
             postagens: postagens,
             mensagens: mensagens,
             eventos: eventos,
+            delegacoes: delegacoes,
+            sessoes: [sessaoCS],
+            discursos: discursos,
+            mocoes: mocoes,
+            inscricoes: inscricoes,
+            pagamentos: pagamentos,
             auditoria: [
-                { id: uid('log'), quando: agora(), usuarioId: 'usu_supra', acao: 'Plataforma iniciada', detalhe: 'Dados de demonstracao carregados.' }
+                { id: uid('log'), quando: agora(), usuarioId: 'usu_supra', acao: 'Plataforma iniciada', detalhe: 'Dados de demonstração carregados.' }
             ]
         };
     }

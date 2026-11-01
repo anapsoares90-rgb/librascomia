@@ -1,4 +1,4 @@
-/* ==================== Funcoes do painel (perfis) ======================= */
+/* ==================== Funções do painel (perfis) ======================= */
 (function (global) {
     'use strict';
 
@@ -11,43 +11,43 @@
     function formulario(funcao) {
         var edicao = !!funcao;
         UI.formulario({
-            titulo: edicao ? 'Editar funcao do painel' : 'Cadastrar funcao do painel',
-            subtitulo: 'Uma funcao define exatamente que paineis e acoes o coordenador vai encontrar quando entrar.',
-            botao: edicao ? 'Guardar funcao' : 'Criar funcao',
+            titulo: edicao ? 'Editar função do painel' : 'Cadastrar função do painel',
+            subtitulo: 'Uma função define exatamente que painéis e ações o coordenador vai encontrar quando entrar.',
+            botao: edicao ? 'Salvar função' : 'Criar função',
             largura: 'max-w-2xl',
             campos: [
-                { nome: 'nome', rotulo: 'Nome da funcao', tipo: 'text', valor: edicao ? funcao.nome : '', obrigatorio: true, placeholder: 'Ex.: Coordenador de Imprensa' },
+                { nome: 'nome', rotulo: 'Nome da função', tipo: 'text', valor: edicao ? funcao.nome : '', obrigatorio: true, placeholder: 'Ex.: Coordenador de Imprensa' },
                 {
                     nome: 'escopo', rotulo: 'Ambito', tipo: 'select', largura: 'metade',
                     valor: edicao ? funcao.escopo : 'comissao',
                     opcoes: [
-                        { valor: 'comissao', rotulo: 'Comissao (so o que lhe for atribuido)' },
-                        { valor: 'frente', rotulo: 'Frente (todas as comissoes da frente)' },
+                        { valor: 'comissao', rotulo: 'Comitê (só o que lhe for atribuído)' },
+                        { valor: 'frente', rotulo: 'Frente (todos os comitês da frente)' },
                         { valor: 'global', rotulo: 'Global (toda a plataforma)' }
                     ]
                 },
-                { nome: 'descricao', rotulo: 'Descricao', tipo: 'text', valor: edicao ? funcao.descricao : '', largura: 'metade', placeholder: 'Para que serve esta funcao' },
+                { nome: 'descricao', rotulo: 'Descricao', tipo: 'text', valor: edicao ? funcao.descricao : '', largura: 'metade', placeholder: 'Para que serve esta função' },
                 {
-                    nome: 'permissoes', rotulo: 'Paineis e acoes libertados', tipo: 'checkboxes',
+                    nome: 'permissoes', rotulo: 'Painéis e ações liberados', tipo: 'checkboxes',
                     valor: edicao ? (funcao.permissoes || []) : ['postagens.criar', 'mensagens.enviar'],
                     opcoes: opcoesPermissoes(),
                     ajuda: '"Acesso total a plataforma" e exclusivo do Supra Admin.'
                 }
             ],
             validar: function (d) {
-                if (!d.permissoes.length) { return 'Escolhe pelo menos uma permissao para esta funcao.'; }
+                if (!d.permissoes.length) { return 'Escolha pelo menos uma permissão para esta função.'; }
                 return null;
             },
             aoGuardar: function (d) {
                 if (edicao) {
                     Store.atualizar('funcoes', funcao.id, d);
-                    Store.registar('Funcao atualizada', d.nome + ' (' + d.permissoes.length + ' permissoes)');
-                    UI.toast('Funcao atualizada.', 'sucesso');
+                    Store.registar('Função atualizada', d.nome + ' (' + d.permissoes.length + ' permissões)');
+                    UI.toast('Função atualizada.', 'sucesso');
                 } else {
                     d.sistema = false;
                     Store.inserir('funcoes', d);
-                    Store.registar('Funcao criada', d.nome);
-                    UI.toast('Funcao "' + d.nome + '" cadastrada.', 'sucesso');
+                    Store.registar('Função criada', d.nome);
+                    UI.toast('Função "' + d.nome + '" cadastrada.', 'sucesso');
                 }
                 App.recarregar();
             }
@@ -57,20 +57,20 @@
     function eliminar(funcao) {
         var emUso = Store.listar('usuarios').filter(function (u) { return u.funcaoId === funcao.id; });
         if (funcao.sistema) {
-            UI.toast('As funcoes do sistema nao podem ser eliminadas.', 'aviso');
+            UI.toast('As funções do sistema não podem ser eliminadas.', 'aviso');
             return;
         }
         UI.confirmar({
-            titulo: 'Eliminar funcao',
+            titulo: 'Excluir função',
             mensagem: emUso.length
-                ? 'Esta funcao esta atribuida a ' + emUso.length + ' coordenador(es). Muda-lhes a funcao antes de eliminar.'
-                : 'Queres eliminar a funcao "' + funcao.nome + '"?',
+                ? 'Esta função esta atribuída a ' + emUso.length + ' coordenador(es). Muda-lhes a função antes de excluir.'
+                : 'Quer excluir a função "' + funcao.nome + '"?',
             confirmar: emUso.length ? 'Compreendi' : 'Eliminar',
             aoConfirmar: function () {
                 if (emUso.length) { return; }
                 Store.remover('funcoes', funcao.id);
-                Store.registar('Funcao eliminada', funcao.nome);
-                UI.toast('Funcao eliminada.', 'sucesso');
+                Store.registar('Função excluída', funcao.nome);
+                UI.toast('Função excluída.', 'sucesso');
                 App.recarregar();
             }
         });
@@ -78,13 +78,13 @@
 
     global.Views = global.Views || {};
     global.Views.funcoes = {
-        titulo: 'Funcoes do painel',
+        titulo: 'Funções do painel',
         formulario: formulario,
         render: function () {
             var funcoes = Store.listar('funcoes');
-            var html = UI.cabecalho('Acessos', 'Funcoes do painel',
-                'Cada coordenador recebe uma funcao. E a funcao que decide os paineis e as acoes que ele encontra ao entrar.',
-                '<button class="btn btn--principal" data-acao="nova">' + UI.icone('plus', 15) + ' Cadastrar funcao</button>');
+            var html = UI.cabecalho('Acessos', 'Funções do painel',
+                'Cada coordenador recebe uma função. É a função que decide os painéis e as ações que ele encontra ao entrar.',
+                '<button class="btn btn--principal" data-acao="nova">' + UI.icone('plus', 15) + ' Cadastrar função</button>');
 
             html += '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' + funcoes.map(function (f) {
                 var utilizadores = Store.listar('usuarios').filter(function (u) { return u.funcaoId === f.id; });
@@ -114,7 +114,7 @@
                                   }).join('')) +
                         '</div>' +
                         '<div class="flex items-center justify-between gap-3 mt-4 pt-3 border-t" style="border-color:var(--linha)">' +
-                            '<span class="nota">' + utilizadores.length + ' coordenador(es) com esta funcao</span>' +
+                            '<span class="nota">' + utilizadores.length + ' coordenador(es) com esta função</span>' +
                             '<div class="flex -space-x-1.5">' + utilizadores.slice(0, 5).map(function (u) {
                                 return UI.avatar(u.nome, 'slate', 'pequeno');
                             }).join('') + '</div>' +
@@ -123,7 +123,7 @@
                 '</section>';
             }).join('') + '</div>';
 
-            html += '<div class="mt-4">' + UI.painel('Permissoes disponiveis',
+            html += '<div class="mt-4">' + UI.painel('Permissões disponíveis',
                 '<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">' + Store.PERMISSOES.map(function (pm) {
                     return '<div class="flex gap-3">' +
                         '<span class="sobrancelha shrink-0" style="width:5.5rem;padding-top:.15rem">' + UI.esc(pm.grupo) + '</span>' +

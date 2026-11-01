@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel do Protagonismo</title>
-    <meta name="description" content="Painel de gestao do Protagonismo Estudantil: comissoes do SIV (Simulado da ONU), Cine Club, comunicacao interna, calendario e portal publico.">
+    <meta name="description" content="Painel de gestão do Protagonismo Estudantil: comitês do SIV (Simulado da ONU), Cine Club, comunicação interna, calendário e portal público.">
 
     <link rel="preload" href="assets/fonts/fraunces-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="assets/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -30,24 +30,24 @@
 
                 <div>
                     <h1 class="titulo-pagina" style="font-size:clamp(1.9rem,1.4rem+1.8vw,2.8rem)">
-                        O SIV, o Cine Club e tudo o que a escola inventar a seguir — num sitio so.
+                        O SIV, o Cine Club e tudo o que a escola inventar a seguir — num sitio só.
                     </h1>
                     <p class="subtitulo" style="font-size:.95rem;margin-top:1rem">
-                        A coordenacao geral cria as frentes e as comissoes, decide o que cada coordenador
+                        A coordenação geral cria as frentes e os comitês, decide o que cada coordenador
                         pode ver e comunica com toda a gente. A escola acompanha, no portal, aquilo que for liberado.
                     </p>
 
                     <dl class="mt-9">
                         <div class="py-3.5 flex gap-6 border-t" style="border-color:var(--linha)">
                             <dt class="sobrancelha w-28 shrink-0" style="padding-top:.2rem">Supra Admin</dt>
-                            <dd class="texto-medio">Cadastra frentes, comissoes, funcoes do painel e coordenadores. Ve tudo.</dd>
+                            <dd class="texto-medio">Cadastra frentes, comitês, funções do painel e coordenadores. Ve tudo.</dd>
                         </div>
                         <div class="py-3.5 flex gap-6 border-t" style="border-color:var(--linha)">
-                            <dt class="sobrancelha w-28 shrink-0" style="padding-top:.2rem">Comissao</dt>
-                            <dd class="texto-medio">Cada coordenador no seu painel, com aquilo — e so aquilo — que lhe foi libertado.</dd>
+                            <dt class="sobrancelha w-28 shrink-0" style="padding-top:.2rem">Comitê</dt>
+                            <dd class="texto-medio">Cada coordenador no seu painel, com aquilo — e só aquilo — que lhe foi liberado.</dd>
                         </div>
                         <div class="py-3.5 flex gap-6 border-t border-b" style="border-color:var(--linha)">
-                            <dt class="sobrancelha w-28 shrink-0" style="padding-top:.2rem">Publico</dt>
+                            <dt class="sobrancelha w-28 shrink-0" style="padding-top:.2rem">Público</dt>
                             <dd class="texto-medio">Postagens liberadas e agenda aberta a toda a comunidade escolar.</dd>
                         </div>
                     </dl>
@@ -55,7 +55,7 @@
 
                 <div class="entrada-cartao p-6 sm:p-7">
                     <h2 class="serifa" style="font-size:1.3rem">Entrar</h2>
-                    <p class="nota" style="margin-top:.25rem">Com as credenciais entregues pela coordenacao.</p>
+                    <p class="nota" style="margin-top:.25rem">Com as credenciais entregues pela coordenação.</p>
 
                     <form id="form-login" class="mt-5 space-y-4">
                         <div>
@@ -63,10 +63,10 @@
                             <input id="login-email" type="email" required autocomplete="username" class="campo" placeholder="nome@escola.pt">
                         </div>
                         <div>
-                            <label for="login-senha" class="rotulo">Palavra-passe</label>
+                            <label for="login-senha" class="rotulo">Senha</label>
                             <div class="relative">
                                 <input id="login-senha" type="password" required autocomplete="current-password" class="campo" style="padding-right:2.4rem" placeholder="••••••••">
-                                <button type="button" id="ver-senha" class="btn btn--nu absolute right-1 top-1/2 -translate-y-1/2" aria-label="Mostrar palavra-passe">
+                                <button type="button" id="ver-senha" class="btn btn--nu absolute right-1 top-1/2 -translate-y-1/2" aria-label="Mostrar senha">
                                     <i data-lucide="eye" style="width:15px;height:15px" class="pointer-events-none"></i>
                                 </button>
                             </div>
@@ -80,15 +80,15 @@
                     </form>
 
                     <button type="button" id="btn-publico" class="ligacao mt-4 inline-block">
-                        Ou ver o portal publico da escola →
+                        Ou ver o portal público da escola →
                     </button>
 
                     <div class="mt-7 pt-5 border-t" style="border-color:var(--linha)">
-                        <p class="sobrancelha">Contas de demonstracao</p>
+                        <p class="sobrancelha">Contas de demonstração</p>
                         <ul class="lista mt-3">
                             <li class="flex items-baseline justify-between gap-4">
                                 <div>
-                                    <p style="font-size:.8125rem">Coordenacao geral <span class="nota">· supra admin</span></p>
+                                    <p style="font-size:.8125rem">Coordenação geral <span class="nota">· supra admin</span></p>
                                     <p class="nota">supra@escola.pt · supra123</p>
                                 </div>
                                 <button type="button" data-demo="supra@escola.pt|supra123" class="ligacao">usar</button>
@@ -139,7 +139,7 @@
             <nav id="menu" class="flex-1 overflow-y-auto custom-scrollbar py-4"></nav>
 
             <button id="btn-ver-publico" class="pe-lateral">
-                <i data-lucide="external-link" style="width:15px;height:15px"></i> Ver como publico
+                <i data-lucide="external-link" style="width:15px;height:15px"></i> Ver como público
             </button>
         </aside>
 
@@ -167,6 +167,11 @@
     <script src="assets/js/views/calendario.js"></script>
     <script src="assets/js/views/relatorios.js"></script>
     <script src="assets/js/views/auditoria.js"></script>
+    <script src="assets/js/views/debate.js"></script>
+    <script src="assets/js/views/aovivo.js"></script>
+    <script src="assets/js/views/delegacoes.js"></script>
+    <script src="assets/js/views/inscricoes.js"></script>
+    <script src="assets/js/views/financeiro.js"></script>
     <script src="assets/js/views/portal.js"></script>
     <script src="assets/js/app.js"></script>
     <script>

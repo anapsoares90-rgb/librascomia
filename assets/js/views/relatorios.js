@@ -1,4 +1,4 @@
-/* ============================= Relatorios ============================== */
+/* ============================= Relatórios ============================== */
 (function (global) {
     'use strict';
 
@@ -21,7 +21,7 @@
 
     global.Views = global.Views || {};
     global.Views.relatorios = {
-        titulo: 'Relatorios',
+        titulo: 'Relatórios',
         render: function () {
             var linhas = porComissao();
             var posts = Dados.postagensVisiveis();
@@ -29,12 +29,12 @@
             var maxMembros = Math.max.apply(null, [1].concat(linhas.map(function (l) { return l.membros; })));
             var totalPosts = posts.length || 1;
 
-            var html = UI.cabecalho('Acompanhamento', 'Relatorios',
-                'Indicadores de participacao e producao por comissao.',
+            var html = UI.cabecalho('Acompanhamento', 'Relatórios',
+                'Indicadores de participacao e produção por comitê.',
                 '<button class="btn" data-acao="csv">' + UI.icone('download', 15) + ' Exportar CSV</button>');
 
             html += '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">' +
-                '<div class="lg:col-span-2">' + UI.painel('Postagens por comissao', linhas.length
+                '<div class="lg:col-span-2">' + UI.painel('Postagens por comitê', linhas.length
                     ? linhas.map(function (l) { return UI.barra(l.comissao.nome, l.postagens, maxPosts, Dados.corFrente(l.comissao.frenteId)); }).join('')
                     : UI.vazio('Sem dados.', 'bar-chart-3')) + '</div>' +
                 UI.painel('Estado das postagens', Object.keys(Dados.ESTADOS).map(function (k) {
@@ -51,7 +51,7 @@
             '</div>';
 
             html += '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">' +
-                UI.painel('Membros por comissao', linhas.length
+                UI.painel('Membros por comitê', linhas.length
                     ? linhas.slice().sort(function (a, b) { return b.membros - a.membros; })
                         .map(function (l) { return UI.barra(l.comissao.nome, l.membros, maxMembros, 'emerald'); }).join('')
                     : UI.vazio('Sem dados.', 'users')) +
@@ -62,7 +62,7 @@
                     return '<li class="flex items-center gap-3 ' + UI.tom(f.cor) + '">' +
                         '<span class="selo-frente">' + UI.icone(f.icone || 'layers', 15) + '</span>' +
                         '<div class="min-w-0 flex-1"><p class="truncate" style="font-size:.8125rem;font-weight:500">' + UI.esc(f.nome) + '</p>' +
-                        '<p class="nota">' + cs.length + ' comissoes · ' + ps.length + ' postagens · ' + es.length + ' eventos</p></div>' +
+                        '<p class="nota">' + cs.length + ' comitês · ' + ps.length + ' postagens · ' + es.length + ' eventos</p></div>' +
                     '</li>';
                 }).join('') + '</ul>') +
             '</div>';

@@ -1,4 +1,4 @@
-/* ===================== Portal publico do Protagonismo ================== */
+/* ===================== Portal público do Protagonismo ================== */
 (function (global) {
     'use strict';
 
@@ -33,7 +33,7 @@
 
     global.Views = global.Views || {};
     global.Views.portal = {
-        titulo: 'Portal publico',
+        titulo: 'Portal público',
         render: function () {
             var frentes = Store.listar('frentes').filter(function (f) { return f.ativo; });
             var todas = Dados.postagensPublicas();
@@ -49,12 +49,12 @@
 
             if (Auth.ehPublico()) {
                 html += '<header class="mb-8">' +
-                    '<p class="sobrancelha">Mural publico</p>' +
+                    '<p class="sobrancelha">Mural público</p>' +
                     '<h2 class="manchete" style="margin-top:.5rem">Protagonismo Estudantil</h2>' +
-                    '<p class="subtitulo">Acompanha o que as comissoes do SIV, do Cine Club e das outras frentes estao a preparar.</p>' +
+                    '<p class="subtitulo">Acompanhe o que os comitês do SIV, do Cine Club e das outras frentes estao a preparar.</p>' +
                 '</header>';
             } else {
-                html += UI.cabecalho('Pre-visualizacao', 'Portal publico',
+                html += UI.cabecalho('Pre-visualizacao', 'Portal público',
                     'E isto que a comunidade escolar ve — apenas as postagens liberadas.', '');
             }
 
@@ -69,7 +69,7 @@
 
             html += '<div class="lg:col-span-2 space-y-4">';
             if (!lista.length) {
-                html += UI.painel('', UI.vazio('Ainda nao ha publicacoes liberadas nesta frente. Volta em breve!', 'newspaper'));
+                html += UI.painel('', UI.vazio('Ainda não ha publicacoes liberadas nesta frente. Volte em breve!', 'newspaper'));
             } else {
                 destaques.slice(0, 2).forEach(function (p) { html += artigo(p, true); });
                 normais.forEach(function (p) { html += artigo(p, false); });
@@ -91,7 +91,7 @@
                         '<span class="selo-frente">' + UI.icone(f.icone || 'layers', 15) + '</span>' +
                         '<div class="min-w-0"><p style="font-size:.8125rem;font-weight:500">' + UI.esc(f.nome) + '</p>' +
                         '<p class="nota line-clamp-2">' + UI.esc(f.descricao) + '</p>' +
-                        '<p class="nota" style="margin-top:.15rem">' + cs.length + ' comissoes</p></div>' +
+                        '<p class="nota" style="margin-top:.15rem">' + cs.length + ' comitês</p></div>' +
                     '</li>';
                 }).join('') + '</ul>') +
             '</div>';

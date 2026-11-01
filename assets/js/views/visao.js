@@ -1,4 +1,4 @@
-/* ============================ Visao geral ============================== */
+/* ============================ Visão geral ============================== */
 (function (global) {
     'use strict';
 
@@ -9,17 +9,17 @@
         var minhaComissao = comissoes.length === 1 ? comissoes[0].nome : null;
 
         var titulo = supra
-            ? 'Coordenacao geral do Protagonismo'
-            : 'Painel ' + (minhaComissao ? '— ' + minhaComissao : 'de coordenacao');
+            ? 'Coordenação geral do Protagonismo'
+            : 'Painel ' + (minhaComissao ? '— ' + minhaComissao : 'de coordenação');
 
         var texto = supra
-            ? 'Ves todas as frentes, todas as comissoes e todas as postagens. E daqui que se cadastram frentes, comissoes, funcoes do painel e coordenadores.'
-            : 'Bem-vindo(a), ' + (eu ? eu.nome.split(' ')[0] : '') + '. Aqui geres a comunicacao interna da tua comissao e escreves as postagens que vao para o mural publico.';
+            ? 'Você vê todas as frentes, todos os comitês e todas as postagens. E daqui que se cadastram frentes, comitês, funções do painel e coordenadores.'
+            : 'Bem-vindo(a), ' + (eu ? eu.nome.split(' ')[0] : '') + '. Aqui gerencia a comunicação interna da seu comitê e escreves as postagens que vao para o mural público.';
 
         var dados = supra
             ? [
                 { valor: Auth.frentesVisiveis().length, rotulo: 'Frentes' },
-                { valor: comissoes.length, rotulo: 'Comissoes' },
+                { valor: comissoes.length, rotulo: 'Comitês' },
                 { valor: Store.listar('usuarios').filter(function (u) { return u.perfil === 'admin'; }).length, rotulo: 'Coordenadores' }
               ]
             : [
@@ -30,7 +30,7 @@
 
         return '<section class="faixa">' +
                     '<div class="faixa__marca">' + UI.icone(supra ? 'shield' : 'layout-panel-left', 190) + '</div>' +
-                    '<p class="sobrancelha" style="color:rgba(255,255,255,.7)">' + (supra ? 'Supra Admin' : 'Administracao de comissao') + '</p>' +
+                    '<p class="sobrancelha" style="color:rgba(255,255,255,.7)">' + (supra ? 'Supra Admin' : 'Administração de comitê') + '</p>' +
                     '<h2 class="faixa__titulo" style="margin-top:.5rem">' + UI.esc(titulo) + '</h2>' +
                     '<p class="faixa__texto">' + UI.esc(texto) + '</p>' +
                     '<div class="faixa__pe">' + dados.map(function (d) {
@@ -41,7 +41,7 @@
 
     function blocoFrentes() {
         var frentes = Auth.frentesVisiveis();
-        if (!frentes.length) { return UI.vazio('Ainda nao ha frentes atribuidas ao teu acesso.', 'layers'); }
+        if (!frentes.length) { return UI.vazio('Ainda não ha frentes atribuidas ao seu acesso.', 'layers'); }
 
         return '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' + frentes.map(function (f) {
             var comissoes = Auth.comissoesVisiveis().filter(function (c) { return c.frenteId === f.id; });
@@ -54,7 +54,7 @@
                                 '<p style="font-weight:600;font-size:.875rem">' + UI.esc(f.nome) + '</p>' +
                                 '<p class="nota line-clamp-2" style="margin-top:.15rem">' + UI.esc(f.descricao) + '</p>' +
                                 '<div class="flex flex-wrap gap-x-4 gap-y-1 mt-3">' +
-                                    UI.etiqueta(comissoes.length + ' comissoes', f.cor) +
+                                    UI.etiqueta(comissoes.length + ' comitês', f.cor) +
                                     UI.etiqueta(posts.length + ' postagens', 'slate') +
                                     UI.etiqueta(eventos.length + ' na agenda', 'slate') +
                                 '</div>' +
@@ -66,7 +66,7 @@
 
     function blocoAgenda() {
         var eventos = Dados.proximosEventos(5);
-        if (!eventos.length) { return UI.vazio('Sem eventos agendados para os proximos dias.', 'calendar-off'); }
+        if (!eventos.length) { return UI.vazio('Sem eventos agendados para os próximos dias.', 'calendar-off'); }
         return '<ul class="lista">' + eventos.map(function (e) {
             var t = Dados.tipoEvento(e.tipo);
             return '<li class="flex items-center gap-3">' +
@@ -104,7 +104,7 @@
         var posts = Dados.postagensVisiveis().filter(function (p) {
             return (eu && p.autorId === eu.id) || minhas.indexOf(p.comissaoId) !== -1;
         }).slice(0, 5);
-        if (!posts.length) { return UI.vazio('Ainda nao escreveste nenhuma postagem.', 'file-plus'); }
+        if (!posts.length) { return UI.vazio('Ainda não escreveste nenhuma postagem.', 'file-plus'); }
         return '<ul class="lista">' + posts.map(function (p) {
             var e = Dados.estado(p.status);
             return '<li class="flex items-center gap-3">' +
@@ -119,7 +119,7 @@
 
     function blocoMembros() {
         var membros = Dados.membrosVisiveis().slice(0, 6);
-        if (!membros.length) { return UI.vazio('Ainda nao ha membros cadastrados na tua comissao.', 'users'); }
+        if (!membros.length) { return UI.vazio('Ainda não ha membros cadastrados na seu comitê.', 'users'); }
         return '<ul class="lista">' + membros.map(function (m) {
             return '<li class="flex items-center gap-3">' +
                         UI.avatar(m.nome, 'sky', 'pequeno') +
@@ -135,7 +135,7 @@
     function blocoPendentes() {
         var pendentes = Dados.postagensPendentes();
         if (!pendentes.length) {
-            return '<p class="recado">' + UI.icone('check-check', 16) + ' Nao ha postagens a espera de liberacao.</p>';
+            return '<p class="recado">' + UI.icone('check-check', 16) + ' Não ha postagens a espera de liberacao.</p>';
         }
         return '<ul class="lista">' + pendentes.map(function (p) {
             return '<li class="flex items-center gap-3">' +
@@ -150,7 +150,7 @@
 
     global.Views = global.Views || {};
     global.Views.visao = {
-        titulo: 'Visao geral',
+        titulo: 'Visão geral',
         render: function () {
             var supra = Auth.ehSupra();
             var posts = Dados.postagensVisiveis();
@@ -160,10 +160,10 @@
             var html = faixa();
 
             html += '<div class="mt-6">' + UI.metricas([
-                { rotulo: supra ? 'Comissoes ativas' : 'As minhas comissoes', valor: Auth.comissoesVisiveis().length, tom: 'indigo', nota: Auth.frentesVisiveis().length + ' frente(s)' },
+                { rotulo: supra ? 'Comitês ativas' : 'Meus comitês', valor: Auth.comissoesVisiveis().length, tom: 'indigo', nota: Auth.frentesVisiveis().length + ' frente(s)' },
                 { rotulo: 'Membros inscritos', valor: Dados.membrosVisiveis().length, tom: 'emerald' },
                 { rotulo: 'Postagens', valor: posts.length, tom: 'sky', nota: pendentes.length + ' a aguardar liberacao' },
-                { rotulo: 'Proximos eventos', valor: eventos.length, tom: 'violet', nota: 'nos proximos dias' }
+                { rotulo: 'Próximos eventos', valor: eventos.length, tom: 'violet', nota: 'nos próximos dias' }
             ]) + '</div>';
 
             html += '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">';
@@ -172,26 +172,26 @@
 
             if (supra) {
                 html += UI.painel('Frentes do Protagonismo', blocoFrentes(), {
-                    acao: '<a href="#/comissoes" class="ligacao">Ver comissoes</a>'
+                    acao: '<a href="#/comissoes" class="ligacao">Ver comitês</a>'
                 });
             } else {
-                html += UI.painel('As minhas postagens', blocoPostagensRecentes(), {
+                html += UI.painel('Meus postagens', blocoPostagensRecentes(), {
                     acao: (Auth.pode('postagens.criar') ? '<button class="ligacao" data-acao="nova-postagem">Nova postagem</button>' : '') 
                 }) +
-                UI.painel('Membros da comissao', blocoMembros(), {
+                UI.painel('Membros do comitê', blocoMembros(), {
                     acao: '<a href="#/membros" class="ligacao">Ver todos</a>'
                 });
             }
 
             if (Auth.pode('postagens.publicar')) {
                 html += UI.painel('A aguardar liberacao', blocoPendentes(), {
-                    acao: pendentes.length ? UI.etiqueta(pendentes.length + ' em analise', 'amber', { forte: true, semPonto: true }) : ''
+                    acao: pendentes.length ? UI.etiqueta(pendentes.length + ' em análise', 'amber', { forte: true, semPonto: true }) : ''
                 });
             }
             html += '</div>';
 
             html += '<div class="space-y-4">' +
-                        UI.painel('Proximos eventos', blocoAgenda(), { acao: '<a href="#/calendario" class="ligacao">Agenda</a>' }) +
+                        UI.painel('Próximos eventos', blocoAgenda(), { acao: '<a href="#/calendario" class="ligacao">Agenda</a>' }) +
                         UI.painel(supra ? 'Comunicados enviados' : 'Comunicados do Supra Admin', blocoMensagens(), { acao: '<a href="#/mensagens" class="ligacao">Abrir</a>' }) +
                     '</div>';
 

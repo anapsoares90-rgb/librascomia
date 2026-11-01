@@ -10,40 +10,40 @@
 
         UI.formulario({
             titulo: edicao ? 'Editar acesso de coordenador' : 'Adicionar coordenador',
-            subtitulo: 'Define a funcao do painel e exatamente que frentes e comissoes este coordenador pode ver.',
+            subtitulo: 'Define a função do painel e exatamente que frentes e comitês este coordenador pode ver.',
             largura: 'max-w-3xl',
-            botao: edicao ? 'Guardar acesso' : 'Criar acesso',
+            botao: edicao ? 'Salvar acesso' : 'Criar acesso',
             campos: [
                 { nome: 'nome', rotulo: 'Nome completo', tipo: 'text', valor: edicao ? usuario.nome : '', obrigatorio: true },
                 { nome: 'cargo', rotulo: 'Cargo / titulo', tipo: 'text', valor: edicao ? usuario.cargo : '', largura: 'metade', placeholder: 'Ex.: Coordenador de Imprensa' },
                 { nome: 'email', rotulo: 'E-mail de acesso', tipo: 'email', valor: edicao ? usuario.email : '', obrigatorio: true, largura: 'metade' },
-                { nome: 'senha', rotulo: edicao ? 'Palavra-passe (deixa vazio para manter)' : 'Palavra-passe inicial', tipo: 'text', valor: '', obrigatorio: !edicao, largura: 'metade', placeholder: edicao ? '••••••' : 'Ex.: siv2026' },
+                { nome: 'senha', rotulo: edicao ? 'Senha (deixa vazio para manter)' : 'Senha inicial', tipo: 'text', valor: '', obrigatorio: !edicao, largura: 'metade', placeholder: edicao ? '••••••' : 'Ex.: siv2026' },
                 {
-                    nome: 'funcaoId', rotulo: 'Funcao do painel', tipo: 'select', largura: 'metade', obrigatorio: true,
+                    nome: 'funcaoId', rotulo: 'Função do painel', tipo: 'select', largura: 'metade', obrigatorio: true,
                     valor: edicao ? usuario.funcaoId : (funcoes[0] ? funcoes[0].id : ''),
-                    opcoes: funcoes.map(function (f) { return { valor: f.id, rotulo: f.nome + ' — ' + f.permissoes.length + ' permissoes' }; }),
-                    ajuda: 'A funcao determina os paineis visiveis. Cadastra novas funcoes em "Funcoes do painel".'
+                    opcoes: funcoes.map(function (f) { return { valor: f.id, rotulo: f.nome + ' — ' + f.permissoes.length + ' permissões' }; }),
+                    ajuda: 'A função determina os painéis visiveis. Cadastra novas funções em "Funções do painel".'
                 },
                 {
-                    nome: 'frenteIds', rotulo: 'Frentes libertadas', tipo: 'checkboxes',
+                    nome: 'frenteIds', rotulo: 'Frentes liberadas', tipo: 'checkboxes',
                     valor: edicao ? (usuario.frenteIds || []) : [],
-                    opcoes: todasFrentes.map(function (f) { return { valor: f.id, rotulo: f.nome, ajuda: 'Da acesso a todas as comissoes desta frente.' }; })
+                    opcoes: todasFrentes.map(function (f) { return { valor: f.id, rotulo: f.nome, ajuda: 'Da acesso a todos os comitês desta frente.' }; })
                 },
                 {
-                    nome: 'comissaoIds', rotulo: 'Comissoes libertadas', tipo: 'checkboxes',
+                    nome: 'comissaoIds', rotulo: 'Comitês liberadas', tipo: 'checkboxes',
                     valor: edicao ? (usuario.comissaoIds || []) : [],
                     opcoes: todasComissoes.map(function (c) {
                         return { valor: c.id, rotulo: Dados.siglaFrente(c.frenteId) + ' · ' + c.nome };
                     })
                 },
-                { nome: 'ativo', rotulo: 'Acesso ativo', tipo: 'checkbox', valor: edicao ? usuario.ativo : true, ajuda: 'Desativa para bloquear o inicio de sessao sem apagar o historico.' }
+                { nome: 'ativo', rotulo: 'Acesso ativo', tipo: 'checkbox', valor: edicao ? usuario.ativo : true, ajuda: 'Desative para bloquear o início de sessão sem apagar o histórico.' }
             ],
             validar: function (d) {
                 var repetido = Store.listar('usuarios').filter(function (u) {
                     return u.email.toLowerCase() === d.email.toLowerCase() && (!edicao || u.id !== usuario.id);
                 });
-                if (repetido.length) { return 'Ja existe uma conta com esse e-mail.'; }
-                if (!d.frenteIds.length && !d.comissaoIds.length) { return 'Liberta pelo menos uma frente ou comissao para este coordenador.'; }
+                if (repetido.length) { return 'Já existe uma conta com esse e-mail.'; }
+                if (!d.frenteIds.length && !d.comissaoIds.length) { return 'Libere pelo menos uma frente ou comitê para este coordenador.'; }
                 return null;
             },
             aoGuardar: function (d) {
@@ -60,8 +60,8 @@
                     dados.ultimoAcesso = null;
                     var novo = Store.inserir('usuarios', dados);
                     Store.registar('Coordenador adicionado', d.nome + ' — ' + Dados.nomeFuncao(d.funcaoId));
-                    UI.toast('Coordenador criado. Entrega-lhe o e-mail e a palavra-passe.', 'sucesso');
-                    // Se so tem uma comissao e ela esta sem coordenador, assume-a.
+                    UI.toast('Coordenador criado. Entregue-lhe o e-mail e a senha.', 'sucesso');
+                    // Se só tem um comitê e ela esta sem coordenador, assume-a.
                     if (d.comissaoIds.length === 1) {
                         var c = Store.encontrar('comissoes', d.comissaoIds[0]);
                         if (c && !c.coordenadorId) { Store.atualizar('comissoes', c.id, { coordenadorId: novo.id }); }
@@ -75,7 +75,7 @@
     function eliminar(usuario) {
         UI.confirmar({
             titulo: 'Remover coordenador',
-            mensagem: 'Queres remover o acesso de "' + usuario.nome + '"? As postagens que criou continuam na plataforma.',
+            mensagem: 'Quer remover o acesso de "' + usuario.nome + '"? As postagens que criou continuam na plataforma.',
             confirmar: 'Remover acesso',
             aoConfirmar: function () {
                 Store.listar('comissoes').filter(function (c) { return c.coordenadorId === usuario.id; })
@@ -100,30 +100,30 @@
             corpo:
                 '<div class="space-y-5">' +
                     '<div>' +
-                        '<p class="sobrancelha">Funcao atribuida</p>' +
+                        '<p class="sobrancelha">Função atribuída</p>' +
                         '<p style="font-weight:600;margin-top:.3rem">' + UI.esc(funcao ? funcao.nome : '—') + '</p>' +
                         '<p class="nota">' + UI.esc(funcao ? funcao.descricao : '') + '</p>' +
                     '</div>' +
                     '<div>' +
-                        '<p class="sobrancelha">Paineis visiveis</p>' +
+                        '<p class="sobrancelha">Painéis visiveis</p>' +
                         '<div class="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">' + (funcao ? funcao.permissoes.map(function (chave) {
                             var pm = Store.PERMISSOES.filter(function (x) { return x.chave === chave; })[0];
                             return UI.etiqueta(pm ? pm.rotulo : chave, 'indigo');
                         }).join('') : '') + '</div>' +
                     '</div>' +
                     '<div>' +
-                        '<p class="sobrancelha">Comissoes que consegue ver (' + comissoes.length + ')</p>' +
+                        '<p class="sobrancelha">Comitês que consegue ver (' + comissoes.length + ')</p>' +
                         (comissoes.length
                             ? '<ul class="lista mt-2">' + comissoes.map(function (c) {
                                   return '<li style="font-size:.8125rem">' + UI.esc(Dados.nomeFrente(c.frenteId)) +
                                          ' · <b>' + UI.esc(c.nome) + '</b></li>';
                               }).join('') + '</ul>'
-                            : '<p class="etiqueta tom-amber" style="margin-top:.4rem">Nenhuma comissao libertada.</p>') +
+                            : '<p class="etiqueta tom-amber" style="margin-top:.4rem">Nenhum comitê liberada.</p>') +
                     '</div>' +
                     '<div class="corpo-texto--destacado">' +
                         '<p class="sobrancelha">Credenciais</p>' +
                         '<p class="texto-medio" style="margin-top:.3rem">' + UI.esc(usuario.email) + '</p>' +
-                        '<p class="nota">Ultimo acesso: ' + UI.esc(usuario.ultimoAcesso ? UI.dataHora(usuario.ultimoAcesso) : 'ainda nao entrou') + '</p>' +
+                        '<p class="nota">Último acesso: ' + UI.esc(usuario.ultimoAcesso ? UI.dataHora(usuario.ultimoAcesso) : 'ainda não entrou') + '</p>' +
                     '</div>' +
                 '</div>',
             rodape: '<button type="button" data-fechar="1" class="btn">Fechar</button>'
@@ -137,12 +137,12 @@
         render: function () {
             var usuarios = Store.listar('usuarios');
             var html = UI.cabecalho('Acessos', 'Coordenadores',
-                'Adiciona os coordenadores de cada comissao e atribui a funcao e o painel a que terao acesso.',
+                'Adiciona os coordenadores de cada comitê e atribui a função e o painel a que terao acesso.',
                 '<button class="btn btn--principal" data-acao="novo">' + UI.icone('user-plus', 15) + ' Adicionar coordenador</button>');
 
             html += UI.painel('', '<div class="overflow-x-auto"><table class="tabela">' +
                 '<thead><tr>' +
-                    '<th>Coordenador</th><th>Funcao do painel</th><th>Acesso libertado</th><th>Estado</th><th class="text-right">Acoes</th>' +
+                    '<th>Coordenador</th><th>Função do painel</th><th>Acesso liberado</th><th>Estado</th><th class="text-right">Ações</th>' +
                 '</tr></thead><tbody>' +
                 usuarios.map(function (u) {
                     var frentes = (u.frenteIds || []).map(Dados.nomeFrente);
@@ -160,7 +160,7 @@
                             (supra ? 'Toda a plataforma'
                                    : (frentes.concat(comissoes).length
                                         ? UI.esc(frentes.concat(comissoes).join(' · '))
-                                        : '<span class="etiqueta tom-amber">Sem acesso atribuido</span>')) +
+                                        : '<span class="etiqueta tom-amber">Sem acesso atribuído</span>')) +
                         '</td>' +
                         '<td>' + (u.ativo ? UI.etiqueta('Ativo', 'emerald') : UI.etiqueta('Desativado', 'slate')) + '</td>' +
                         '<td>' +
@@ -179,7 +179,7 @@
             var semCoord = Store.listar('comissoes').filter(function (c) { return !c.coordenadorId; });
             if (semCoord.length) {
                 html += '<div class="mt-4">' + UI.aviso(
-                    '<p style="font-weight:500">' + semCoord.length + ' comissao(oes) ainda sem coordenador</p>' +
+                    '<p style="font-weight:500">' + semCoord.length + ' comitê(s) ainda sem coordenador</p>' +
                     '<p class="nota">' + UI.esc(semCoord.map(function (c) { return c.nome; }).join(', ')) + '</p>', 'amber') + '</div>';
             }
             return html;

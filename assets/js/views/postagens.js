@@ -16,15 +16,15 @@
     function formulario(post) {
         var edicao = !!post;
         var eu = Auth.usuarioAtual();
-        var comissoes = Dados.opcoesComissoes(null, '— Comunicado da frente (sem comissao) —');
+        var comissoes = Dados.opcoesComissoes(null, '— Comunicado da frente (sem comitê) —');
         var frentes = Dados.opcoesFrentes();
-        if (!frentes.length) { UI.toast('Sem frentes disponiveis para publicar.', 'aviso'); return; }
+        if (!frentes.length) { UI.toast('Sem frentes disponíveis para publicar.', 'aviso'); return; }
 
         UI.formulario({
             titulo: edicao ? 'Editar postagem' : 'Nova postagem',
-            subtitulo: 'Postagens internas chegam aos membros da comissao. Postagens publicas so aparecem no portal depois de liberadas.',
+            subtitulo: 'Postagens internas chegam aos membros do comitê. Postagens públicas só aparecem no portal depois de liberadas.',
             largura: 'max-w-3xl',
-            botao: edicao ? 'Guardar postagem' : 'Criar postagem',
+            botao: edicao ? 'Salvar postagem' : 'Criar postagem',
             campos: [
                 { nome: 'titulo', rotulo: 'Titulo', tipo: 'text', valor: edicao ? post.titulo : '', obrigatorio: true },
                 { nome: 'resumo', rotulo: 'Resumo (aparece na listagem)', tipo: 'text', valor: edicao ? post.resumo : '', obrigatorio: true },
@@ -44,15 +44,15 @@
                     valor: edicao ? post.visibilidade : 'interno',
                     opcoes: [
                         { valor: 'interno', rotulo: 'Interno — membros cadastrados' },
-                        { valor: 'publico', rotulo: 'Publico — portal da escola' }
+                        { valor: 'publico', rotulo: 'Público — portal da escola' }
                     ],
-                    ajuda: Auth.pode('postagens.publicar') ? 'Podes liberar diretamente.' : 'As publicas ficam em analise ate a coordenacao liberar.'
+                    ajuda: Auth.pode('postagens.publicar') ? 'Pode liberar diretamente.' : 'As públicas ficam em análise ate a coordenação liberar.'
                 },
                 { nome: 'tags', rotulo: 'Etiquetas (separadas por virgula)', tipo: 'text', largura: 'metade', valor: edicao ? (post.tags || []).join(', ') : '' },
                 { nome: 'destaque', rotulo: 'Marcar como destaque no portal', tipo: 'checkbox', valor: edicao ? post.destaque : false }
             ],
             validar: function (d) {
-                if (d.comissaoId && !Auth.veComissao(d.comissaoId)) { return 'Nao tens acesso a essa comissao.'; }
+                if (d.comissaoId && !Auth.veComissao(d.comissaoId)) { return 'Não tem acesso a esse comitê.'; }
                 return null;
             },
             aoGuardar: function (d) {
@@ -63,7 +63,7 @@
                     tags: d.tags ? d.tags.split(',').map(function (t) { return t.trim(); }).filter(Boolean) : []
                 };
                 if (edicao) {
-                    // Alterar uma postagem ja liberada volta a coloca-la em analise.
+                    // Alterar uma postagem já liberada volta a coloca-la em análise.
                     if (post.status === 'aprovado' && dados.visibilidade === 'publico' && !Auth.pode('postagens.publicar')) {
                         dados.status = 'pendente';
                         dados.publicadoEm = null;
@@ -77,7 +77,7 @@
                     dados.publicadoEm = null;
                     Store.inserir('postagens', dados);
                     Store.registar('Postagem criada', d.titulo);
-                    UI.toast('Postagem guardada como rascunho.', 'sucesso');
+                    UI.toast('Postagem salva como rascunho.', 'sucesso');
                 }
                 App.recarregar();
             }
@@ -95,7 +95,7 @@
         Store.registar('Postagem ' + Dados.estado(novoEstado).rotulo.toLowerCase(), post.titulo);
         var mensagens = {
             aprovado: 'Postagem liberada.',
-            pendente: 'Enviada para liberacao da coordenacao.',
+            pendente: 'Enviada para liberacao da coordenação.',
             rejeitado: 'Postagem devolvida ao autor.',
             rascunho: 'Postagem devolvida a rascunho.'
         };
@@ -105,12 +105,12 @@
 
     function eliminar(post) {
         UI.confirmar({
-            titulo: 'Eliminar postagem',
-            mensagem: 'Queres eliminar "' + post.titulo + '"?',
+            titulo: 'Excluir postagem',
+            mensagem: 'Quer excluir "' + post.titulo + '"?',
             aoConfirmar: function () {
                 Store.remover('postagens', post.id);
-                Store.registar('Postagem eliminada', post.titulo);
-                UI.toast('Postagem eliminada.', 'sucesso');
+                Store.registar('Postagem excluída', post.titulo);
+                UI.toast('Postagem excluída.', 'sucesso');
                 App.recarregar();
             }
         });
@@ -125,7 +125,7 @@
             corpo:
                 '<div class="flex flex-wrap gap-x-4 gap-y-2 mb-4">' +
                     UI.etiqueta(e.rotulo, e.cor, { forte: true }) +
-                    UI.etiqueta(post.visibilidade === 'publico' ? 'Portal publico' : 'Interno', post.visibilidade === 'publico' ? 'sky' : 'slate') +
+                    UI.etiqueta(post.visibilidade === 'publico' ? 'Portal público' : 'Interno', post.visibilidade === 'publico' ? 'sky' : 'slate') +
                     (post.destaque ? UI.etiqueta('Destaque', 'amber') : '') +
                 '</div>' +
                 '<p style="font-weight:500;margin-bottom:.9rem">' + UI.esc(post.resumo) + '</p>' +
@@ -179,16 +179,16 @@
                 return true;
             });
 
-            var html = UI.cabecalho('Comunicacao', 'Postagens',
-                Auth.ehSupra() ? 'Todas as postagens das comissoes, em qualquer estado.'
-                               : 'As postagens da tua comissao e as ja liberadas no portal.',
+            var html = UI.cabecalho('Comunicação', 'Postagens',
+                Auth.ehSupra() ? 'Todas as postagens dos comitês, em qualquer estado.'
+                               : 'As postagens da seu comitê e as já liberadas no portal.',
                 (Auth.pode('postagens.criar') ? '<button class="btn btn--principal" data-acao="nova">' + UI.icone('plus', 15) + ' Nova postagem</button>' : ''));
 
             html += UI.metricas([
                 { rotulo: 'Total', valor: todas.length, tom: 'indigo' },
-                { rotulo: 'Em analise', valor: todas.filter(function (p) { return p.status === 'pendente'; }).length, tom: 'amber' },
+                { rotulo: 'Em análise', valor: todas.filter(function (p) { return p.status === 'pendente'; }).length, tom: 'amber' },
                 { rotulo: 'Liberadas', valor: todas.filter(function (p) { return p.status === 'aprovado'; }).length, tom: 'emerald' },
-                { rotulo: 'No portal publico', valor: todas.filter(function (p) { return p.status === 'aprovado' && p.visibilidade === 'publico'; }).length, tom: 'sky' }
+                { rotulo: 'No portal público', valor: todas.filter(function (p) { return p.status === 'aprovado' && p.visibilidade === 'publico'; }).length, tom: 'sky' }
             ]);
 
             html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">' +
@@ -197,14 +197,14 @@
                     Object.keys(Dados.ESTADOS).map(function (k) {
                         return '<option value="' + k + '"' + (filtro.estado === k ? ' selected' : '') + '>' + Dados.ESTADOS[k].rotulo + '</option>';
                     }).join('') + '</select>' +
-                '<select id="f-comissao" class="campo"><option value="">Todas as comissoes</option>' +
+                '<select id="f-comissao" class="campo"><option value="">Todos os comitês</option>' +
                     Dados.opcoesComissoes().map(function (o) {
                         return '<option value="' + o.valor + '"' + (filtro.comissaoId === o.valor ? ' selected' : '') + '>' + UI.esc(o.rotulo) + '</option>';
                     }).join('') + '</select>' +
                 '<select id="f-visibilidade" class="campo">' +
-                    '<option value="">Interno e publico</option>' +
-                    '<option value="interno"' + (filtro.visibilidade === 'interno' ? ' selected' : '') + '>So internas</option>' +
-                    '<option value="publico"' + (filtro.visibilidade === 'publico' ? ' selected' : '') + '>So publicas</option>' +
+                    '<option value="">Interno e público</option>' +
+                    '<option value="interno"' + (filtro.visibilidade === 'interno' ? ' selected' : '') + '>Só internas</option>' +
+                    '<option value="publico"' + (filtro.visibilidade === 'publico' ? ' selected' : '') + '>Só públicas</option>' +
                 '</select>' +
             '</div>';
 
@@ -218,7 +218,7 @@
                     '<div class="min-w-0 flex-1">' +
                         '<div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">' +
                             UI.etiqueta(e.rotulo, e.cor, { forte: true }) +
-                            UI.etiqueta(p.visibilidade === 'publico' ? 'Publico' : 'Interno', p.visibilidade === 'publico' ? 'sky' : 'slate') +
+                            UI.etiqueta(p.visibilidade === 'publico' ? 'Público' : 'Interno', p.visibilidade === 'publico' ? 'sky' : 'slate') +
                             (p.destaque ? UI.etiqueta('Destaque', 'amber') : '') +
                         '</div>' +
                         '<h3 style="font-weight:600;margin-top:.4rem">' + UI.esc(p.titulo) + '</h3>' +

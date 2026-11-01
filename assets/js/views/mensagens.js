@@ -1,4 +1,4 @@
-/* ================= Central de comunicacao (mensagens) ================== */
+/* ================= Central de comunicação (mensagens) ================== */
 (function (global) {
     'use strict';
 
@@ -11,14 +11,14 @@
 
         var alcances = [];
         if (podeGeral) {
-            alcances.push({ valor: 'geral', rotulo: 'Comunicado geral — todas as comissoes' });
+            alcances.push({ valor: 'geral', rotulo: 'Comunicado geral — todos os comitês' });
             alcances.push({ valor: 'frente', rotulo: 'Uma frente inteira' });
         }
-        alcances.push({ valor: 'comissao', rotulo: 'Uma comissao especifica' });
+        alcances.push({ valor: 'comissao', rotulo: 'Um comitê especifica' });
 
         UI.formulario({
-            titulo: 'Nova comunicacao',
-            subtitulo: 'Ferramenta de comunicacao entre as comissoes do Protagonismo.',
+            titulo: 'Nova comunicação',
+            subtitulo: 'Ferramenta de comunicação entre os comitês do Protagonismo.',
             largura: 'max-w-2xl',
             botao: 'Enviar comunicado',
             campos: [
@@ -37,17 +37,17 @@
                 },
                 {
                     nome: 'frenteId', rotulo: 'Frente (se aplicavel)', tipo: 'select', largura: 'metade',
-                    valor: '', opcoes: Dados.opcoesFrentes('— nao aplicavel —')
+                    valor: '', opcoes: Dados.opcoesFrentes('— não aplicavel —')
                 },
                 {
-                    nome: 'comissaoId', rotulo: 'Comissao (se aplicavel)', tipo: 'select', largura: 'metade',
-                    valor: preComissaoId || '', opcoes: Dados.opcoesComissoes(null, '— nao aplicavel —')
+                    nome: 'comissaoId', rotulo: 'Comitê (se aplicavel)', tipo: 'select', largura: 'metade',
+                    valor: preComissaoId || '', opcoes: Dados.opcoesComissoes(null, '— não aplicavel —')
                 }
             ],
             validar: function (d) {
-                if (d.alcance === 'frente' && !d.frenteId) { return 'Escolhe a frente destinataria.'; }
-                if (d.alcance === 'comissao' && !d.comissaoId) { return 'Escolhe a comissao destinataria.'; }
-                if (d.alcance === 'comissao' && !Auth.veComissao(d.comissaoId)) { return 'Nao tens acesso a essa comissao.'; }
+                if (d.alcance === 'frente' && !d.frenteId) { return 'Escolha a frente destinataria.'; }
+                if (d.alcance === 'comissao' && !d.comissaoId) { return 'Escolha o comitê destinataria.'; }
+                if (d.alcance === 'comissao' && !Auth.veComissao(d.comissaoId)) { return 'Não tem acesso a esse comitê.'; }
                 return null;
             },
             aoGuardar: function (d) {
@@ -58,7 +58,7 @@
                     comissaoId: d.alcance === 'comissao' ? d.comissaoId : null,
                     prioridade: d.prioridade, lidasPor: []
                 });
-                Store.registar('Comunicado enviado', d.assunto + ' → ' + (d.alcance === 'geral' ? 'todas as comissoes' : d.alcance === 'frente' ? Dados.nomeFrente(d.frenteId) : Dados.nomeComissao(d.comissaoId)));
+                Store.registar('Comunicado enviado', d.assunto + ' → ' + (d.alcance === 'geral' ? 'todos os comitês' : d.alcance === 'frente' ? Dados.nomeFrente(d.frenteId) : Dados.nomeComissao(d.comissaoId)));
                 UI.toast('Comunicado enviado.', 'sucesso');
                 App.recarregar();
             }
@@ -86,12 +86,12 @@
 
     function eliminar(mensagem) {
         UI.confirmar({
-            titulo: 'Eliminar comunicado',
-            mensagem: 'Queres eliminar o comunicado "' + mensagem.assunto + '"?',
+            titulo: 'Excluir comunicado',
+            mensagem: 'Quer excluir o comunicado "' + mensagem.assunto + '"?',
             aoConfirmar: function () {
                 Store.remover('mensagens', mensagem.id);
-                Store.registar('Comunicado eliminado', mensagem.assunto);
-                UI.toast('Comunicado eliminado.', 'sucesso');
+                Store.registar('Comunicado excluído', mensagem.assunto);
+                UI.toast('Comunicado excluído.', 'sucesso');
                 App.recarregar();
             }
         });
@@ -99,7 +99,7 @@
 
     global.Views = global.Views || {};
     global.Views.mensagens = {
-        titulo: 'Comunicacao',
+        titulo: 'Comunicação',
         formulario: formulario,
         render: function () {
             var eu = Auth.usuarioAtual();
@@ -111,12 +111,12 @@
                 acoes += '<button class="btn" data-acao="geral">' + UI.icone('radio', 15) + ' Comunicado geral</button>';
             }
             if (Auth.pode('mensagens.enviar')) {
-                acoes += '<button class="btn btn--principal" data-acao="nova">' + UI.icone('send', 15) + ' Nova comunicacao</button>';
+                acoes += '<button class="btn btn--principal" data-acao="nova">' + UI.icone('send', 15) + ' Nova comunicação</button>';
             }
 
-            var html = UI.cabecalho('Comunicacao', 'Central de comunicacao',
-                Auth.ehSupra() ? 'Envia mensagens para uma comissao, para uma frente inteira ou para toda a plataforma.'
-                               : 'Comunicados recebidos da coordenacao e mensagens da tua comissao.',
+            var html = UI.cabecalho('Comunicação', 'Central de comunicação',
+                Auth.ehSupra() ? 'Envia mensagens para um comitê, para uma frente inteira ou para toda a plataforma.'
+                               : 'Comunicados recebidos da coordenação e mensagens da seu comitê.',
                 acoes);
 
             html += UI.metricas([
@@ -127,13 +127,13 @@
             ]);
 
             html += '<div class="flex flex-wrap gap-1.5 mb-4">' +
-                [['', 'Todos'], ['geral', 'Gerais'], ['frente', 'Por frente'], ['comissao', 'Por comissao']].map(function (par) {
+                [['', 'Todos'], ['geral', 'Gerais'], ['frente', 'Por frente'], ['comissao', 'Por comitê']].map(function (par) {
                     return '<button class="filtro' + (filtro.alcance === par[0] ? ' filtro--ativo' : '') + '" data-filtro="' + par[0] + '">' + par[1] + '</button>';
                 }).join('') +
             '</div>';
 
             if (!lista.length) {
-                return html + UI.painel('', UI.vazio('Ainda nao ha comunicados nesta categoria.', 'message-square-off'));
+                return html + UI.painel('', UI.vazio('Ainda não ha comunicados nesta categoria.', 'message-square-off'));
             }
 
             html += UI.painel('', lista.map(function (m) {

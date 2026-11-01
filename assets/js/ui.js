@@ -1,6 +1,6 @@
 /* =========================================================================
    UI — pecas de interface reutilizadas pelas vistas.
-   O aspeto vive em app.css; aqui so montamos a marcacao com nomes de classe.
+   O aspeto vive em app.css; aqui só montamos a marcacao com nomes de classe.
    ========================================================================= */
 (function (global) {
     'use strict';
@@ -347,7 +347,7 @@
         return '<div class="aviso ' + tom(tomNome || 'amber') + '">' + icone(icone_ || 'alert-triangle', 16) + '<div>' + texto + '</div></div>';
     }
 
-    /* ------------------------------------------------- Guardar ficheiros -- */
+    /* ------------------------------------------------- Salvar arquivos -- */
     /* No navegador normal descarrega logo; dentro do visualizador de
        artefactos da claude.ai pede autorizacao ao visitante. */
     function descarregarDireto(nome, conteudo, tipo) {
@@ -366,27 +366,27 @@
         var claude = global.claude;
         if (!claude || typeof claude.use !== 'function') {
             descarregarDireto(nome, conteudo, tipo);
-            toast('Ficheiro descarregado.', 'sucesso');
+            toast('Arquivo descarregado.', 'sucesso');
             return;
         }
         claude.use('downloads').then(function (downloads) {
             if (!downloads) {
                 descarregarDireto(nome, conteudo, tipo);
-                toast('Ficheiro descarregado.', 'sucesso');
+                toast('Arquivo descarregado.', 'sucesso');
                 return;
             }
             downloads.save({ filename: nome, data: conteudo })
-                .then(function () { toast('Ficheiro guardado.', 'sucesso'); })
+                .then(function () { toast('Arquivo salvo.', 'sucesso'); })
                 .catch(function (erro) {
                     var codigo = erro && erro.code;
                     if (codigo === 'declined') { return; }
                     if (codigo === 'extension_not_enabled' || codigo === 'rejected_extension') {
                         downloads.save({ filename: nome.replace(/\.[^.]+$/, '') + '.txt', data: conteudo })
-                            .then(function () { toast('Ficheiro guardado.', 'sucesso'); })
-                            .catch(function () { toast('Nao foi possivel guardar o ficheiro aqui.', 'erro'); });
+                            .then(function () { toast('Arquivo salvo.', 'sucesso'); })
+                            .catch(function () { toast('Não foi possível salvar o arquivo aqui.', 'erro'); });
                         return;
                     }
-                    toast('Nao foi possivel guardar o ficheiro aqui.', 'erro');
+                    toast('Não foi possível salvar o arquivo aqui.', 'erro');
                 });
         });
     }

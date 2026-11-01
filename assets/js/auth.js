@@ -1,11 +1,11 @@
 /* =========================================================================
-   Auth — sessao, perfis e permissoes
+   Auth — sessão, perfis e permissões
    -------------------------------------------------------------------------
    Perfis existentes:
      supra   -> Supra Admin: ve e administra toda a plataforma.
-     admin   -> Coordenador: so ve as frentes/comissoes que o Supra Admin
-                lhe libertou, e so as funcionalidades da funcao atribuida.
-     publico -> Visitante: portal publico, apenas postagens liberadas.
+     admin   -> Coordenador: só ve as frentes/comitês que o Supra Admin
+                lhe liberou, e só as funcionalidades da função atribuída.
+     público -> Visitante: portal público, apenas postagens liberadas.
    ========================================================================= */
 (function (global) {
     'use strict';
@@ -42,13 +42,13 @@
             return u.email.toLowerCase() === alvo;
         })[0];
 
-        if (!utilizador) { return { ok: false, erro: 'Nao existe nenhuma conta com esse e-mail.' }; }
-        if (!utilizador.ativo) { return { ok: false, erro: 'Esta conta esta desativada. Fale com a coordenacao.' }; }
-        if (utilizador.senha !== senha) { return { ok: false, erro: 'Palavra-passe incorreta.' }; }
+        if (!utilizador) { return { ok: false, erro: 'Não existe nenhuma conta com esse e-mail.' }; }
+        if (!utilizador.ativo) { return { ok: false, erro: 'Esta conta esta desativada. Fale com a coordenação.' }; }
+        if (utilizador.senha !== senha) { return { ok: false, erro: 'Senha incorreta.' }; }
 
         Store.atualizar('usuarios', utilizador.id, { ultimoAcesso: Store.agora() });
         guardarSessao({ usuarioId: utilizador.id, perfil: utilizador.perfil, iniciadaEm: Store.agora() });
-        Store.registar('Inicio de sessao', utilizador.nome + ' entrou no painel.', utilizador.id);
+        Store.registar('Início de sessão', utilizador.nome + ' entrou no painel.', utilizador.id);
         return { ok: true, usuario: utilizador };
     }
 
@@ -57,8 +57,8 @@
         return { ok: true };
     }
 
-    /* Modo de teste: salta entre perfis sem voltar ao ecra de entrada.
-       E uma ajuda de demonstracao — ver App.MODO_TESTE em app.js. */
+    /* Modo de teste: salta entre perfis sem voltar ao tela de entrada.
+       É uma ajuda de demonstração — ver App.MODO_TESTE em app.js. */
     function assumirPerfil(perfil) {
         if (perfil === 'publico') {
             entrarComoPublico();
@@ -70,14 +70,14 @@
             var atual = usuarioAtual();
             if (atual && atual.perfil === 'admin') { alvo = atual; }
         }
-        if (!alvo) { return { ok: false, erro: 'Nao ha nenhuma conta ativa com esse perfil.' }; }
+        if (!alvo) { return { ok: false, erro: 'Não ha nenhuma conta ativa com esse perfil.' }; }
         guardarSessao({ usuarioId: alvo.id, perfil: alvo.perfil, iniciadaEm: Store.agora(), teste: true });
         return { ok: true, usuario: alvo };
     }
 
     function sair() {
         var u = usuarioAtual();
-        if (u) { Store.registar('Fim de sessao', u.nome + ' saiu do painel.', u.id); }
+        if (u) { Store.registar('Fim de sessão', u.nome + ' saiu do painel.', u.id); }
         guardarSessao(false);
     }
 
@@ -107,7 +107,7 @@
     }
 
     /* --------------------------------------------------------------------- */
-    /* Permissoes                                                             */
+    /* Permissões                                                             */
     /* --------------------------------------------------------------------- */
     function funcaoAtual() {
         var u = usuarioAtual();
@@ -128,7 +128,7 @@
     }
 
     /* --------------------------------------------------------------------- */
-    /* Ambito de dados (o que este utilizador tem direito a ver)               */
+    /* Ambito de dados (o que este usuário tem direito a ver)               */
     /* --------------------------------------------------------------------- */
     function comissoesVisiveis() {
         var todas = Store.listar('comissoes');

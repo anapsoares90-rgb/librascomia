@@ -773,3 +773,129 @@ textarea.campo { resize: vertical; line-height: 1.6; }
     body { background: #fff; }
     .painel, .metrica { break-inside: avoid; }
 }
+
+/* =========================================================================
+   SiV — mesa de debate
+   ========================================================================= */
+
+.cronometro { padding: 1.4rem 1.5rem 1.25rem; text-align: center; }
+.cronometro__tempo {
+    font-family: var(--titulo);
+    font-weight: 600;
+    font-size: clamp(3rem, 2rem + 6vw, 5.5rem);
+    line-height: 1;
+    letter-spacing: -.045em;
+    font-variant-numeric: tabular-nums;
+}
+.cronometro__alvo { font-size: .35em; color: var(--tinta-suave); margin-left: .35rem; letter-spacing: -.01em; }
+.cronometro__barra {
+    height: 6px;
+    background: var(--superficie-2);
+    border: 1px solid var(--linha);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 1.1rem auto 1.2rem;
+    max-width: 30rem;
+}
+.cronometro__fill { height: 100%; background: var(--marca); border-radius: 999px; transition: width 260ms linear; }
+.cronometro__botoes { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; }
+.cronometro--esgotado .cronometro__tempo { color: var(--sinal); }
+.cronometro--esgotado .cronometro__fill { background: var(--sinal); }
+
+.orador-atual {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--marca);
+    background: var(--marca-clara);
+    border-radius: var(--raio);
+}
+.orador-atual__bandeira { font-size: 2.1rem; line-height: 1; }
+.orador-atual__pais { font-family: var(--titulo); font-weight: 600; font-size: 1.35rem; line-height: 1.1; letter-spacing: -.02em; }
+
+.fila-item { display: flex; align-items: center; gap: .7rem; }
+.fila-item__ordem {
+    width: 1.4rem; height: 1.4rem;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .625rem; font-weight: 600;
+    color: var(--tinta-media);
+    background: var(--superficie-2);
+    border: 1px solid var(--linha);
+    border-radius: 50%;
+}
+.fila-item__bandeira { font-size: 1.15rem; line-height: 1; flex-shrink: 0; }
+
+.presenca {
+    flex-shrink: 0;
+    min-width: 2.3rem;
+    padding: .2rem .4rem;
+    font-size: .625rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-align: center;
+    border-radius: 999px;
+    border: 1px solid var(--linha-forte);
+    background: var(--superficie);
+    color: var(--tinta-suave);
+    cursor: pointer;
+    transition: all var(--transicao);
+}
+button.presenca:hover { border-color: var(--tinta-suave); }
+.presenca--votante { background: rgba(4, 120, 87, .12); border-color: #047857; color: #047857; }
+.presenca--presente { background: rgba(3, 105, 161, .10); border-color: #0369A1; color: #0369A1; }
+
+.chamada-resumo {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+.chamada-resumo div {
+    padding: .6rem .3rem;
+    background: var(--superficie-2);
+    border: 1px solid var(--linha);
+    border-radius: var(--raio-pequeno);
+}
+.chamada-resumo b { display: block; font-family: var(--titulo); font-weight: 600; font-size: 1.5rem; line-height: 1; }
+.chamada-resumo span { display: block; font-size: .5625rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-suave); margin-top: .3rem; }
+
+/* ------------------------------------------------------------- ao vivo -- */
+.grade-vivo { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .85rem; }
+
+.comite-vivo {
+    border: 1px solid var(--linha);
+    border-left: 3px solid var(--tom);
+    border-radius: var(--raio-pequeno);
+    padding: .85rem .95rem;
+    background: var(--superficie);
+    transition: border-color var(--transicao), transform var(--transicao);
+}
+.comite-vivo:hover { transform: translateY(-2px); border-color: var(--linha-forte); border-left-color: var(--tom); }
+.comite-vivo__nome { font-weight: 600; font-size: .9375rem; letter-spacing: -.01em; }
+.comite-vivo__modo { font-size: .75rem; font-weight: 500; color: var(--tom); margin-top: .5rem; }
+.comite-vivo__relogio {
+    font-family: var(--titulo);
+    font-weight: 600;
+    font-size: 1.25rem;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+    margin-top: .3rem;
+}
+
+.pingo-vivo {
+    width: .5rem; height: .5rem;
+    border-radius: 50%;
+    background: #047857;
+    flex-shrink: 0;
+    margin-top: .35rem;
+    box-shadow: 0 0 0 0 rgba(4, 120, 87, .5);
+    animation: pulsar 2s infinite;
+}
+@keyframes pulsar {
+    0%   { box-shadow: 0 0 0 0 rgba(4, 120, 87, .45); }
+    70%  { box-shadow: 0 0 0 7px rgba(4, 120, 87, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(4, 120, 87, 0); }
+}
